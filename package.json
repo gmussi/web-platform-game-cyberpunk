@@ -4,8 +4,9 @@
   "description": "A 2D side-scrolling platformer game built with Phaser.js",
   "main": "index.html",
   "scripts": {
-    "start": "python3 -m http.server 8000",
-    "dev": "python3 -m http.server 8000"
+    "start": "npx http-server -p 8000 -o",
+    "dev": "npx http-server -p 8000 -o",
+    "serve": "npx http-server -p 8000"
   },
   "keywords": [
     "phaser",

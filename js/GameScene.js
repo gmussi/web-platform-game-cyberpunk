@@ -10,6 +10,20 @@ class GameScene extends Phaser.Scene {
             this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_frame_${frameNumber}.png`);
         }
         
+        // Load background images (optimized smaller files ~800KB each, 1728x576px)
+        this.load.image('background1', 'img/background1.png');
+        this.load.image('background2', 'img/background2.png');
+        this.load.image('background3', 'img/background3.png');
+        
+        // Add timeout for loading
+        this.load.on('complete', () => {
+            console.log('All assets loaded successfully');
+        });
+        
+        this.load.on('progress', (progress) => {
+            console.log('Loading progress:', Math.round(progress * 100) + '%');
+        });
+        
         // Load character sprites and animations
         this.loadCharacterSprites();
         
@@ -129,8 +143,10 @@ class GameScene extends Phaser.Scene {
         // Create character animations
         this.createCharacterAnimations();
         
-        // Create background layers
-        this.createBackground();
+        // Wait a bit for background images to fully load, then create background
+        this.time.delayedCall(1000, () => {
+            this.createBackground();
+        });
         
         // Create platforms
         this.createPlatforms();
@@ -186,25 +202,70 @@ class GameScene extends Phaser.Scene {
     }
 
     createBackground() {
-        // Generate cyberpunk background
-        const backgroundTexture = CyberpunkBackgroundGenerator.createBackground(this);
+        // Randomly select one of the three background images
+        const backgroundKeys = ['background1', 'background2', 'background3'];
+        const selectedBackground = backgroundKeys[Math.floor(Math.random() * backgroundKeys.length)];
         
-        // Add the background with parallax effect (moves slower than camera)
-        this.backgroundImage = this.add.image(2050, 300, backgroundTexture);
-        this.backgroundImage.setScrollFactor(0.3); // Moves at 30% of camera speed
+        console.log('Selected background:', selectedBackground);
         
-        // Add dark overlay layer to make background darker (also with parallax)
-        this.darkOverlay = this.add.rectangle(2050, 300, 4100, 600, 0x000000, 0.4);
-        this.darkOverlay.setDepth(1); // Above background but below game elements
-        this.darkOverlay.setScrollFactor(0.3); // Moves at 30% of camera speed
+        // Create the background image
+        if (this.textures.exists(selectedBackground)) {
+            // Create a single background image that covers the entire world
+            const worldWidth = 4100;
+            const worldHeight = 600;
+            const imageWidth = this.textures.get(selectedBackground).source[0].width;
+            const imageHeight = this.textures.get(selectedBackground).source[0].height;
+            
+            // Calculate scale to cover the full world width (may stretch vertically)
+            // New images are 1728x576px, world is 4100x600px
+            const scaleX = worldWidth / imageWidth;  // 4100 / 1728 ≈ 2.37
+            const scaleY = worldHeight / imageHeight; // 600 / 576 ≈ 1.04
+            
+            // Use the larger scale to ensure full coverage of world width
+            const scale = Math.max(scaleX, scaleY);
+            
+            console.log('Image dimensions:', imageWidth, 'x', imageHeight);
+            console.log('Scale factors - X:', scaleX.toFixed(2), 'Y:', scaleY.toFixed(2), 'Using:', scale.toFixed(2));
+            
+            // Position the background to start from the left edge of the world
+            this.backgroundImage = this.add.image(imageWidth * scale / 2, worldHeight / 2, selectedBackground);
+            this.backgroundImage.setScrollFactor(0.3);
+            this.backgroundImage.setDepth(-10);
+            this.backgroundImage.setScale(scale);
+            
+            console.log('Single background created');
+            console.log('Image size:', imageWidth, 'x', imageHeight);
+            console.log('World size:', worldWidth, 'x', worldHeight);
+            console.log('Scale used:', scale);
+            console.log('Background positioned at:', this.backgroundImage.x, this.backgroundImage.y);
+            
+        } else {
+            console.log('Background texture not found, using fallback');
+            this.createFallbackBackground();
+        }
+        
+        // Test rectangles removed - background is working!
         
         // Add some additional atmospheric elements with different parallax speeds
         this.addAtmosphericElements();
     }
     
+    
+    createFallbackBackground() {
+        // Create a simple colored background as fallback
+        const graphics = this.add.graphics();
+        graphics.fillStyle(0x0a0a2e);
+        graphics.fillRect(0, 0, 4100, 600);
+        graphics.generateTexture('fallbackBackground', 4100, 600);
+        graphics.destroy();
+        
+        this.backgroundImage = this.add.image(2050, 300, 'fallbackBackground');
+        console.log('Created fallback background');
+    }
+    
     addAtmosphericElements() {
-        // Add floating particles with parallax effect
-        for (let i = 0; i < 65; i++) {
+        // Add floating particles with parallax effect - reduced count to see background
+        for (let i = 0; i < 10; i++) {
             const particle = this.add.circle(
                 Math.random() * 4100,
                 Math.random() * 600,
