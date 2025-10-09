@@ -1,0 +1,21 @@
+{
+  "name": "2d-platformer-game",
+  "version": "1.0.0",
+  "description": "A 2D side-scrolling platformer game built with Phaser.js",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "phaser",
+    "game",
+    "platformer",
+    "2d",
+    "javascript"
+  ],
+  "author": "Game Developer",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
