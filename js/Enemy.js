@@ -44,48 +44,6 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
         // Set depth to appear above dark overlay
         this.setDepth(20);
         
-        // Add robot-specific glow effects (visual only, no physics)
-        if (type === 'stationary') {
-            // Red glow for stationary robots
-            this.glowEffect = scene.add.circle(x, y, 12, 0xff0000, 0.4);
-            this.glowEffect.setDepth(21);
-            
-            // Outer glow ring
-            this.outerGlow = scene.add.circle(x, y, 16, 0xff4444, 0.2);
-            this.outerGlow.setDepth(22);
-        } else {
-            // Blue glow for moving robots
-            this.glowEffect = scene.add.circle(x, y, 12, 0x0088ff, 0.4);
-            this.glowEffect.setDepth(21);
-            
-            // Outer glow ring
-            this.outerGlow = scene.add.circle(x, y, 16, 0x4488ff, 0.2);
-            this.outerGlow.setDepth(22);
-        }
-        
-        // Animate glow effects
-        scene.tweens.add({
-            targets: this.glowEffect,
-            scaleX: 1.5,
-            scaleY: 1.5,
-            alpha: 0.2,
-            duration: 1000,
-            repeat: -1,
-            yoyo: true,
-            ease: 'Sine.easeInOut'
-        });
-        
-        scene.tweens.add({
-            targets: this.outerGlow,
-            scaleX: 1.3,
-            scaleY: 1.3,
-            alpha: 0.1,
-            duration: 1200,
-            repeat: -1,
-            yoyo: true,
-            ease: 'Sine.easeInOut'
-        });
-        
         // Movement properties for moving enemies
         this.moveDirection = 1; // 1 for right, -1 for left
         this.moveDistance = 100;

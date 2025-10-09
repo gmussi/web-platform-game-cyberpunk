@@ -6,7 +6,7 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 
 ### Character Selection Screen
 
-- Four unique characters with detailed pixel art sprites:
+- Four unique characters with detailed pixel art sprites (64x64):
   - **Cyber Warrior** (Red) - Armored fighter with energy sword
   - **Quantum Mage** (Purple) - Mystical caster with quantum staff
   - **Stealth Rogue** (Blue) - Agile assassin with stealth field
@@ -41,7 +41,7 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Moving Enemies**: Patrol left/right automatically
 - **Patrol Enemies**: Move within specific ranges
 - **Collision System**: 1-second cooldown between damage hits
-- **Robot Sprites**: Procedurally generated futuristic robot enemies with:
+- **Robot Sprites**: Procedurally generated futuristic robot enemies (64x64) with:
   - Glowing eyes and antenna lights
   - Circuit patterns and exhaust vents
   - Different designs for stationary vs moving types
@@ -172,6 +172,7 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Audio**: Web Audio API integration with background music and sound effects
 - **Performance**: Optimized for 60fps gameplay with efficient sprite generation
 - **Procedural Content**: All visual assets generated programmatically using Phaser Graphics (except portal sprites)
+- **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
 - **Animated Sprites**: Portal uses clean 12-frame sprite animation without additional procedural effects
 - **Memory Management**: Proper cleanup of generated textures and audio resources
 

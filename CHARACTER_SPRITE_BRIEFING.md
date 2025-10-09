@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-You are creating pixel art character sprites for a 2D side-scrolling cyberpunk platformer game built with Phaser.js. The game features 4 unique characters with distinct themes and abilities.
+You are creating pixel art sprites for a 2D side-scrolling cyberpunk platformer game built with Phaser.js. The game features 4 unique characters with distinct themes and abilities, plus various enemy types.
 
 ## Technical Specifications
 
