@@ -84,18 +84,70 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
         return new Platform(scene, x, y, 400, 20);
     }
 
+    // Helper method to check if a platform would collide with existing platforms
+    static checkPlatformCollision(x, y, width, height, existingPlatforms, minDistance = 15) {
+        for (const platform of existingPlatforms) {
+            // Calculate distance between platform centers
+            const distanceX = Math.abs(x - platform.x);
+            const distanceY = Math.abs(y - platform.y);
+            
+            // Calculate minimum required distance (half width of each platform + minDistance)
+            const minDistanceX = (width / 2) + (platform.width / 2) + minDistance;
+            const minDistanceY = (height / 2) + (platform.height / 2) + minDistance;
+            
+            // Check if platforms are too close
+            if (distanceX < minDistanceX && distanceY < minDistanceY) {
+                return true; // Collision detected
+            }
+        }
+        return false; // No collision
+    }
+
     // Method to create a series of platforms for level generation
-    static createPlatformSequence(scene, startX, startY, count, spacing = 150, heightVariation = 50) {
+    static createPlatformSequence(scene, startX, startY, count, spacing = 150, heightVariation = 50, existingPlatforms = []) {
         const platforms = [];
         
         for (let i = 0; i < count; i++) {
-            const x = startX + (i * spacing);
+            let x = startX + (i * spacing);
             // Ensure platforms are never above Y=100 to avoid UI overlap
-            const y = Math.max(100, startY + (Math.sin(i * 0.5) * heightVariation));
+            let y = Math.max(100, startY + (Math.sin(i * 0.5) * heightVariation));
             
             // Vary platform sizes
-            let platform;
+            let platformWidth, platformHeight;
             const sizeRoll = Math.random();
+            if (sizeRoll < 0.3) {
+                platformWidth = 100;
+                platformHeight = 20;
+            } else if (sizeRoll < 0.7) {
+                platformWidth = 200;
+                platformHeight = 20;
+            } else {
+                platformWidth = 300;
+                platformHeight = 20;
+            }
+            
+            // Check for collisions and adjust position if needed
+            let attempts = 0;
+            const maxAttempts = 20;
+            while (Platform.checkPlatformCollision(x, y, platformWidth, platformHeight, [...existingPlatforms, ...platforms]) && attempts < maxAttempts) {
+                // Try adjusting X position first
+                x += spacing * 0.3;
+                attempts++;
+                
+                // If X adjustment doesn't work, try Y adjustment
+                if (attempts > 5) {
+                    y += heightVariation * 0.5;
+                }
+                
+                // If still colliding, try a completely new position
+                if (attempts > 10) {
+                    x = startX + (i * spacing) + (Math.random() - 0.5) * spacing;
+                    y = Math.max(100, startY + (Math.sin(i * 0.5) * heightVariation) + (Math.random() - 0.5) * heightVariation);
+                }
+            }
+            
+            // Create platform with determined size
+            let platform;
             if (sizeRoll < 0.3) {
                 platform = Platform.createSmall(scene, x, y);
             } else if (sizeRoll < 0.7) {
@@ -136,13 +188,37 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Method to create floating platforms at different heights
-    static createFloatingPlatforms(scene, startX, baseY, count, spacing = 200) {
+    static createFloatingPlatforms(scene, startX, baseY, count, spacing = 200, existingPlatforms = []) {
         const platforms = [];
         
         for (let i = 0; i < count; i++) {
-            const x = startX + (i * spacing);
+            let x = startX + (i * spacing);
             // Ensure platforms are never above Y=100 to avoid UI overlap
-            const y = Math.max(100, baseY - (Math.random() * 200 + 100));
+            let y = Math.max(100, baseY - (Math.random() * 200 + 100));
+            
+            // Platform dimensions for collision checking
+            const platformWidth = 200;
+            const platformHeight = 20;
+            
+            // Check for collisions and adjust position if needed
+            let attempts = 0;
+            const maxAttempts = 20;
+            while (Platform.checkPlatformCollision(x, y, platformWidth, platformHeight, [...existingPlatforms, ...platforms]) && attempts < maxAttempts) {
+                // Try adjusting X position first
+                x += spacing * 0.3;
+                attempts++;
+                
+                // If X adjustment doesn't work, try Y adjustment
+                if (attempts > 5) {
+                    y += 50; // Move down a bit
+                }
+                
+                // If still colliding, try a completely new position
+                if (attempts > 10) {
+                    x = startX + (i * spacing) + (Math.random() - 0.5) * spacing;
+                    y = Math.max(100, baseY - (Math.random() * 200 + 100));
+                }
+            }
             
             const platform = Platform.createMedium(scene, x, y);
             platforms.push(platform);

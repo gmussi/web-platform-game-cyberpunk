@@ -3,6 +3,14 @@ class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
     }
 
+    preload() {
+        // Load portal animation frames
+        for (let i = 1; i <= 12; i++) {
+            const frameNumber = i.toString().padStart(2, '0');
+            this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_frame_${frameNumber}.png`);
+        }
+    }
+
     create() {
         // Set world bounds based on scroll direction
         this.setupWorldBounds();
@@ -67,19 +75,21 @@ class GameScene extends Phaser.Scene {
         // Generate cyberpunk background
         const backgroundTexture = CyberpunkBackgroundGenerator.createBackground(this);
         
-        // Add the background
+        // Add the background with parallax effect (moves slower than camera)
         this.backgroundImage = this.add.image(2050, 300, backgroundTexture);
+        this.backgroundImage.setScrollFactor(0.3); // Moves at 30% of camera speed
         
-        // Add dark overlay layer to make background darker
+        // Add dark overlay layer to make background darker (also with parallax)
         this.darkOverlay = this.add.rectangle(2050, 300, 4100, 600, 0x000000, 0.4);
         this.darkOverlay.setDepth(1); // Above background but below game elements
+        this.darkOverlay.setScrollFactor(0.3); // Moves at 30% of camera speed
         
-        // Add some additional atmospheric elements
+        // Add some additional atmospheric elements with different parallax speeds
         this.addAtmosphericElements();
     }
     
     addAtmosphericElements() {
-        // Add floating particles
+        // Add floating particles with parallax effect
         for (let i = 0; i < 65; i++) {
             const particle = this.add.circle(
                 Math.random() * 4100,
@@ -89,6 +99,7 @@ class GameScene extends Phaser.Scene {
                 0.5
             );
             particle.setDepth(2); // Above dark overlay but below game elements
+            particle.setScrollFactor(0.5); // Moves at 50% of camera speed (between background and foreground)
             
             // Animate particles
             this.tweens.add({
@@ -113,23 +124,38 @@ class GameScene extends Phaser.Scene {
         this.platforms.push(...groundPlatforms);
         
         // Floating platforms with better spacing and distribution
-        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 300, 500, 6, 400);
-        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 800, 450, 5, 450);
-        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 1400, 400, 6, 400);
-        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2000, 480, 5, 450);
+        // Pass existing platforms to ensure no collisions
+        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 300, 500, 6, 400, this.platforms);
+        this.platforms.push(...floatingPlatforms1);
         
-        this.platforms.push(...floatingPlatforms1, ...floatingPlatforms2, ...floatingPlatforms3, ...floatingPlatforms4);
+        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 800, 450, 5, 450, this.platforms);
+        this.platforms.push(...floatingPlatforms2);
+        
+        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 1400, 400, 6, 400, this.platforms);
+        this.platforms.push(...floatingPlatforms3);
+        
+        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2000, 480, 5, 450, this.platforms);
+        this.platforms.push(...floatingPlatforms4);
         
         // Create platform sequences with better spacing
-        const sequence1 = Platform.createPlatformSequence(this, 600, 450, 4, 300, 80);
-        const sequence2 = Platform.createPlatformSequence(this, 1600, 400, 4, 350, 100);
-        const sequence3 = Platform.createPlatformSequence(this, 2400, 420, 3, 400, 90);
+        // Pass existing platforms to ensure no collisions
+        const sequence1 = Platform.createPlatformSequence(this, 600, 450, 4, 300, 80, this.platforms);
+        this.platforms.push(...sequence1);
         
-        this.platforms.push(...sequence1, ...sequence2, ...sequence3);
+        const sequence2 = Platform.createPlatformSequence(this, 1600, 400, 4, 350, 100, this.platforms);
+        this.platforms.push(...sequence2);
+        
+        const sequence3 = Platform.createPlatformSequence(this, 2400, 420, 3, 400, 90, this.platforms);
+        this.platforms.push(...sequence3);
     }
 
     createPlayer() {
-        const startX = 100; // Always start at the left side
+        // Paladin starts near the portal, other characters start at the beginning
+        let startX = 100; // Default starting position
+        if (gameData.selectedCharacter === 'D') {
+            startX = 3800; // Paladin starts close to portal (portal is at x=4000)
+        }
+        
         this.player = new Player(this, startX, 500, gameData.selectedCharacter);
         
         console.log('Player created at:', startX, 500, 'Character:', gameData.selectedCharacter);
@@ -177,11 +203,35 @@ class GameScene extends Phaser.Scene {
         const portalX = 4000;
         const portalY = 500; // On the ground level
         
-        // Create invisible portal sprite for collision detection only
-        this.portalSprite = this.add.rectangle(portalX, portalY, 100, 100, 0x000000, 0);
+        // Create animated portal sprite
+        this.portalSprite = this.add.sprite(portalX, portalY, 'portal_frame_01');
         this.portalSprite.setDepth(25);
         
-        console.log('Portal sprite created at:', portalX, portalY);
+        // Create portal animation
+        this.anims.create({
+            key: 'portalAnimation',
+            frames: [
+                { key: 'portal_frame_01' },
+                { key: 'portal_frame_02' },
+                { key: 'portal_frame_03' },
+                { key: 'portal_frame_04' },
+                { key: 'portal_frame_05' },
+                { key: 'portal_frame_06' },
+                { key: 'portal_frame_07' },
+                { key: 'portal_frame_08' },
+                { key: 'portal_frame_09' },
+                { key: 'portal_frame_10' },
+                { key: 'portal_frame_11' },
+                { key: 'portal_frame_12' }
+            ],
+            frameRate: 12, // 12 fps for smooth animation
+            repeat: -1 // Loop infinitely
+        });
+        
+        // Start the animation
+        this.portalSprite.play('portalAnimation');
+        
+        console.log('Animated portal sprite created at:', portalX, portalY);
         console.log('Portal sprite:', this.portalSprite);
         
         // Add physics body for collision detection
@@ -196,123 +246,7 @@ class GameScene extends Phaser.Scene {
         console.log('Portal body enabled:', this.portalSprite.body.enable);
         console.log('Portal body size:', this.portalSprite.body.width, this.portalSprite.body.height);
         
-        // Add portal effects
-        this.addPortalEffects();
-    }
-
-    addPortalEffects() {
-        // No pulsing animation needed since there are no circles
-        
-        // Add energy sparks around the portal (reduced)
-        for (let i = 0; i < 8; i++) {
-            const spark = this.add.circle(
-                this.portalSprite.x + (Math.cos(i * Math.PI / 4) * 80),
-                this.portalSprite.y + (Math.sin(i * Math.PI / 4) * 80),
-                1 + Math.random() * 1,
-                0x88ccff,
-                0.8
-            );
-            spark.setDepth(26);
-            
-            // Animate sparks with different speeds
-            this.tweens.add({
-                targets: spark,
-                x: this.portalSprite.x + (Math.cos(i * Math.PI / 4 + Math.PI * 2) * 80),
-                y: this.portalSprite.y + (Math.sin(i * Math.PI / 4 + Math.PI * 2) * 80),
-                duration: 3000 + Math.random() * 1000,
-                repeat: -1,
-                ease: 'Linear'
-            });
-            
-            // Add sparkle effect
-            this.tweens.add({
-                targets: spark,
-                alpha: 0.3,
-                scaleX: 0.5,
-                scaleY: 0.5,
-                duration: 800 + Math.random() * 400,
-                repeat: -1,
-                yoyo: true,
-                ease: 'Sine.easeInOut'
-            });
-        }
-        
-        // Add horizontal scan lines
-        this.addScanLines();
-        
-        // Add energy field around portal (reduced)
-        this.addEnergyField();
-    }
-    
-    createRotatingRing(x, y, radius, color, alpha, duration, depth) {
-        const ring = this.add.graphics();
-        ring.lineStyle(2, color, alpha);
-        ring.strokeCircle(0, 0, radius);
-        ring.generateTexture(`portalRing${radius}`, radius * 2 + 20, radius * 2 + 20);
-        ring.destroy();
-        
-        const ringSprite = this.add.image(x, y, `portalRing${radius}`);
-        ringSprite.setDepth(depth);
-        
-        this.tweens.add({
-            targets: ringSprite,
-            angle: 360,
-            duration: duration,
-            repeat: -1,
-            ease: 'Linear'
-        });
-    }
-    
-    addScanLines() {
-        // Create horizontal scan lines effect only
-        for (let i = 0; i < 8; i++) {
-            const scanLine = this.add.rectangle(
-                this.portalSprite.x,
-                this.portalSprite.y - 40 + (i * 10),
-                120,
-                3,
-                0x88ccff,
-                0.7
-            );
-            scanLine.setDepth(27);
-            
-            // Animate scan lines with different patterns
-            this.tweens.add({
-                targets: scanLine,
-                alpha: 0.2,
-                duration: 1200,
-                repeat: -1,
-                yoyo: true,
-                ease: 'Sine.easeInOut',
-                delay: i * 150
-            });
-        }
-    }
-    
-    addEnergyField() {
-        // Create reduced energy field particles
-        for (let i = 0; i < 10; i++) {
-            const energy = this.add.circle(
-                this.portalSprite.x + (Math.random() - 0.5) * 100,
-                this.portalSprite.y + (Math.random() - 0.5) * 100,
-                1 + Math.random() * 0.5,
-                0x44aaff,
-                0.6
-            );
-            energy.setDepth(28);
-            
-            // Animate energy particles
-            this.tweens.add({
-                targets: energy,
-                x: this.portalSprite.x + (Math.random() - 0.5) * 100,
-                y: this.portalSprite.y + (Math.random() - 0.5) * 100,
-                alpha: 0.1,
-                duration: 2500 + Math.random() * 1000,
-                repeat: -1,
-                yoyo: true,
-                ease: 'Sine.easeInOut'
-            });
-        }
+        // Portal is now just the animated sprite - no additional effects needed
     }
 
     setupCollisions() {
@@ -324,20 +258,13 @@ class GameScene extends Phaser.Scene {
             // Collision handling is done in Enemy class
         });
         
-        // Player vs Portal
+        // Player vs Portal - only the animated portal sprite
         console.log('Setting up portal collision detection...');
         console.log('Player:', this.player);
         console.log('Portal sprite:', this.portalSprite);
         
         this.physics.add.overlap(this.player, this.portalSprite, (player, portal) => {
             console.log('Portal collision detected! Starting victory scene...');
-            this.stopBackgroundMusic();
-            this.scene.start('VictoryScene');
-        });
-        
-        // Try alternative collision detection
-        this.physics.add.collider(this.player, this.portalSprite, (player, portal) => {
-            console.log('Portal collision detected via collider! Starting victory scene...');
             this.stopBackgroundMusic();
             this.scene.start('VictoryScene');
         });
@@ -471,7 +398,7 @@ class GameScene extends Phaser.Scene {
             this.updateHealthBar(this.player.health);
         }
         
-        // Manual portal collision check (backup)
+        // Manual portal collision check (backup) - only checks animated portal sprite
         if (this.player && this.portalSprite) {
             const distance = Phaser.Math.Distance.Between(
                 this.player.x, this.player.y,

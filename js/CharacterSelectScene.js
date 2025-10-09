@@ -8,10 +8,10 @@ class CharacterSelectScene extends Phaser.Scene {
         this.heroSprites = HeroSpriteGenerator.generateHeroSprites(this);
         
         // Background
-        this.add.rectangle(400, 300, 800, 600, 0x0a0a2e); // Dark cyberpunk background
+        this.add.rectangle(600, 400, 1200, 800, 0x0a0a2e); // Dark cyberpunk background
         
         // Title
-        this.add.text(400, 100, 'Choose Your Cyber Hero', {
+        this.add.text(600, 150, 'Choose Your Cyber Hero', {
             fontSize: '32px',
             fill: '#00ffff',
             fontStyle: 'bold'
@@ -23,10 +23,10 @@ class CharacterSelectScene extends Phaser.Scene {
         // Character selection area
         const characterKeys = ['A', 'B', 'C', 'D'];
         const characterSize = 120;
-        const spacing = 160; // Reduced spacing
+        const spacing = 200; // Increased spacing for larger screen
         const totalWidth = (characterKeys.length - 1) * spacing;
-        const startX = (800 - totalWidth) / 2; // Center the characters
-        const y = 300;
+        const startX = (1200 - totalWidth) / 2; // Center the characters
+        const y = 400;
 
         // Create character options
         this.characters = [];
@@ -73,7 +73,7 @@ class CharacterSelectScene extends Phaser.Scene {
         });
 
         // Instructions
-        this.add.text(400, 500, 'Click on a hero to begin your cyberpunk adventure!', {
+        this.add.text(600, 650, 'Click on a hero to begin your cyberpunk adventure!', {
             fontSize: '16px',
             fill: '#00ffff'
         }).setOrigin(0.5);
@@ -83,8 +83,8 @@ class CharacterSelectScene extends Phaser.Scene {
         // Add some floating particles
         for (let i = 0; i < 20; i++) {
             const particle = this.add.circle(
+                Math.random() * 1200,
                 Math.random() * 800,
-                Math.random() * 600,
                 1 + Math.random() * 2,
                 0x00ffff,
                 0.5
@@ -103,8 +103,8 @@ class CharacterSelectScene extends Phaser.Scene {
         // Add some neon lines
         for (let i = 0; i < 5; i++) {
             const line = this.add.rectangle(
+                Math.random() * 1200,
                 Math.random() * 800,
-                Math.random() * 600,
                 100 + Math.random() * 50,
                 2,
                 0xff00ff,

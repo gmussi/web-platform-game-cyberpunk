@@ -1,8 +1,8 @@
 // Main game configuration
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
     parent: 'game-container',
     backgroundColor: '#0a0a2e', // Dark cyberpunk blue
     physics: {
