@@ -1,22 +1,18 @@
 class Enemy extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, type = 'stationary') {
-        // Generate robot sprites if not already done
-        if (!scene.textures.exists('stationaryRobot')) {
-            RobotSpriteGenerator.generateRobotSprites(scene);
-        }
-        
-        // Get the appropriate robot sprite
-        const robotSprites = {
-            'stationary': 'stationaryRobot',
-            'moving': 'movingRobot'
+    constructor(scene, x, y, type = 'stationary', enemyType = 'enemy1') {
+        // Use actual enemy sprites instead of procedural generation
+        const enemySprites = {
+            'enemy1': 'enemy1_south',
+            'enemy2': 'enemy2_south'
         };
         
-        const textureKey = robotSprites[type];
+        const textureKey = enemySprites[enemyType];
         
         super(scene, x, y, textureKey);
         
         this.scene = scene;
         this.type = type; // 'stationary' or 'moving'
+        this.enemyType = enemyType; // 'enemy1' or 'enemy2'
         
         // Add to scene and enable physics
         scene.add.existing(this);
@@ -54,7 +50,19 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.lastCollisionTime = 0;
         this.collisionCooldown = 1000; // 1 second cooldown
         
+        // Set initial facing direction (south for stationary enemies)
+        this.facingDirection = 'south';
+        this.updateSprite();
+        
         this.setupBehavior();
+    }
+
+    updateSprite() {
+        // Update sprite based on facing direction
+        const spriteKey = `${this.enemyType}_${this.facingDirection}`;
+        if (this.scene.textures.exists(spriteKey)) {
+            this.setTexture(spriteKey);
+        }
     }
 
     setupBehavior() {
@@ -80,15 +88,25 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (distanceFromStart >= this.patrolRange) {
             this.moveDirection *= -1;
             this.setVelocityX(this.speed * this.moveDirection);
-            this.setFlipX(this.moveDirection < 0);
+            this.updateFacingDirection();
         }
         
         // Check for walls or platforms
         if (this.body.blocked.left || this.body.blocked.right) {
             this.moveDirection *= -1;
             this.setVelocityX(this.speed * this.moveDirection);
-            this.setFlipX(this.moveDirection < 0);
+            this.updateFacingDirection();
         }
+    }
+    
+    updateFacingDirection() {
+        // Update facing direction based on movement
+        if (this.moveDirection > 0) {
+            this.facingDirection = 'east';
+        } else {
+            this.facingDirection = 'west';
+        }
+        this.updateSprite();
     }
 
     checkPlayerCollision() {
@@ -126,16 +144,16 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Static method to create different types of enemies
-    static createStationaryEnemy(scene, x, y) {
-        return new Enemy(scene, x, y, 'stationary');
+    static createStationaryEnemy(scene, x, y, enemyType = 'enemy1') {
+        return new Enemy(scene, x, y, 'stationary', enemyType);
     }
 
-    static createMovingEnemy(scene, x, y) {
-        return new Enemy(scene, x, y, 'moving');
+    static createMovingEnemy(scene, x, y, enemyType = 'enemy1') {
+        return new Enemy(scene, x, y, 'moving', enemyType);
     }
 
-    static createPatrolEnemy(scene, x, y, patrolRange = 150) {
-        const enemy = new Enemy(scene, x, y, 'moving');
+    static createPatrolEnemy(scene, x, y, patrolRange = 150, enemyType = 'enemy1') {
+        const enemy = new Enemy(scene, x, y, 'moving', enemyType);
         enemy.patrolRange = patrolRange;
         return enemy;
     }

@@ -3,9 +3,29 @@ class CharacterSelectScene extends Phaser.Scene {
         super({ key: 'CharacterSelectScene' });
     }
 
+    preload() {
+        // Load character sprites for selection screen
+        this.loadCharacterSprites();
+    }
+    
+    loadCharacterSprites() {
+        const characters = ['char1', 'char2', 'char3', 'char4'];
+        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
+        
+        characters.forEach((char, index) => {
+            const charName = characterNames[index];
+            
+            // Load breathing-idle animation frames for character selection
+            for (let i = 0; i < 4; i++) {
+                const frameNumber = i.toString().padStart(3, '0');
+                this.load.image(`${charName}_breathing_idle_${frameNumber}`, `img/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`);
+            }
+        });
+    }
+
     create() {
-        // Generate hero sprites
-        this.heroSprites = HeroSpriteGenerator.generateHeroSprites(this);
+        // Create character animations for selection screen
+        this.createCharacterAnimations();
         
         // Background
         this.add.rectangle(600, 400, 1200, 800, 0x0a0a2e); // Dark cyberpunk background
@@ -35,11 +55,15 @@ class CharacterSelectScene extends Phaser.Scene {
             const x = startX + (index * spacing);
             const character = characters[key];
             
-            // Character sprite (now using generated pixel art)
-            const sprite = this.add.image(x, y, this.heroSprites[key]);
+            // Character sprite (using breathing-idle animation)
+            const charName = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'][index];
+            const sprite = this.add.sprite(x, y, `${charName}_breathing_idle_000`);
             sprite.setDisplaySize(characterSize, characterSize);
             sprite.setScale(1.2); // Start at larger size
             sprite.setInteractive();
+            
+            // Play breathing-idle animation
+            sprite.play(`${charName}_breathing_idle`);
             
             // Character name
             this.add.text(x, y + 80, character.name, {
@@ -77,6 +101,25 @@ class CharacterSelectScene extends Phaser.Scene {
             fontSize: '16px',
             fill: '#00ffff'
         }).setOrigin(0.5);
+    }
+    
+    createCharacterAnimations() {
+        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
+        
+        characterNames.forEach(charName => {
+            // Create breathing-idle animation for selection screen
+            this.anims.create({
+                key: `${charName}_breathing_idle`,
+                frames: [
+                    { key: `${charName}_breathing_idle_000` },
+                    { key: `${charName}_breathing_idle_001` },
+                    { key: `${charName}_breathing_idle_002` },
+                    { key: `${charName}_breathing_idle_003` }
+                ],
+                frameRate: 8, // Slow breathing animation
+                repeat: -1 // Loop infinitely
+            });
+        });
     }
     
     addCyberpunkElements() {

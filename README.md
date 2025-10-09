@@ -12,7 +12,12 @@ A complete 2D platformer game built with Phaser.js featuring character selection
   - **Stealth Rogue** (Blue) - Agile assassin with stealth field
   - **Plasma Paladin** (Gold) - Holy warrior with energy shield (starts near portal)
 - Interactive character selection with hover effects
-- Procedurally generated character sprites using Phaser graphics
+- **Animated Character Sprites**: Each character includes multiple animation states:
+  - **Rotations**: 4-directional sprites (north, south, east, west)
+  - **Walking Animations**: 6-frame walking cycles for east/west directions
+  - **Breathing-Idle**: 4-frame idle breathing animation
+  - **Jumping**: 9-frame jumping animation sequences
+- High-quality pixel art sprites with cyberpunk aesthetic
 
 ### Core Gameplay
 
@@ -65,7 +70,27 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 ├── index.html                    # Main HTML file
 ├── background_music.mp3          # Background music audio file
 ├── wilhelmscream.mp3            # Wilhelm scream sound effect
+├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
 ├── img/
+│   ├── char1/                   # Cyber Warrior character sprites
+│   │   ├── metadata.json       # Character metadata and animation definitions
+│   │   ├── rotations/          # 4-directional character sprites
+│   │   └── animations/         # Character animation sequences
+│   │       ├── breathing-idle/ # Idle breathing animation
+│   │       ├── jumping-1/      # Jumping animation
+│   │       └── walk/           # Walking animation
+│   ├── char2/                   # Quantum Mage character sprites
+│   │   ├── metadata.json       # Character metadata and animation definitions
+│   │   ├── rotations/          # 4-directional character sprites
+│   │   └── animations/         # Character animation sequences
+│   ├── char3/                   # Stealth Rogue character sprites
+│   │   ├── metadata.json       # Character metadata and animation definitions
+│   │   ├── rotations/          # 4-directional character sprites
+│   │   └── animations/         # Character animation sequences
+│   ├── char4/                   # Plasma Paladin character sprites
+│   │   ├── metadata.json       # Character metadata and animation definitions
+│   │   ├── rotations/          # 4-directional character sprites
+│   │   └── animations/         # Character animation sequences
 │   └── portal/                  # Portal animation sprites
 │       ├── portal_frame_01.png  # Portal animation frame 1
 │       ├── portal_frame_02.png  # Portal animation frame 2
@@ -88,7 +113,7 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 │   ├── Player.js                # Player class with movement and physics
 │   ├── Enemy.js                 # Enemy class with different behaviors
 │   ├── Platform.js              # Platform class for level generation
-│   ├── HeroSpriteGenerator.js   # Procedural hero sprite generation
+│   ├── HeroSpriteGenerator.js   # Procedural hero sprite generation (fallback)
 │   ├── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
 │   └── CyberpunkBackgroundGenerator.js # Procedural background generation
 ```
@@ -139,13 +164,48 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Audio System**: Integrated sound management with volume control
 - **Visual Effects**: Particle systems, glow effects, and atmospheric elements
 
+## Character Sprite System
+
+The game features a comprehensive character sprite system with high-quality pixel art assets:
+
+### Sprite Structure
+
+Each character (`char1` through `char4`) includes:
+
+- **`metadata.json`**: Defines character properties, animation sequences, and file paths
+- **`rotations/`**: Static sprites for 4 directions (north, south, east, west)
+- **`animations/`**: Dynamic animation sequences:
+  - **`walk/`**: 6-frame walking cycles for east/west directions
+  - **`breathing-idle/`**: 4-frame idle breathing animation (south direction)
+  - **`jumping-1/`**: 9-frame jumping animation for east/west directions
+
+### Animation Specifications
+
+- **Sprite Size**: 64x64 pixels for detailed character representation
+- **Format**: PNG with transparent backgrounds
+- **Style**: Clean pixel art with cyberpunk aesthetic
+- **Frame Rates**: Optimized for smooth 60fps gameplay
+- **Color Themes**: Each character has distinct color schemes matching their cyberpunk theme
+
+### Integration Status
+
+- ✅ **Character Sprites**: Complete pixel art assets for all 4 characters
+- ✅ **Animation Sequences**: All walking, idle, and jumping animations ready
+- ✅ **Metadata System**: Comprehensive animation definitions in JSON format
+- 🔄 **Animation Integration**: Sprites are loaded but animation system needs implementation
+- ✅ **Fallback System**: Procedural sprite generation available as backup
+
 ## Customization
 
 ### Adding New Characters
 
 1. Add character data to `characters` object in `main.js`
-2. Create new sprite generation method in `HeroSpriteGenerator.js`
+2. Create character sprite assets in `img/charX/` directory with:
+   - `metadata.json` file defining animations and rotations
+   - `rotations/` folder with 4-directional sprites (north, south, east, west)
+   - `animations/` folder with animation sequences (walk, breathing-idle, jumping-1)
 3. Update character selection UI in `CharacterSelectScene.js`
+4. Add fallback sprite generation method in `HeroSpriteGenerator.js` if needed
 
 ### Adding New Enemy Types
 
@@ -171,9 +231,10 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Window Size**: Larger 1200x800 display for better gameplay experience
 - **Audio**: Web Audio API integration with background music and sound effects
 - **Performance**: Optimized for 60fps gameplay with efficient sprite generation
-- **Procedural Content**: All visual assets generated programmatically using Phaser Graphics (except portal sprites)
+- **Character Sprites**: High-quality pixel art character sprites with multiple animation states
+- **Procedural Content**: Backgrounds and enemy sprites generated programmatically using Phaser Graphics
 - **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
-- **Animated Sprites**: Portal uses clean 12-frame sprite animation without additional procedural effects
+- **Animated Sprites**: Portal uses clean 12-frame sprite animation, characters have walking/idle/jump animations
 - **Memory Management**: Proper cleanup of generated textures and audio resources
 
 ## Browser Compatibility
@@ -184,7 +245,7 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 
 ## Future Enhancements
 
-- Character sprite animations and idle/movement states
+- Character sprite animation integration (sprites are ready, need to implement animation system)
 - Additional sound effects for different actions
 - Power-ups and collectibles
 - Multiple levels with different themes
@@ -194,3 +255,4 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - Multiplayer support
 - More complex enemy AI behaviors
 - Weather effects and dynamic backgrounds
+- Character-specific abilities and special moves

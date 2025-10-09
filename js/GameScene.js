@@ -9,11 +9,125 @@ class GameScene extends Phaser.Scene {
             const frameNumber = i.toString().padStart(2, '0');
             this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_frame_${frameNumber}.png`);
         }
+        
+        // Load character sprites and animations
+        this.loadCharacterSprites();
+        
+        // Load enemy sprites
+        this.loadEnemySprites();
     }
-
+    
+    loadCharacterSprites() {
+        const characters = ['char1', 'char2', 'char3', 'char4'];
+        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
+        
+        characters.forEach((char, index) => {
+            const charName = characterNames[index];
+            
+            // Load rotation sprites
+            this.load.image(`${charName}_south`, `img/${char}/rotations/south.png`);
+            this.load.image(`${charName}_west`, `img/${char}/rotations/west.png`);
+            this.load.image(`${charName}_east`, `img/${char}/rotations/east.png`);
+            this.load.image(`${charName}_north`, `img/${char}/rotations/north.png`);
+            
+            // Load breathing-idle animation frames
+            for (let i = 0; i < 4; i++) {
+                const frameNumber = i.toString().padStart(3, '0');
+                this.load.image(`${charName}_breathing_idle_${frameNumber}`, `img/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`);
+            }
+            
+            // Load walk animation frames (east and west)
+            ['east', 'west'].forEach(direction => {
+                for (let i = 0; i < 6; i++) {
+                    const frameNumber = i.toString().padStart(3, '0');
+                    this.load.image(`${charName}_walk_${direction}_${frameNumber}`, `img/${char}/animations/walk/${direction}/frame_${frameNumber}.png`);
+                }
+            });
+            
+            // Load jumping animation frames (east and west)
+            ['east', 'west'].forEach(direction => {
+                for (let i = 0; i < 9; i++) {
+                    const frameNumber = i.toString().padStart(3, '0');
+                    this.load.image(`${charName}_jumping_${direction}_${frameNumber}`, `img/${char}/animations/jumping-1/${direction}/frame_${frameNumber}.png`);
+                }
+            });
+        });
+    }
+    
+    loadEnemySprites() {
+        const enemies = ['enemy1', 'enemy2'];
+        
+        enemies.forEach(enemy => {
+            // Load rotation sprites for each enemy
+            this.load.image(`${enemy}_south`, `img/${enemy}/rotations/south.png`);
+            this.load.image(`${enemy}_west`, `img/${enemy}/rotations/west.png`);
+            this.load.image(`${enemy}_east`, `img/${enemy}/rotations/east.png`);
+            this.load.image(`${enemy}_north`, `img/${enemy}/rotations/north.png`);
+        });
+    }
+    
+    createCharacterAnimations() {
+        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
+        
+        characterNames.forEach(charName => {
+            // Create breathing-idle animation
+            this.anims.create({
+                key: `${charName}_breathing_idle`,
+                frames: [
+                    { key: `${charName}_breathing_idle_000` },
+                    { key: `${charName}_breathing_idle_001` },
+                    { key: `${charName}_breathing_idle_002` },
+                    { key: `${charName}_breathing_idle_003` }
+                ],
+                frameRate: 8, // Slow breathing animation
+                repeat: -1 // Loop infinitely
+            });
+            
+            // Create walk animations for east and west
+            ['east', 'west'].forEach(direction => {
+                this.anims.create({
+                    key: `${charName}_walk_${direction}`,
+                    frames: [
+                        { key: `${charName}_walk_${direction}_000` },
+                        { key: `${charName}_walk_${direction}_001` },
+                        { key: `${charName}_walk_${direction}_002` },
+                        { key: `${charName}_walk_${direction}_003` },
+                        { key: `${charName}_walk_${direction}_004` },
+                        { key: `${charName}_walk_${direction}_005` }
+                    ],
+                    frameRate: 12, // Smooth walking animation
+                    repeat: -1 // Loop infinitely
+                });
+            });
+            
+            // Create jumping animations for east and west
+            ['east', 'west'].forEach(direction => {
+                this.anims.create({
+                    key: `${charName}_jumping_${direction}`,
+                    frames: [
+                        { key: `${charName}_jumping_${direction}_000` },
+                        { key: `${charName}_jumping_${direction}_001` },
+                        { key: `${charName}_jumping_${direction}_002` },
+                        { key: `${charName}_jumping_${direction}_003` },
+                        { key: `${charName}_jumping_${direction}_004` },
+                        { key: `${charName}_jumping_${direction}_005` },
+                        { key: `${charName}_jumping_${direction}_006` },
+                        { key: `${charName}_jumping_${direction}_007` },
+                        { key: `${charName}_jumping_${direction}_008` }
+                    ],
+                    frameRate: 15, // Quick jumping animation
+                    repeat: 0 // Play once
+                });
+            });
+        });
+    }
+    
     create() {
         // Set world bounds based on scroll direction
         this.setupWorldBounds();
+        
+        // Create character animations
+        this.createCharacterAnimations();
         
         // Create background layers
         this.createBackground();
@@ -171,25 +285,25 @@ class GameScene extends Phaser.Scene {
         
         // Stationary enemies (blocking paths) - position them on ground platforms
         const stationaryEnemies = [
-            Enemy.createStationaryEnemy(this, 400, 520), // On ground
-            Enemy.createStationaryEnemy(this, 800, 520),  // On ground
-            Enemy.createStationaryEnemy(this, 1200, 520), // On ground
-            Enemy.createStationaryEnemy(this, 1600, 520)  // On ground
+            Enemy.createStationaryEnemy(this, 400, 520, 'enemy1'), // On ground
+            Enemy.createStationaryEnemy(this, 800, 520, 'enemy2'),  // On ground
+            Enemy.createStationaryEnemy(this, 1200, 520, 'enemy1'), // On ground
+            Enemy.createStationaryEnemy(this, 1600, 520, 'enemy2')  // On ground
         ];
         
         // Moving enemies (patrolling) - position them on floating platforms
         const movingEnemies = [
-            Enemy.createMovingEnemy(this, 300, 480),  // On floating platform
-            Enemy.createMovingEnemy(this, 700, 330),   // On floating platform
-            Enemy.createMovingEnemy(this, 1100, 280),  // On floating platform
-            Enemy.createMovingEnemy(this, 1500, 230)   // On floating platform
+            Enemy.createMovingEnemy(this, 300, 480, 'enemy1'),  // On floating platform
+            Enemy.createMovingEnemy(this, 700, 330, 'enemy2'),   // On floating platform
+            Enemy.createMovingEnemy(this, 1100, 280, 'enemy1'),  // On floating platform
+            Enemy.createMovingEnemy(this, 1500, 230, 'enemy2')   // On floating platform
         ];
         
         // Patrol enemies with different ranges - position them on platforms
         const patrolEnemies = [
-            Enemy.createPatrolEnemy(this, 600, 430),   // On platform
-            Enemy.createPatrolEnemy(this, 1000, 380),  // On platform
-            Enemy.createPatrolEnemy(this, 1400, 330)   // On platform
+            Enemy.createPatrolEnemy(this, 600, 430, 150, 'enemy1'),   // On platform
+            Enemy.createPatrolEnemy(this, 1000, 380, 150, 'enemy2'),  // On platform
+            Enemy.createPatrolEnemy(this, 1400, 330, 150, 'enemy1')   // On platform
         ];
         
         this.enemies.push(...stationaryEnemies, ...movingEnemies, ...patrolEnemies);

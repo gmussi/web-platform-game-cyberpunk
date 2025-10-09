@@ -1,36 +1,22 @@
 class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, characterKey) {
-        // Generate hero sprites if not already done
-        if (!scene.textures.exists('cyberWarrior')) {
-            HeroSpriteGenerator.generateHeroSprites(scene);
-        }
-        
-        // Get the appropriate hero sprite
-        const heroSprites = {
+        // Get the appropriate character name
+        const characterNames = {
             'A': 'cyberWarrior',
             'B': 'quantumMage', 
             'C': 'stealthRogue',
             'D': 'plasmaPaladin'
         };
         
-        const textureKey = heroSprites[characterKey];
+        const charName = characterNames[characterKey];
         
-        // Ensure texture exists before creating sprite
-        if (!scene.textures.exists(textureKey)) {
-            console.error(`Texture ${textureKey} not found!`);
-            // Create a fallback texture
-            const graphics = scene.add.graphics();
-            graphics.fillStyle(0xff0000);
-            graphics.fillRect(0, 0, 32, 32);
-            graphics.generateTexture(textureKey, 32, 32);
-            graphics.destroy();
-        }
-        
-        super(scene, x, y, textureKey);
+        // Start with the breathing-idle animation first frame
+        super(scene, x, y, `${charName}_breathing_idle_000`);
         
         this.scene = scene;
         this.characterKey = characterKey;
         this.characterData = characters[characterKey];
+        this.charName = charName;
         
         // Add to scene and enable physics
         scene.add.existing(this);
@@ -78,9 +64,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         // Animation states
         this.isMoving = false;
         this.facingRight = true; // Always face right
+        this.currentAnimation = 'breathing_idle';
+        this.isJumping = false;
         
         // Set initial facing direction (always right)
         this.setFlipX(false);
+        
+        // Start with breathing-idle animation
+        this.play(`${charName}_breathing_idle`);
     }
 
     update() {
@@ -119,16 +110,17 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         // Check if player can move right (not at right edge)
         const canMoveRight = this.x + playerHalfWidth < screenRight;
         
+        // Reset movement state
+        this.isMoving = false;
+        
         if (this.cursors.left.isDown && canMoveLeft) {
             this.setVelocityX(-this.speed);
             this.isMoving = true;
             this.facingRight = false;
-            this.setFlipX(true);
         } else if (this.cursors.right.isDown && canMoveRight) {
             this.setVelocityX(this.speed);
             this.isMoving = true;
             this.facingRight = true;
-            this.setFlipX(false);
         } else {
             this.setVelocityX(0);
             this.isMoving = false;
@@ -155,18 +147,38 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     updateAnimation() {
-        // Simple visual feedback for movement
-        if (this.isMoving && this.isGrounded) {
-            // Could add walking animation here
-            this.setTint(this.characterData.color);
-        } else if (!this.isGrounded) {
-            // Jumping - slightly different tint
-            this.setTint(Phaser.Display.Color.GetColor(
-                this.characterData.color >> 16,
-                (this.characterData.color >> 8) & 0xFF,
-                this.characterData.color & 0xFF
-            ));
+        // Determine current state and play appropriate animation
+        if (!this.isGrounded) {
+            // Jumping animation - check if direction changed
+            const direction = this.facingRight ? 'east' : 'west';
+            const animationKey = `${this.charName}_jumping_${direction}`;
+            
+            if (this.currentAnimation !== 'jumping' || this.anims.currentAnim.key !== animationKey) {
+                this.play(animationKey);
+                this.currentAnimation = 'jumping';
+                this.isJumping = true;
+            }
+        } else if (this.isMoving) {
+            // Walking animation - check if direction changed
+            const direction = this.facingRight ? 'east' : 'west';
+            const animationKey = `${this.charName}_walk_${direction}`;
+            
+            if (this.currentAnimation !== 'walking' || this.anims.currentAnim.key !== animationKey) {
+                this.play(animationKey);
+                this.currentAnimation = 'walking';
+                this.isJumping = false;
+            }
+        } else {
+            // Idle breathing animation
+            if (this.currentAnimation !== 'breathing_idle') {
+                this.play(`${this.charName}_breathing_idle`);
+                this.currentAnimation = 'breathing_idle';
+                this.isJumping = false;
+            }
         }
+        
+        // Don't flip sprites since we have separate east/west animations
+        // The west sprites should already be facing the correct direction
     }
 
     takeDamage(amount) {
