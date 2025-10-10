@@ -198,6 +198,9 @@ class GameScene extends Phaser.Scene {
         // Create player immediately (will be repositioned when map loads)
         this.createPlayer();
         
+        // Initialize enemies array to prevent race condition
+        this.enemies = [];
+        
         // Set up camera
         this.setupCamera();
         
@@ -880,11 +883,13 @@ class GameScene extends Phaser.Scene {
         }
         
         // Update enemies
-        this.enemies.forEach(enemy => {
-            if (enemy && enemy.active) {
-                enemy.update();
-            }
-        });
+        if (this.enemies && Array.isArray(this.enemies)) {
+            this.enemies.forEach(enemy => {
+                if (enemy && enemy.active) {
+                    enemy.update();
+                }
+            });
+        }
         
         // Debug: Track player position every 60 frames (1 second) - DISABLED
         // if (this.player && this.frameCount % 60 === 0) {
@@ -894,12 +899,14 @@ class GameScene extends Phaser.Scene {
         // }
         this.frameCount++;
         
-        this.enemies.forEach(enemy => {
-            if (enemy && enemy.body && enemy.body.velocity.y !== 0) {
-                enemy.body.setVelocityY(0);
-                enemy.body.setAllowGravity(false);
-            }
-        });
+        if (this.enemies && Array.isArray(this.enemies)) {
+            this.enemies.forEach(enemy => {
+                if (enemy && enemy.body && enemy.body.velocity.y !== 0) {
+                    enemy.body.setVelocityY(0);
+                    enemy.body.setAllowGravity(false);
+                }
+            });
+        }
         
         // Update health bar
         if (this.player) {
