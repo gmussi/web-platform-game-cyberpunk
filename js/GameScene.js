@@ -276,12 +276,20 @@ class GameScene extends Phaser.Scene {
                 if (this.mapData.tiles[y] && Array.isArray(this.mapData.tiles[y])) {
                     console.log(`Row ${y} length: ${this.mapData.tiles[y].length}`);
                     for (let x = 0; x < Math.min(this.mapData.tiles[y].length, this.tilemapSystem.mapWidth); x++) {
-                        // Use setTile to trigger visual updates (same as MapEditorScene)
-                        this.tilemapSystem.setTile(x, y, this.mapData.tiles[y][x]);
+                        const tileData = this.mapData.tiles[y][x];
+                        
+                        // Handle both old format (number) and new format (object)
+                        if (typeof tileData === 'number') {
+                            // Old format: just tile type
+                            this.tilemapSystem.setTile(x, y, tileData);
+                        } else if (tileData && typeof tileData === 'object') {
+                            // New format: object with type and spriteIndex
+                            this.tilemapSystem.setTile(x, y, tileData.type, tileData.spriteIndex);
+                        }
                         
                         // Debug: Log specific tile (120, 13)
                         if (x === 120 && y === 13) {
-                            console.log(`Loading tile at (120, 13): mapData=${this.mapData.tiles[y][x]}, tilemapSystem=${this.tilemapSystem.getTile(x, y)}`);
+                            console.log(`Loading tile at (120, 13): mapData=${JSON.stringify(tileData)}, tilemapSystem=${this.tilemapSystem.getTile(x, y)}`);
                         }
                     }
                 }

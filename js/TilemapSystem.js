@@ -76,6 +76,16 @@ class TilemapSystem {
         return TilemapSystem.TILE_TYPES.EMPTY;
     }
     
+    // Get tile sprite index at coordinates
+    getTileSpriteIndex(x, y) {
+        if (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight) {
+            if (this.tileSpriteIndices && this.tileSpriteIndices[y] && this.tileSpriteIndices[y][x] !== undefined) {
+                return this.tileSpriteIndices[y][x];
+            }
+        }
+        return null;
+    }
+    
     // Convert world coordinates to tile coordinates
     worldToTile(worldX, worldY) {
         return {

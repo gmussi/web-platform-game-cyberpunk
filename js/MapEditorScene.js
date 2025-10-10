@@ -832,15 +832,22 @@ class MapEditorScene extends Phaser.Scene {
         // Clear existing tile data
         this.mapData.tiles = [];
         
-        // Save tile data
+        // Save tile data with sprite indices
         for (let y = 0; y < this.tilemapSystem.mapHeight; y++) {
             this.mapData.tiles[y] = [];
             for (let x = 0; x < this.tilemapSystem.mapWidth; x++) {
-                this.mapData.tiles[y][x] = this.tilemapSystem.getTile(x, y);
+                const tileType = this.tilemapSystem.getTile(x, y);
+                const spriteIndex = this.tilemapSystem.getTileSpriteIndex(x, y);
+                
+                // Store both tile type and sprite index
+                this.mapData.tiles[y][x] = {
+                    type: tileType,
+                    spriteIndex: spriteIndex
+                };
             }
         }
         
-        console.log('Tile data saved to map');
+        console.log('Tile data with sprite indices saved to map');
     }
 
     loadMap() {
@@ -886,7 +893,16 @@ class MapEditorScene extends Phaser.Scene {
             for (let y = 0; y < Math.min(this.mapData.tiles.length, this.tilemapSystem.mapHeight); y++) {
                 if (this.mapData.tiles[y] && Array.isArray(this.mapData.tiles[y])) {
                     for (let x = 0; x < Math.min(this.mapData.tiles[y].length, this.tilemapSystem.mapWidth); x++) {
-                        this.tilemapSystem.setTile(x, y, this.mapData.tiles[y][x]);
+                        const tileData = this.mapData.tiles[y][x];
+                        
+                        // Handle both old format (number) and new format (object)
+                        if (typeof tileData === 'number') {
+                            // Old format: just tile type
+                            this.tilemapSystem.setTile(x, y, tileData);
+                        } else if (tileData && typeof tileData === 'object') {
+                            // New format: object with type and spriteIndex
+                            this.tilemapSystem.setTile(x, y, tileData.type, tileData.spriteIndex);
+                        }
                     }
                 }
             }
