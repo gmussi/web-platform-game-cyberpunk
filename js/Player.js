@@ -27,6 +27,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setBounce(0.2);
         this.setDragX(300);
         
+        // Set proper physics body size (smaller than sprite for better gameplay)
+        this.body.setSize(32, 48); // Width: 32px, Height: 48px (smaller than 64x64 sprite)
+        this.body.setOffset(16, 8); // Center horizontally, offset vertically to align with body
+        
         // Set depth to appear above dark overlay and other elements
         this.setDepth(30);
         
@@ -34,21 +38,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVisible(true);
         this.setActive(true);
         
-        // Add a subtle glow effect to make player more visible (visual only, no physics)
-        this.playerGlow = scene.add.circle(x, y, 20, 0xffffff, 0.2);
-        this.playerGlow.setDepth(31); // Above player
-        
-        // Animate player glow
-        scene.tweens.add({
-            targets: this.playerGlow,
-            scaleX: 1.2,
-            scaleY: 1.2,
-            alpha: 0.1,
-            duration: 2000,
-            repeat: -1,
-            yoyo: true,
-            ease: 'Sine.easeInOut'
-        });
         
         // Input handling
         this.cursors = scene.input.keyboard.createCursorKeys();
@@ -79,14 +68,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.handleJump();
         this.updateAnimation();
         
-        // Ensure player stays visible and glow follows
+        // Ensure player stays visible
         this.setVisible(true);
         this.setActive(true);
         
-        // Update glow position to follow player
-        if (this.playerGlow) {
-            this.playerGlow.setPosition(this.x, this.y);
-        }
         
         // Ensure player depth is maintained
         this.setDepth(30);

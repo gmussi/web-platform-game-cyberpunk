@@ -160,6 +160,9 @@ class GameScene extends Phaser.Scene {
         // Create portal
         this.createPortal();
         
+        // Create hitbox visualizations
+        this.createHitboxVisualizations();
+        
         // Set up collisions
         this.setupCollisions();
         
@@ -212,14 +215,14 @@ class GameScene extends Phaser.Scene {
         if (this.textures.exists(selectedBackground)) {
             // Create a single background image that covers the entire world
             const worldWidth = 4100;
-            const worldHeight = 600;
+            const worldHeight = 800;
             const imageWidth = this.textures.get(selectedBackground).source[0].width;
             const imageHeight = this.textures.get(selectedBackground).source[0].height;
             
             // Calculate scale to cover the full world width (may stretch vertically)
-            // New images are 1728x576px, world is 4100x600px
+            // New images are 1728x576px, world is 4100x800px
             const scaleX = worldWidth / imageWidth;  // 4100 / 1728 ≈ 2.37
-            const scaleY = worldHeight / imageHeight; // 600 / 576 ≈ 1.04
+            const scaleY = worldHeight / imageHeight; // 800 / 576 ≈ 1.39
             
             // Use the larger scale to ensure full coverage of world width
             const scale = Math.max(scaleX, scaleY);
@@ -293,34 +296,36 @@ class GameScene extends Phaser.Scene {
         this.platforms = [];
         
         // Ground platforms - extend to 4100px to ensure full coverage with buffer
-        const groundPlatforms = Platform.createGround(this, 0, 560, 4100);
+        // Move ground down to maximize playable area (screen height 800px, world height 600px)
+        const groundPlatforms = Platform.createGround(this, 0, 760, 4100);
         console.log('Ground platforms created:', groundPlatforms.length);
         console.log('Ground platform positions:', groundPlatforms.map(p => p.x));
         this.platforms.push(...groundPlatforms);
         
         // Floating platforms with better spacing and distribution
+        // Adjust all platform heights relative to new ground level (760px)
         // Pass existing platforms to ensure no collisions
-        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 300, 500, 6, 400, this.platforms);
+        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 300, 700, 6, 400, this.platforms);
         this.platforms.push(...floatingPlatforms1);
         
-        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 800, 450, 5, 450, this.platforms);
+        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 800, 650, 5, 450, this.platforms);
         this.platforms.push(...floatingPlatforms2);
         
-        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 1400, 400, 6, 400, this.platforms);
+        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 1400, 600, 6, 400, this.platforms);
         this.platforms.push(...floatingPlatforms3);
         
-        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2000, 480, 5, 450, this.platforms);
+        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2000, 680, 5, 450, this.platforms);
         this.platforms.push(...floatingPlatforms4);
         
         // Create platform sequences with better spacing
         // Pass existing platforms to ensure no collisions
-        const sequence1 = Platform.createPlatformSequence(this, 600, 450, 4, 300, 80, this.platforms);
+        const sequence1 = Platform.createPlatformSequence(this, 600, 650, 4, 300, 80, this.platforms);
         this.platforms.push(...sequence1);
         
-        const sequence2 = Platform.createPlatformSequence(this, 1600, 400, 4, 350, 100, this.platforms);
+        const sequence2 = Platform.createPlatformSequence(this, 1600, 600, 4, 350, 100, this.platforms);
         this.platforms.push(...sequence2);
         
-        const sequence3 = Platform.createPlatformSequence(this, 2400, 420, 3, 400, 90, this.platforms);
+        const sequence3 = Platform.createPlatformSequence(this, 2400, 620, 3, 400, 90, this.platforms);
         this.platforms.push(...sequence3);
     }
 
@@ -331,9 +336,9 @@ class GameScene extends Phaser.Scene {
             startX = 3800; // Paladin starts close to portal (portal is at x=4000)
         }
         
-        this.player = new Player(this, startX, 500, gameData.selectedCharacter);
+        this.player = new Player(this, startX, 700, gameData.selectedCharacter);
         
-        console.log('Player created at:', startX, 500, 'Character:', gameData.selectedCharacter);
+        console.log('Player created at:', startX, 700, 'Character:', gameData.selectedCharacter);
         console.log('Player visible:', this.player.visible);
         console.log('Player active:', this.player.active);
         
@@ -341,42 +346,146 @@ class GameScene extends Phaser.Scene {
         this.playerGroup = this.physics.add.group([this.player]);
     }
 
+    // Helper function to find appropriate spawn position on ground or platforms
+    findSpawnPosition(x, preferGround = true) {
+        const groundY = 760; // Ground level from platform creation
+        const enemySpriteHeight = 64; // Enemy sprite size is 64x64
+        const enemyPhysicsHeight = 48; // Enemy physics body height
+        const enemyPhysicsOffsetY = 8; // Enemy physics body vertical offset
+        const groundPlatformHeight = 40; // Ground platform height from Platform.createGround
+        
+        if (preferGround) {
+            // Position enemy so their feet touch the ground platform surface
+            // Ground platform top is at: groundY - groundPlatformHeight/2
+            // Enemy physics body bottom should be at platform top
+            // Enemy center should be at: platform top - (enemyPhysicsHeight/2 - enemyPhysicsOffsetY)
+            const groundPlatformTop = groundY - groundPlatformHeight / 2;
+            const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY);
+            return { x: x, y: enemyCenterY };
+        }
+        
+        // For floating enemies, find the best platform to spawn on
+        let bestPlatform = null;
+        let bestScore = -1;
+        
+        for (const platform of this.platforms) {
+            if (!platform || !platform.active) continue;
+            
+            // Skip ground platforms (they have Y around 760)
+            if (platform.y > 700) continue;
+            
+            // Calculate how good this platform is for spawning
+            const distanceFromTarget = Math.abs(platform.x - x);
+            const platformWidth = platform.width || 200;
+            
+            // Score based on proximity and whether the platform is in the right area
+            let score = 0;
+            
+            // Prefer platforms that are close to the target X
+            if (distanceFromTarget < platformWidth) {
+                score += 100; // High score for platforms at the target X
+            } else if (distanceFromTarget < platformWidth * 2) {
+                score += 50; // Medium score for nearby platforms
+            } else if (distanceFromTarget < platformWidth * 3) {
+                score += 25; // Low score for somewhat nearby platforms
+            }
+            
+            // Prefer platforms that are not too high (avoid UI overlap)
+            if (platform.y > 150 && platform.y < 600) {
+                score += 20;
+            }
+            
+            // Choose the platform with the best score
+            if (score > bestScore) {
+                bestScore = score;
+                bestPlatform = platform;
+            }
+        }
+        
+        // If we found a good platform, spawn on it
+        if (bestPlatform && bestScore > 0) {
+            // Position enemy so their feet touch the platform surface
+            const platformTop = bestPlatform.y - bestPlatform.height / 2;
+            const enemyCenterY = platformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY);
+            return { 
+                x: bestPlatform.x, 
+                y: enemyCenterY
+            };
+        }
+        
+        // Fallback to ground if no suitable platform found
+        console.warn(`No suitable platform found for X=${x}, falling back to ground`);
+        const groundPlatformTop = groundY - groundPlatformHeight / 2;
+        const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY);
+        return { x: x, y: enemyCenterY };
+    }
+
     createEnemies() {
         this.enemies = [];
         
         // Stationary enemies (blocking paths) - position them on ground platforms
-        const stationaryEnemies = [
-            Enemy.createStationaryEnemy(this, 400, 520, 'enemy1'), // On ground
-            Enemy.createStationaryEnemy(this, 800, 520, 'enemy2'),  // On ground
-            Enemy.createStationaryEnemy(this, 1200, 520, 'enemy1'), // On ground
-            Enemy.createStationaryEnemy(this, 1600, 520, 'enemy2')  // On ground
+        const stationaryPositions = [
+            { x: 400, preferGround: true },
+            { x: 800, preferGround: true },
+            { x: 1200, preferGround: true },
+            { x: 1600, preferGround: true }
         ];
         
-        // Moving enemies (patrolling) - position them on floating platforms
-        const movingEnemies = [
-            Enemy.createMovingEnemy(this, 300, 480, 'enemy1'),  // On floating platform
-            Enemy.createMovingEnemy(this, 700, 330, 'enemy2'),   // On floating platform
-            Enemy.createMovingEnemy(this, 1100, 280, 'enemy1'),  // On floating platform
-            Enemy.createMovingEnemy(this, 1500, 230, 'enemy2')   // On floating platform
-        ];
+        const stationaryEnemies = stationaryPositions.map((pos, index) => {
+            const spawnPos = this.findSpawnPosition(pos.x, pos.preferGround);
+            const enemyType = index % 2 === 0 ? 'enemy1' : 'enemy2';
+            return Enemy.createStationaryEnemy(this, spawnPos.x, spawnPos.y, enemyType);
+        });
         
-        // Patrol enemies with different ranges - position them on platforms
-        const patrolEnemies = [
-            Enemy.createPatrolEnemy(this, 600, 430, 150, 'enemy1'),   // On platform
-            Enemy.createPatrolEnemy(this, 1000, 380, 150, 'enemy2'),  // On platform
-            Enemy.createPatrolEnemy(this, 1400, 330, 150, 'enemy1')   // On platform
-        ];
+        // Moving enemies (patrolling) - find good floating platforms to spawn on
+        const movingEnemies = [];
+        const floatingPlatforms = this.platforms.filter(p => p.y < 700); // Only floating platforms
+        
+        // Try to spawn moving enemies on different floating platforms
+        const targetMovingEnemies = 4;
+        for (let i = 0; i < targetMovingEnemies && i < floatingPlatforms.length; i++) {
+            const platform = floatingPlatforms[i];
+            const enemyType = i % 2 === 0 ? 'enemy1' : 'enemy2';
+            const spawnPos = this.findSpawnPosition(platform.x, false);
+            movingEnemies.push(Enemy.createMovingEnemy(this, spawnPos.x, spawnPos.y, enemyType));
+        }
+        
+        // Patrol enemies with different ranges - find platforms for them too
+        const patrolEnemies = [];
+        const targetPatrolEnemies = 3;
+        for (let i = targetMovingEnemies; i < targetMovingEnemies + targetPatrolEnemies && i < floatingPlatforms.length; i++) {
+            const platform = floatingPlatforms[i];
+            const enemyType = i % 2 === 0 ? 'enemy1' : 'enemy2';
+            const spawnPos = this.findSpawnPosition(platform.x, false);
+            patrolEnemies.push(Enemy.createPatrolEnemy(this, spawnPos.x, spawnPos.y, 150, enemyType));
+        }
         
         this.enemies.push(...stationaryEnemies, ...movingEnemies, ...patrolEnemies);
         
         // Add enemies to physics group
         this.enemyGroup = this.physics.add.group(this.enemies);
+        
+        // Debug: Log enemy positions and platform info
+        console.log('Floating platforms available:', floatingPlatforms.length);
+        console.log('Floating platform positions:', floatingPlatforms.map(p => `x=${p.x}, y=${p.y}`));
+        console.log('Enemies spawned at positions:');
+        this.enemies.forEach((enemy, index) => {
+            console.log(`Enemy ${index}: x=${enemy.x}, y=${enemy.y}, type=${enemy.type}`);
+            console.log(`Enemy ${index} physics body: x=${enemy.body.x}, y=${enemy.body.y}, width=${enemy.body.width}, height=${enemy.body.height}`);
+        });
+        
+        // Debug: Log player physics body info
+        if (this.player) {
+            console.log(`Player physics body: x=${this.player.body.x}, y=${this.player.body.y}, width=${this.player.body.width}, height=${this.player.body.height}`);
+            console.log(`Player sprite: x=${this.player.x}, y=${this.player.y}, width=${this.player.width}, height=${this.player.height}`);
+        }
     }
 
     createPortal() {
         // Create portal at the end of the map (near x=4000)
         const portalX = 4000;
-        const portalY = 500; // On the ground level
+        const groundY = 760; // Ground level from platform creation
+        const portalY = groundY - 100; // Position portal above ground level
         
         // Create animated portal sprite
         this.portalSprite = this.add.sprite(portalX, portalY, 'portal_frame_01');
@@ -422,6 +531,78 @@ class GameScene extends Phaser.Scene {
         console.log('Portal body size:', this.portalSprite.body.width, this.portalSprite.body.height);
         
         // Portal is now just the animated sprite - no additional effects needed
+    }
+
+    createHitboxVisualizations() {
+        // Create hitbox graphics for player
+        this.playerHitbox = this.add.graphics();
+        this.playerHitbox.setDepth(50); // Above everything else
+        
+        // Create hitbox graphics for enemies
+        this.enemyHitboxes = this.add.graphics();
+        this.enemyHitboxes.setDepth(50); // Above everything else
+        
+        console.log('Hitbox visualizations created');
+    }
+
+    updateHitboxVisualizations() {
+        // Clear previous hitbox drawings
+        this.playerHitbox.clear();
+        this.enemyHitboxes.clear();
+        
+        // Draw player hitbox
+        if (this.player && this.player.body) {
+            const playerBody = this.player.body;
+            this.playerHitbox.lineStyle(3, 0x00ff00, 0.8); // Green outline
+            
+            // Use physics body position (now properly offset)
+            const hitboxX = playerBody.x;
+            const hitboxY = playerBody.y - 8; // Small offset above player
+            
+            this.playerHitbox.strokeRect(
+                hitboxX,
+                hitboxY,
+                playerBody.width,
+                playerBody.height
+            );
+            
+            // Add debug info
+            this.playerHitbox.fillStyle(0x00ff00, 0.3);
+            this.playerHitbox.fillRect(
+                hitboxX,
+                hitboxY,
+                playerBody.width,
+                playerBody.height
+            );
+        }
+        
+        // Draw enemy hitboxes
+        this.enemies.forEach((enemy, index) => {
+            if (enemy && enemy.body && enemy.active) {
+                const enemyBody = enemy.body;
+                this.enemyHitboxes.lineStyle(2, 0xff0000, 0.8); // Red outline
+                
+                // Use physics body position (now properly offset)
+                const hitboxX = enemyBody.x;
+                const hitboxY = enemyBody.y - 8; // Small offset above enemy
+                
+                this.enemyHitboxes.strokeRect(
+                    hitboxX,
+                    hitboxY,
+                    enemyBody.width,
+                    enemyBody.height
+                );
+                
+                // Add debug info
+                this.enemyHitboxes.fillStyle(0xff0000, 0.2);
+                this.enemyHitboxes.fillRect(
+                    hitboxX,
+                    hitboxY,
+                    enemyBody.width,
+                    enemyBody.height
+                );
+            }
+        });
     }
 
     setupCollisions() {
@@ -490,8 +671,8 @@ class GameScene extends Phaser.Scene {
     }
 
     setupCamera() {
-        // Set camera bounds for extended world
-        this.cameras.main.setBounds(0, 0, 4100, 600);
+        // Set camera bounds for extended world with maximized playable area
+        this.cameras.main.setBounds(0, 0, 4100, 800);
         
         // Start camera following player
         this.cameras.main.startFollow(this.player);
@@ -572,6 +753,9 @@ class GameScene extends Phaser.Scene {
         if (this.player) {
             this.updateHealthBar(this.player.health);
         }
+        
+        // Update hitbox visualizations
+        this.updateHitboxVisualizations();
         
         // Manual portal collision check (backup) - only checks animated portal sprite
         if (this.player && this.portalSprite) {
