@@ -104,7 +104,7 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Method to create a series of platforms for level generation
-    static createPlatformSequence(scene, startX, startY, count, spacing = 150, heightVariation = 50, existingPlatforms = []) {
+    static createPlatformSequence(scene, startX, startY, count, spacing = 150, heightVariation = 50, existingPlatforms = [], portalCollisionCheck = null) {
         const platforms = [];
         
         for (let i = 0; i < count; i++) {
@@ -129,7 +129,8 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
             // Check for collisions and adjust position if needed
             let attempts = 0;
             const maxAttempts = 20;
-            while (Platform.checkPlatformCollision(x, y, platformWidth, platformHeight, [...existingPlatforms, ...platforms]) && attempts < maxAttempts) {
+            while ((Platform.checkPlatformCollision(x, y, platformWidth, platformHeight, [...existingPlatforms, ...platforms]) || 
+                   (portalCollisionCheck && portalCollisionCheck(x, y, platformWidth, platformHeight))) && attempts < maxAttempts) {
                 // Try adjusting X position first
                 x += spacing * 0.3;
                 attempts++;
@@ -188,7 +189,7 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Method to create floating platforms at different heights
-    static createFloatingPlatforms(scene, startX, baseY, count, spacing = 200, existingPlatforms = []) {
+    static createFloatingPlatforms(scene, startX, baseY, count, spacing = 200, existingPlatforms = [], portalCollisionCheck = null) {
         const platforms = [];
         
         for (let i = 0; i < count; i++) {
@@ -203,7 +204,8 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
             // Check for collisions and adjust position if needed
             let attempts = 0;
             const maxAttempts = 20;
-            while (Platform.checkPlatformCollision(x, y, platformWidth, platformHeight, [...existingPlatforms, ...platforms]) && attempts < maxAttempts) {
+            while ((Platform.checkPlatformCollision(x, y, platformWidth, platformHeight, [...existingPlatforms, ...platforms]) || 
+                   (portalCollisionCheck && portalCollisionCheck(x, y, platformWidth, platformHeight))) && attempts < maxAttempts) {
                 // Try adjusting X position first
                 x += spacing * 0.3;
                 attempts++;

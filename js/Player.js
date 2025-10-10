@@ -56,6 +56,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.currentAnimation = 'breathing_idle';
         this.isJumping = false;
         
+        // Jump animation phases
+        this.jumpPhase = 'none'; // 'none', 'start', 'ascending', 'falling', 'landing'
+        this.jumpStartTime = 0;
+        this.jumpFrameIndex = 0;
+        
         // Set initial facing direction (always right)
         this.setFlipX(false);
         
@@ -100,11 +105,17 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         
         if (this.cursors.left.isDown && canMoveLeft) {
             this.setVelocityX(-this.speed);
-            this.isMoving = true;
+            // Only set isMoving to true if not jumping
+            if (this.jumpPhase === 'none') {
+                this.isMoving = true;
+            }
             this.facingRight = false;
         } else if (this.cursors.right.isDown && canMoveRight) {
             this.setVelocityX(this.speed);
-            this.isMoving = true;
+            // Only set isMoving to true if not jumping
+            if (this.jumpPhase === 'none') {
+                this.isMoving = true;
+            }
             this.facingRight = true;
         } else {
             this.setVelocityX(0);
@@ -122,48 +133,120 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleJump() {
-        // Check if player is on ground
-        this.isGrounded = this.body.touching.down;
+        // Only update grounded state if not in a jump sequence
+        if (this.jumpPhase === 'none') {
+            this.isGrounded = this.body.touching.down;
+        } else {
+            // During jump, keep grounded false until landing is complete
+            this.isGrounded = false;
+        }
         
         if (this.isGrounded && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
             this.setVelocityY(-this.jumpPower);
             this.scene.events.emit('playerJumped');
+            
+            // Start jump animation sequence
+            this.jumpPhase = 'start';
+            this.jumpStartTime = this.scene.time.now;
+            this.jumpFrameIndex = 0;
+            this.isJumping = true;
+            this.isGrounded = false; // Ensure we're not grounded during jump
+        }
+        
+        // Update jump phase based on velocity and physics
+        if (this.jumpPhase !== 'none') {
+            if (this.jumpPhase === 'start') {
+                // Check if we've finished the start animation (frames 000-003)
+                const timeSinceStart = this.scene.time.now - this.jumpStartTime;
+                if (timeSinceStart > 200) { // 200ms for start animation
+                    this.jumpPhase = 'ascending';
+                }
+            } else if (this.jumpPhase === 'ascending' && this.body.velocity.y >= 0) {
+                // Switch to falling when velocity becomes positive
+                this.jumpPhase = 'falling';
+            } else if (this.jumpPhase === 'falling' && this.body.touching.down) {
+                // Player landed, start landing animation
+                this.jumpPhase = 'landing';
+                this.jumpStartTime = this.scene.time.now;
+                this.jumpFrameIndex = 0;
+            }
         }
     }
 
     updateAnimation() {
-        // Determine current state and play appropriate animation
-        if (!this.isGrounded) {
-            // Jumping animation - check if direction changed
-            const direction = this.facingRight ? 'east' : 'west';
-            const animationKey = `${this.charName}_jumping_${direction}`;
-            
-            if (this.currentAnimation !== 'jumping' || this.anims.currentAnim.key !== animationKey) {
-                this.play(animationKey);
-                this.currentAnimation = 'jumping';
-                this.isJumping = true;
-            }
-        } else if (this.isMoving) {
-            // Walking animation - check if direction changed
-            const direction = this.facingRight ? 'east' : 'west';
+        const direction = this.facingRight ? 'east' : 'west';
+        
+        // Handle jump animation phases
+        if (this.jumpPhase !== 'none') {
+            this.handleJumpAnimation(direction);
+            return;
+        }
+        
+        // Handle ground animations
+        if (this.isMoving) {
+            // Walking animation
             const animationKey = `${this.charName}_walk_${direction}`;
-            
             if (this.currentAnimation !== 'walking' || this.anims.currentAnim.key !== animationKey) {
                 this.play(animationKey);
                 this.currentAnimation = 'walking';
-                this.isJumping = false;
             }
         } else {
             // Idle breathing animation
             if (this.currentAnimation !== 'breathing_idle') {
                 this.play(`${this.charName}_breathing_idle`);
                 this.currentAnimation = 'breathing_idle';
-                this.isJumping = false;
             }
         }
+    }
+    
+    handleJumpAnimation(direction) {
+        const timeSinceStart = this.scene.time.now - this.jumpStartTime;
         
-        // Don't flip sprites since we have separate east/west animations
-        // The west sprites should already be facing the correct direction
+        switch (this.jumpPhase) {
+            case 'start':
+                // Play frames 000-003 in sequence
+                const startFrame = Math.min(3, Math.floor(timeSinceStart / 50)); // 50ms per frame
+                const startFrameKey = `${this.charName}_jumping_${direction}_${startFrame.toString().padStart(3, '0')}`;
+                if (this.currentAnimation !== 'jumping_start' || this.texture.key !== startFrameKey) {
+                    this.setTexture(startFrameKey);
+                    this.currentAnimation = 'jumping_start';
+                }
+                break;
+                
+            case 'ascending':
+                // Show frame 004
+                const ascendingFrameKey = `${this.charName}_jumping_${direction}_004`;
+                if (this.currentAnimation !== 'jumping_ascending' || this.texture.key !== ascendingFrameKey) {
+                    this.setTexture(ascendingFrameKey);
+                    this.currentAnimation = 'jumping_ascending';
+                }
+                break;
+                
+            case 'falling':
+                // Show frame 005
+                const fallingFrameKey = `${this.charName}_jumping_${direction}_005`;
+                if (this.currentAnimation !== 'jumping_falling' || this.texture.key !== fallingFrameKey) {
+                    this.setTexture(fallingFrameKey);
+                    this.currentAnimation = 'jumping_falling';
+                }
+                break;
+                
+            case 'landing':
+                // Play frames 006-008 in sequence
+                const landingFrame = Math.min(2, Math.floor(timeSinceStart / 50)); // 50ms per frame
+                const landingFrameKey = `${this.charName}_jumping_${direction}_${(landingFrame + 6).toString().padStart(3, '0')}`;
+                if (this.currentAnimation !== 'jumping_landing' || this.texture.key !== landingFrameKey) {
+                    this.setTexture(landingFrameKey);
+                    this.currentAnimation = 'jumping_landing';
+                }
+                
+                // Finish landing animation after 150ms
+                if (timeSinceStart > 150) {
+                    this.jumpPhase = 'none';
+                    this.isJumping = false;
+                }
+                break;
+        }
     }
 
     takeDamage(amount) {

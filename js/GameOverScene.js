@@ -3,9 +3,14 @@ class GameOverScene extends Phaser.Scene {
         super({ key: 'GameOverScene' });
     }
 
+    preload() {
+        // Load home background
+        this.load.image('homebg', 'img/homebg.png');
+    }
+
     create() {
         // Background
-        this.add.rectangle(600, 400, 1200, 800, 0x2c3e50); // Dark background
+        this.add.image(600, 400, 'homebg').setDisplaySize(1200, 800);
         
         // Game Over text
         this.add.text(600, 250, 'Game Over', {

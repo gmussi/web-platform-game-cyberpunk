@@ -3,9 +3,14 @@ class VictoryScene extends Phaser.Scene {
         super({ key: 'VictoryScene' });
     }
 
+    preload() {
+        // Load home background
+        this.load.image('homebg', 'img/homebg.png');
+    }
+
     create() {
         // Background
-        this.add.rectangle(600, 400, 1200, 800, 0x1a1a2e); // Dark background
+        this.add.image(600, 400, 'homebg').setDisplaySize(1200, 800);
         
         // Victory text
         this.add.text(600, 200, 'VICTORY!', {

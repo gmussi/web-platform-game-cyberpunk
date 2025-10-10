@@ -7,7 +7,7 @@ class GameScene extends Phaser.Scene {
         // Load portal animation frames
         for (let i = 1; i <= 12; i++) {
             const frameNumber = i.toString().padStart(2, '0');
-            this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_frame_${frameNumber}.png`);
+            this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_clean_frame_${frameNumber}.png`);
         }
         
         // Load background images (optimized smaller files ~800KB each, 1728x576px)
@@ -305,6 +305,15 @@ class GameScene extends Phaser.Scene {
     createPlatforms() {
         this.platforms = [];
         
+        // Define portal area to avoid (portal is at x=4000, y=660, size 100x100)
+        this.portalArea = {
+            x: 4000,
+            y: 660,
+            width: 100,
+            height: 100,
+            buffer: 50 // Extra buffer around portal
+        };
+        
         // Ground platforms - extend to 4100px to ensure full coverage with buffer
         // Move ground down to maximize playable area (screen height 800px, world height 600px)
         const groundPlatforms = Platform.createGround(this, 0, 760, 4100);
@@ -315,28 +324,49 @@ class GameScene extends Phaser.Scene {
         // Floating platforms with increased spacing and fewer platforms
         // Adjust all platform heights relative to new ground level (760px)
         // Pass existing platforms to ensure no collisions
-        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 400, 700, 3, 600, this.platforms);
+        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 400, 700, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...floatingPlatforms1);
         
-        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 1200, 650, 3, 600, this.platforms);
+        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 1200, 650, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...floatingPlatforms2);
         
-        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 2000, 600, 3, 600, this.platforms);
+        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 2000, 600, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...floatingPlatforms3);
         
-        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2800, 680, 3, 600, this.platforms);
+        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2800, 680, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...floatingPlatforms4);
         
         // Create platform sequences with increased spacing
         // Pass existing platforms to ensure no collisions
-        const sequence1 = Platform.createPlatformSequence(this, 800, 650, 3, 500, 80, this.platforms);
+        const sequence1 = Platform.createPlatformSequence(this, 800, 650, 3, 500, 80, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...sequence1);
         
-        const sequence2 = Platform.createPlatformSequence(this, 2000, 600, 3, 600, 100, this.platforms);
+        const sequence2 = Platform.createPlatformSequence(this, 2000, 600, 3, 600, 100, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...sequence2);
         
-        const sequence3 = Platform.createPlatformSequence(this, 3200, 620, 2, 700, 90, this.platforms);
+        const sequence3 = Platform.createPlatformSequence(this, 3200, 620, 2, 700, 90, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
         this.platforms.push(...sequence3);
+    }
+
+    // Helper method to check if a position conflicts with the portal area
+    checkPortalCollision(x, y, width, height) {
+        if (!this.portalArea) return false;
+        
+        const portalLeft = this.portalArea.x - this.portalArea.width / 2 - this.portalArea.buffer;
+        const portalRight = this.portalArea.x + this.portalArea.width / 2 + this.portalArea.buffer;
+        const portalTop = this.portalArea.y - this.portalArea.height / 2 - this.portalArea.buffer;
+        const portalBottom = this.portalArea.y + this.portalArea.height / 2 + this.portalArea.buffer;
+        
+        const platformLeft = x - width / 2;
+        const platformRight = x + width / 2;
+        const platformTop = y - height / 2;
+        const platformBottom = y + height / 2;
+        
+        // Check if platform overlaps with portal area
+        return !(platformRight < portalLeft || 
+                platformLeft > portalRight || 
+                platformBottom < portalTop || 
+                platformTop > portalBottom);
     }
 
     createPlayer() {
