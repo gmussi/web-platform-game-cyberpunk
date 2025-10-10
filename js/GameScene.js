@@ -221,17 +221,27 @@ class GameScene extends Phaser.Scene {
             .then(mapData => {
                 console.log('Loaded default map:', mapData.metadata.name);
                 console.log('Map data size:', JSON.stringify(mapData).length, 'characters');
+                console.log('TilemapSystem initialized:', !!this.tilemapSystem);
+                console.log('TilemapSystem mapWidth:', this.tilemapSystem?.mapWidth);
+                console.log('TilemapSystem mapHeight:', this.tilemapSystem?.mapHeight);
+                
                 this.mapData = mapData;
                 // Load tile data immediately after map data is loaded
+                console.log('Calling loadTileDataFromMap...');
                 this.loadTileDataFromMap();
+                console.log('Calling createCollisionBodies...');
                 // Create collision bodies AFTER tile data is loaded
                 this.tilemapSystem.createCollisionBodies();
+                console.log('Calling createEnemies...');
                 // Create enemies AFTER map data is loaded
                 this.createEnemies();
+                console.log('Calling createPortal...');
                 // Create portal AFTER map data is loaded
                 this.createPortal();
+                console.log('Calling setupCollisions...');
                 // Setup collisions AFTER collision bodies are created
                 this.setupCollisions();
+                console.log('Calling updateObjectsFromMapData...');
                 // Reposition objects based on map data
                 this.updateObjectsFromMapData();
                 console.log('Map loading completed successfully');
@@ -507,11 +517,18 @@ class GameScene extends Phaser.Scene {
     }
 
     createEnemies() {
+        console.log('createEnemies() called');
+        console.log('this.mapData exists:', !!this.mapData);
+        console.log('this.mapData.enemies exists:', !!(this.mapData && this.mapData.enemies));
+        console.log('enemies count:', this.mapData?.enemies?.length || 0);
+        
         this.enemies = [];
         
         if (this.mapData && this.mapData.enemies) {
+            console.log('Creating enemies from map data...');
             // Create enemies from map data
-            this.mapData.enemies.forEach(enemyData => {
+            this.mapData.enemies.forEach((enemyData, index) => {
+                console.log(`Creating enemy ${index}:`, enemyData);
                 let enemy;
                 
                 switch (enemyData.type) {
@@ -538,6 +555,7 @@ class GameScene extends Phaser.Scene {
                 }
                 
                 this.enemies.push(enemy);
+                console.log(`Enemy ${index} created at position:`, enemy.x, enemy.y);
             });
             
             console.log(`Created ${this.enemies.length} enemies from map data`);
@@ -563,6 +581,10 @@ class GameScene extends Phaser.Scene {
     }
 
     createPortal() {
+        console.log('createPortal() called');
+        console.log('this.mapData exists:', !!this.mapData);
+        console.log('this.mapData.portal exists:', !!(this.mapData && this.mapData.portal));
+        
         // Get portal position from map data
         let portalX = 4000;
         let portalY = 660;
@@ -570,13 +592,16 @@ class GameScene extends Phaser.Scene {
         if (this.mapData && this.mapData.portal) {
             portalX = this.mapData.portal.position.x;
             portalY = this.mapData.portal.position.y;
+            console.log('Using portal position from map data:', portalX, portalY);
         } else {
             // Default portal position
             const groundY = 760; // Ground level from platform creation
             portalY = groundY - 100; // Position portal above ground level
+            console.log('Using default portal position:', portalX, portalY);
         }
         
         // Create animated portal sprite
+        console.log('Creating portal sprite at:', portalX, portalY);
         this.portalSprite = this.add.sprite(portalX, portalY, 'portal_frame_01');
         this.portalSprite.setDepth(25);
         
