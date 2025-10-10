@@ -142,17 +142,30 @@ class GameScene extends Phaser.Scene {
         
         // Create character animations
         this.createCharacterAnimations();
-        
+
         // Wait a bit for background images to fully load, then create background
         this.time.delayedCall(1000, () => {
             this.createBackground();
             this.createDarkOverlay();
         });
         
-        // Create platforms
-        this.createPlatforms();
+        // Create tilemap system
+        this.tilemapSystem = new TilemapSystem(this);
+        this.tilemapSystem.generateLevel();
         
-        // Create player
+        // Define portal area for collision checking
+        this.portalArea = {
+            x: 4000,
+            y: 660,
+            width: 100,
+            height: 100,
+            buffer: 50 // Extra buffer around portal
+        };
+        
+        // Create collision bodies for the tilemap FIRST
+        this.tilemapSystem.createCollisionBodies();
+        
+        // Create player AFTER collision bodies are created
         this.createPlayer();
         
         // Create enemies
@@ -161,7 +174,7 @@ class GameScene extends Phaser.Scene {
         // Create portal
         this.createPortal();
         
-        // Set up collisions
+        // Setup collisions AFTER everything is created
         this.setupCollisions();
         
         // Create UI
@@ -176,30 +189,17 @@ class GameScene extends Phaser.Scene {
         // Start background music
         this.startBackgroundMusic();
         
-        // Ensure platforms and enemies stay in place
-        this.time.delayedCall(100, () => {
-            this.platforms.forEach(platform => {
-                if (platform && platform.body) {
-                    platform.body.setAllowGravity(false);
-                    platform.body.setVelocityY(0);
-                    platform.body.setImmovable(true);
-                }
-            });
-            
-            this.enemies.forEach(enemy => {
-                if (enemy && enemy.body) {
-                    enemy.body.setAllowGravity(false);
-                    enemy.body.setVelocityY(0);
-                }
-            });
-        });
+        // Initialize debug counter
+        this.frameCount = 0;
     }
 
     setupWorldBounds() {
-        const worldWidth = 4100; // Extended world to match ground coverage with buffer
-        const worldHeight = 600;
+        const worldWidth = 4100; // Extended world to match tilemap width
+        const worldHeight = 800; // Match tilemap height (25 tiles * 32 pixels)
         
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
+        console.log(`World bounds set: width=${worldWidth}, height=${worldHeight}`);
+        console.log(`Player spawn at Y=688, world bottom at Y=${worldHeight}`);
     }
 
     createBackground() {
@@ -302,52 +302,6 @@ class GameScene extends Phaser.Scene {
         
     }
 
-    createPlatforms() {
-        this.platforms = [];
-        
-        // Define portal area to avoid (portal is at x=4000, y=660, size 100x100)
-        this.portalArea = {
-            x: 4000,
-            y: 660,
-            width: 100,
-            height: 100,
-            buffer: 50 // Extra buffer around portal
-        };
-        
-        // Ground platforms - extend to 4100px to ensure full coverage with buffer
-        // Move ground down to maximize playable area (screen height 800px, world height 600px)
-        const groundPlatforms = Platform.createGround(this, 0, 760, 4100);
-        console.log('Ground platforms created:', groundPlatforms.length);
-        console.log('Ground platform positions:', groundPlatforms.map(p => p.x));
-        this.platforms.push(...groundPlatforms);
-        
-        // Floating platforms with increased spacing and fewer platforms
-        // Adjust all platform heights relative to new ground level (760px)
-        // Pass existing platforms to ensure no collisions
-        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 400, 700, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...floatingPlatforms1);
-        
-        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 1200, 650, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...floatingPlatforms2);
-        
-        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 2000, 600, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...floatingPlatforms3);
-        
-        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2800, 680, 3, 600, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...floatingPlatforms4);
-        
-        // Create platform sequences with increased spacing
-        // Pass existing platforms to ensure no collisions
-        const sequence1 = Platform.createPlatformSequence(this, 800, 650, 3, 500, 80, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...sequence1);
-        
-        const sequence2 = Platform.createPlatformSequence(this, 2000, 600, 3, 600, 100, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...sequence2);
-        
-        const sequence3 = Platform.createPlatformSequence(this, 3200, 620, 2, 700, 90, this.platforms, (x, y, w, h) => this.checkPortalCollision(x, y, w, h));
-        this.platforms.push(...sequence3);
-    }
-
     // Helper method to check if a position conflicts with the portal area
     checkPortalCollision(x, y, width, height) {
         if (!this.portalArea) return false;
@@ -376,88 +330,21 @@ class GameScene extends Phaser.Scene {
             startX = 3800; // Paladin starts close to portal (portal is at x=4000)
         }
         
-        this.player = new Player(this, startX, 700, gameData.selectedCharacter);
+        // Calculate ground level from tilemap (bottom 3 rows)
+        const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
+        const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
+        const playerSpawnY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
         
-        console.log('Player created at:', startX, 700, 'Character:', gameData.selectedCharacter);
-        console.log('Player visible:', this.player.visible);
-        console.log('Player active:', this.player.active);
+        this.player = new Player(this, startX, playerSpawnY, gameData.selectedCharacter);
         
         // Add player to physics groups for collision detection
         this.playerGroup = this.physics.add.group([this.player]);
     }
 
-    // Helper function to find appropriate spawn position on ground or platforms
+    // Helper function to find appropriate spawn position using tilemap
     findSpawnPosition(x, preferGround = true) {
-        const groundY = 760; // Ground level from platform creation
-        const enemySpriteHeight = 64; // Enemy sprite size is 64x64
-        const enemyPhysicsHeight = 48; // Enemy physics body height
-        const enemyPhysicsOffsetY = 8; // Enemy physics body vertical offset
-        const groundPlatformHeight = 40; // Ground platform height from Platform.createGround
-        
-        if (preferGround) {
-            // Position enemy so their feet touch the ground platform surface
-            // Ground platform top is at: groundY - groundPlatformHeight/2
-            // Enemy physics body bottom should be at platform top
-            // Enemy center should be at: platform top - (enemyPhysicsHeight/2 - enemyPhysicsOffsetY)
-            const groundPlatformTop = groundY - groundPlatformHeight / 2;
-            const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY) - 3;
-            return { x: x, y: enemyCenterY };
-        }
-        
-        // For floating enemies, find the best platform to spawn on
-        let bestPlatform = null;
-        let bestScore = -1;
-        
-        for (const platform of this.platforms) {
-            if (!platform || !platform.active) continue;
-            
-            // Skip ground platforms (they have Y around 760)
-            if (platform.y > 700) continue;
-            
-            // Calculate how good this platform is for spawning
-            const distanceFromTarget = Math.abs(platform.x - x);
-            const platformWidth = platform.width || 200;
-            
-            // Score based on proximity and whether the platform is in the right area
-            let score = 0;
-            
-            // Prefer platforms that are close to the target X
-            if (distanceFromTarget < platformWidth) {
-                score += 100; // High score for platforms at the target X
-            } else if (distanceFromTarget < platformWidth * 2) {
-                score += 50; // Medium score for nearby platforms
-            } else if (distanceFromTarget < platformWidth * 3) {
-                score += 25; // Low score for somewhat nearby platforms
-            }
-            
-            // Prefer platforms that are not too high (avoid UI overlap)
-            if (platform.y > 150 && platform.y < 600) {
-                score += 20;
-            }
-            
-            // Choose the platform with the best score
-            if (score > bestScore) {
-                bestScore = score;
-                bestPlatform = platform;
-            }
-        }
-        
-        // If we found a good platform, spawn on it
-        if (bestPlatform && bestScore > 0) {
-            // Position enemy so their feet touch the platform surface
-            const platformTop = bestPlatform.y - bestPlatform.height / 2;
-            const enemyCenterY = platformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY) - 3;
-            return { 
-                x: bestPlatform.x, 
-                y: enemyCenterY
-            };
-        }
-        
-        // Fallback to ground if no suitable platform found
-        console.warn(`No suitable platform found for X=${x}, falling back to ground`);
-        const groundPlatformTop = groundY - groundPlatformHeight / 2;
-        const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY) - 3;
-        return { x: x, y: enemyCenterY };
+        // Use tilemap system to find spawn position
+        return this.tilemapSystem.findEnemySpawnPosition(preferGround);
     }
 
     createEnemies() {
@@ -477,26 +364,23 @@ class GameScene extends Phaser.Scene {
             return Enemy.createStationaryEnemy(this, spawnPos.x, spawnPos.y, enemyType);
         });
         
-        // Moving enemies (patrolling) - find good floating platforms to spawn on
+        // Moving enemies (patrolling) - spawn on platforms
         const movingEnemies = [];
-        const floatingPlatforms = this.platforms.filter(p => p.y < 700); // Only floating platforms
         
-        // Try to spawn moving enemies on different floating platforms
+        // Try to spawn moving enemies on different platforms
         const targetMovingEnemies = 4;
-        for (let i = 0; i < targetMovingEnemies && i < floatingPlatforms.length; i++) {
-            const platform = floatingPlatforms[i];
+        for (let i = 0; i < targetMovingEnemies; i++) {
+            const spawnPos = this.findSpawnPosition(400 + i * 200, false);
             const enemyType = i % 2 === 0 ? 'enemy1' : 'enemy2';
-            const spawnPos = this.findSpawnPosition(platform.x, false);
             movingEnemies.push(Enemy.createMovingEnemy(this, spawnPos.x, spawnPos.y, enemyType));
         }
         
-        // Patrol enemies with different ranges - find platforms for them too
+        // Patrol enemies with different ranges
         const patrolEnemies = [];
         const targetPatrolEnemies = 3;
-        for (let i = targetMovingEnemies; i < targetMovingEnemies + targetPatrolEnemies && i < floatingPlatforms.length; i++) {
-            const platform = floatingPlatforms[i];
+        for (let i = 0; i < targetPatrolEnemies; i++) {
+            const spawnPos = this.findSpawnPosition(600 + i * 300, false);
             const enemyType = i % 2 === 0 ? 'enemy1' : 'enemy2';
-            const spawnPos = this.findSpawnPosition(platform.x, false);
             patrolEnemies.push(Enemy.createPatrolEnemy(this, spawnPos.x, spawnPos.y, 150, enemyType));
         }
         
@@ -505,9 +389,7 @@ class GameScene extends Phaser.Scene {
         // Add enemies to physics group
         this.enemyGroup = this.physics.add.group(this.enemies);
         
-        // Debug: Log enemy positions and platform info
-        console.log('Floating platforms available:', floatingPlatforms.length);
-        console.log('Floating platform positions:', floatingPlatforms.map(p => `x=${p.x}, y=${p.y}`));
+        // Debug: Log enemy positions
         console.log('Enemies spawned at positions:');
         this.enemies.forEach((enemy, index) => {
             console.log(`Enemy ${index}: x=${enemy.x}, y=${enemy.y}, type=${enemy.type}`);
@@ -574,27 +456,28 @@ class GameScene extends Phaser.Scene {
     }
 
     setupCollisions() {
-        // Player vs Platforms
-        this.physics.add.collider(this.player, this.platforms);
+        // Player vs Tilemap
+        this.physics.add.collider(this.player, this.tilemapSystem.collisionGroup);
+        
+        // Also try individual collision bodies as backup
+        this.tilemapSystem.collisionBodies.forEach((body, index) => {
+            this.physics.add.collider(this.player, body);
+        });
         
         // Player vs Enemies
         this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
             // Collision handling is done in Enemy class
         });
         
-        // Player vs Portal - only the animated portal sprite
-        console.log('Setting up portal collision detection...');
-        console.log('Player:', this.player);
-        console.log('Portal sprite:', this.portalSprite);
+        // Enemies vs Tilemap
+        this.physics.add.collider(this.enemies, this.tilemapSystem.collisionGroup);
         
+        // Player vs Portal - only the animated portal sprite
         this.physics.add.overlap(this.player, this.portalSprite, (player, portal) => {
             console.log('Portal collision detected! Starting victory scene...');
             this.stopBackgroundMusic();
             this.scene.start('VictoryScene');
         });
-        
-        // Enemies vs Platforms (so they don't fall through)
-        this.physics.add.collider(this.enemyGroup, this.platforms);
     }
 
     createUI() {
@@ -702,13 +585,13 @@ class GameScene extends Phaser.Scene {
             }
         });
         
-        // Ensure platforms and enemies stay in place (continuous check)
-        this.platforms.forEach(platform => {
-            if (platform && platform.body && platform.body.velocity.y !== 0) {
-                platform.body.setVelocityY(0);
-                platform.body.setAllowGravity(false);
-            }
-        });
+        // Debug: Track player position every 60 frames (1 second) - DISABLED
+        // if (this.player && this.frameCount % 60 === 0) {
+        //     console.log(`Player position: (${this.player.x}, ${this.player.y})`);
+        //     console.log(`Player velocity: (${this.player.body.velocity.x}, ${this.player.body.velocity.y})`);
+        //     console.log(`Player touching ground: ${this.player.body.touching.down}`);
+        // }
+        this.frameCount++;
         
         this.enemies.forEach(enemy => {
             if (enemy && enemy.body && enemy.body.velocity.y !== 0) {
