@@ -4,27 +4,7 @@ class CharacterSelectScene extends Phaser.Scene {
     }
 
     preload() {
-        // Load home background and logo
-        this.load.image('homebg', 'img/homebg.png');
-        this.load.image('logo', 'img/logo.png');
-        
-        // Load character sprites for selection screen
-        this.loadCharacterSprites();
-    }
-    
-    loadCharacterSprites() {
-        const characters = ['char1', 'char2', 'char3', 'char4'];
-        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
-        
-        characters.forEach((char, index) => {
-            const charName = characterNames[index];
-            
-            // Load breathing-idle animation frames for character selection
-            for (let i = 0; i < 4; i++) {
-                const frameNumber = i.toString().padStart(3, '0');
-                this.load.image(`${charName}_breathing_idle_${frameNumber}`, `img/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`);
-            }
-        });
+        // Assets are preloaded in LoadingScene
     }
 
     create() {

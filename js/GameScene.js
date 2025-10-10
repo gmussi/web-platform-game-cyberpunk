@@ -4,86 +4,11 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // Load tileset image
-        this.load.image('tileset', 'img/Tileset.png');
-        
-        // Load portal animation frames
-        for (let i = 1; i <= 12; i++) {
-            const frameNumber = i.toString().padStart(2, '0');
-            this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_clean_frame_${frameNumber}.png`);
-        }
-        
-        // Load background images (optimized smaller files ~800KB each, 1728x576px)
-        this.load.image('background1', 'img/background1.png');
-        this.load.image('background2', 'img/background2.png');
-        this.load.image('background3', 'img/background3.png');
-        
-        // Add timeout for loading
-        this.load.on('complete', () => {
-            console.log('All assets loaded successfully');
-            // Create individual tile textures from tileset
-            this.createTileTextures();
-        });
-        
-        this.load.on('progress', (progress) => {
-            console.log('Loading progress:', Math.round(progress * 100) + '%');
-        });
-        
-        // Load character sprites and animations
-        this.loadCharacterSprites();
-        
-        // Load enemy sprites
-        this.loadEnemySprites();
+        // Assets are preloaded in LoadingScene
+        // Just create tile textures from the preloaded tileset
+        this.createTileTextures();
     }
     
-    loadCharacterSprites() {
-        const characters = ['char1', 'char2', 'char3', 'char4'];
-        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
-        
-        characters.forEach((char, index) => {
-            const charName = characterNames[index];
-            
-            // Load rotation sprites
-            this.load.image(`${charName}_south`, `img/${char}/rotations/south.png`);
-            this.load.image(`${charName}_west`, `img/${char}/rotations/west.png`);
-            this.load.image(`${charName}_east`, `img/${char}/rotations/east.png`);
-            this.load.image(`${charName}_north`, `img/${char}/rotations/north.png`);
-            
-            // Load breathing-idle animation frames
-            for (let i = 0; i < 4; i++) {
-                const frameNumber = i.toString().padStart(3, '0');
-                this.load.image(`${charName}_breathing_idle_${frameNumber}`, `img/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`);
-            }
-            
-            // Load walk animation frames (east and west)
-            ['east', 'west'].forEach(direction => {
-                for (let i = 0; i < 6; i++) {
-                    const frameNumber = i.toString().padStart(3, '0');
-                    this.load.image(`${charName}_walk_${direction}_${frameNumber}`, `img/${char}/animations/walk/${direction}/frame_${frameNumber}.png`);
-                }
-            });
-            
-            // Load jumping animation frames (east and west)
-            ['east', 'west'].forEach(direction => {
-                for (let i = 0; i < 9; i++) {
-                    const frameNumber = i.toString().padStart(3, '0');
-                    this.load.image(`${charName}_jumping_${direction}_${frameNumber}`, `img/${char}/animations/jumping-1/${direction}/frame_${frameNumber}.png`);
-                }
-            });
-        });
-    }
-    
-    loadEnemySprites() {
-        const enemies = ['enemy1', 'enemy2'];
-        
-        enemies.forEach(enemy => {
-            // Load rotation sprites for each enemy
-            this.load.image(`${enemy}_south`, `img/${enemy}/rotations/south.png`);
-            this.load.image(`${enemy}_west`, `img/${enemy}/rotations/west.png`);
-            this.load.image(`${enemy}_east`, `img/${enemy}/rotations/east.png`);
-            this.load.image(`${enemy}_north`, `img/${enemy}/rotations/north.png`);
-        });
-    }
     
     createTileTextures() {
         console.log('GameScene: Creating tile textures...');
@@ -946,30 +871,22 @@ class GameScene extends Phaser.Scene {
         
         window.gameMusicInitialized = true;
         
-        // Load and play the background music MP3 from local file
-        this.load.audio('backgroundMusic', 'background_music.mp3');
-        // Load Wilhelm scream sound effect
-        this.load.audio('wilhelmScream', 'wilhelmscream.mp3');
-        
-        this.load.once('complete', () => {
-            // Create background music sound
-            this.backgroundMusic = this.sound.add('backgroundMusic', {
-                volume: 0.3, // Lower volume so it doesn't overpower gameplay
-                loop: true,   // Loop the music continuously
-                fadeIn: {
-                    duration: 2000, // Fade in over 2 seconds
-                    from: 0,
-                    to: 0.3
-                }
-            });
-            
-            // Start playing the music
-            this.backgroundMusic.play();
-            console.log('Background music started');
-            console.log('Wilhelm scream sound loaded');
+        // Audio is preloaded in LoadingScene
+        // Create background music sound
+        this.backgroundMusic = this.sound.add('backgroundMusic', {
+            volume: 0.3, // Lower volume so it doesn't overpower gameplay
+            loop: true,   // Loop the music continuously
+            fadeIn: {
+                duration: 2000, // Fade in over 2 seconds
+                from: 0,
+                to: 0.3
+            }
         });
         
-        this.load.start();
+        // Start playing the music
+        this.backgroundMusic.play();
+        console.log('Background music started');
+        console.log('Wilhelm scream sound loaded');
     }
     
     playWilhelmScream() {

@@ -12,7 +12,7 @@ const config = {
             debug: false
         }
     },
-    scene: [CharacterSelectScene, GameScene, GameOverScene, VictoryScene, MapEditorScene]
+    scene: [LoadingScene, CharacterSelectScene, GameScene, GameOverScene, VictoryScene, MapEditorScene]
 };
 
 // Game data

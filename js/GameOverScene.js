@@ -4,8 +4,7 @@ class GameOverScene extends Phaser.Scene {
     }
 
     preload() {
-        // Load home background
-        this.load.image('homebg', 'img/homebg.png');
+        // Assets are preloaded in LoadingScene
     }
 
     create() {

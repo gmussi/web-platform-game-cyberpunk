@@ -11,57 +11,11 @@ class MapEditorScene extends Phaser.Scene {
     }
 
     preload() {
-        // Load tileset image
-        this.load.image('tileset', 'img/Tileset.png');
-        
-        // Load the same assets as GameScene
-        for (let i = 1; i <= 12; i++) {
-            const frameNumber = i.toString().padStart(2, '0');
-            this.load.image(`portal_frame_${frameNumber}`, `img/portal/portal_clean_frame_${frameNumber}.png`);
-        }
-        
-        this.load.image('background1', 'img/background1.png');
-        this.load.image('background2', 'img/background2.png');
-        this.load.image('background3', 'img/background3.png');
-        
-        // Add tileset loading completion handler
-        this.load.on('complete', () => {
-            // Create individual tile textures from tileset
-            this.createTileTextures();
-        });
-        
-        // Load character sprites
-        this.loadCharacterSprites();
-        
-        // Load enemy sprites
-        this.loadEnemySprites();
+        // Assets are preloaded in LoadingScene
+        // Just create tile textures from the preloaded tileset
+        this.createTileTextures();
     }
 
-    loadCharacterSprites() {
-        const characters = ['char1', 'char2', 'char3', 'char4'];
-        const characterNames = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'];
-        
-        characters.forEach((char, index) => {
-            const charName = characterNames[index];
-            
-            // Load rotation sprites
-            this.load.image(`${charName}_south`, `img/${char}/rotations/south.png`);
-            this.load.image(`${charName}_west`, `img/${char}/rotations/west.png`);
-            this.load.image(`${charName}_east`, `img/${char}/rotations/east.png`);
-            this.load.image(`${charName}_north`, `img/${char}/rotations/north.png`);
-        });
-    }
-
-    loadEnemySprites() {
-        const enemies = ['enemy1', 'enemy2'];
-        
-        enemies.forEach(enemy => {
-            this.load.image(`${enemy}_south`, `img/${enemy}/rotations/south.png`);
-            this.load.image(`${enemy}_west`, `img/${enemy}/rotations/west.png`);
-            this.load.image(`${enemy}_east`, `img/${enemy}/rotations/east.png`);
-            this.load.image(`${enemy}_north`, `img/${enemy}/rotations/north.png`);
-        });
-    }
     
     createTileTextures() {
         // Check if tileset_sprites already exists to prevent duplicate texture creation
