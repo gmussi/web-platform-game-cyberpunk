@@ -52,7 +52,7 @@ class MapEditorScene extends Phaser.Scene {
         this.mapSystem = new MapSystem(this);
         
         // Set world bounds
-        this.physics.world.setBounds(0, 0, 4100, 800);
+        this.physics.world.setBounds(0, 0, 4128, 800);
         
         // Create background
         this.createBackground();
@@ -539,12 +539,16 @@ class MapEditorScene extends Phaser.Scene {
         this.objectInfoText.setText(`Selected: ${this.selectedTool || 'None - Select a tool'}`);
     }
 
-    saveMap() {
+    async saveMap() {
         // Save tile data to map
         this.saveTileDataToMap();
         
-        this.mapSystem.saveMap(this.mapData);
-        console.log('Map saved from editor');
+        const success = await this.mapSystem.saveMap(this.mapData);
+        if (success) {
+            console.log('Map saved from editor');
+        } else {
+            console.log('Map save cancelled or failed');
+        }
     }
 
     saveTileDataToMap() {
@@ -654,12 +658,41 @@ class MapEditorScene extends Phaser.Scene {
         const worldX = this.cameras.main.getWorldPoint(mouseX, mouseY).x;
         const worldY = this.cameras.main.getWorldPoint(mouseX, mouseY).y;
         
-        this.coordinateText.setText(`Position: (${Math.round(worldX)}, ${Math.round(worldY)})`);
+        // Convert world coordinates to tile coordinates
+        const tileX = Math.floor(worldX / this.tilemapSystem.tileSize);
+        const tileY = Math.floor(worldY / this.tilemapSystem.tileSize);
+        
+        // Get tile type at current position
+        const tileType = this.tilemapSystem.getTile(tileX, tileY);
+        const tileTypeName = this.getTileTypeName(tileType);
+        
+        this.coordinateText.setText(`Position: (${Math.round(worldX)}, ${Math.round(worldY)}) | Tile: (${tileX}, ${tileY}) [${tileTypeName}]`);
         
         // Update mouse indicator
         if (this.mouseIndicator) {
             this.mouseIndicator.setPosition(worldX, worldY);
             this.mouseIndicator.setVisible(true);
+        }
+    }
+    
+    getTileTypeName(tileType) {
+        switch (tileType) {
+            case TilemapSystem.TILE_TYPES.EMPTY:
+                return 'Empty';
+            case TilemapSystem.TILE_TYPES.GROUND:
+                return 'Ground';
+            case TilemapSystem.TILE_TYPES.WALL:
+                return 'Wall';
+            case TilemapSystem.TILE_TYPES.PLATFORM:
+                return 'Platform';
+            case TilemapSystem.TILE_TYPES.SPIKE:
+                return 'Spike';
+            case TilemapSystem.TILE_TYPES.LADDER:
+                return 'Ladder';
+            case TilemapSystem.TILE_TYPES.WATER:
+                return 'Water';
+            default:
+                return `Unknown(${tileType})`;
         }
     }
 }

@@ -200,36 +200,87 @@ class MapSystem {
         };
     }
 
-    // Save current map data to file
-    saveMap(mapData = null) {
+    // Save current map data to file with custom filename
+    async saveMap(mapData = null) {
         const dataToSave = mapData || this.mapData || MapSystem.createMapData();
         
         try {
-            // In a real browser environment, you would use File System Access API
-            // For this demo, we'll create a downloadable JSON file
-            const jsonString = JSON.stringify(dataToSave, null, 2);
-            
-            // Create a blob and download link
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = this.mapFileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up
-            URL.revokeObjectURL(url);
-            
-            console.log('Map saved successfully:', this.mapFileName);
-            return true;
+            // Try to use File System Access API for better file handling
+            if ('showSaveFilePicker' in window) {
+                return await this.saveMapWithFilePicker(dataToSave);
+            } else {
+                // Fallback to custom filename prompt
+                return await this.saveMapWithPrompt(dataToSave);
+            }
         } catch (error) {
             console.error('Error saving map:', error);
             return false;
         }
+    }
+    
+    // Save map using File System Access API
+    async saveMapWithFilePicker(mapData) {
+        try {
+            const jsonString = JSON.stringify(mapData, null, 2);
+            
+            // Show file picker
+            const fileHandle = await window.showSaveFilePicker({
+                suggestedName: this.mapFileName,
+                types: [{
+                    description: 'JSON Map Files',
+                    accept: {
+                        'application/json': ['.json']
+                    }
+                }]
+            });
+            
+            // Write to file
+            const writable = await fileHandle.createWritable();
+            await writable.write(jsonString);
+            await writable.close();
+            
+            console.log('Map saved successfully with File System Access API');
+            return true;
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Save cancelled by user');
+                return false;
+            }
+            throw error;
+        }
+    }
+    
+    // Save map with custom filename prompt (fallback)
+    async saveMapWithPrompt(mapData) {
+        const jsonString = JSON.stringify(mapData, null, 2);
+        
+        // Prompt for filename
+        const filename = prompt('Enter filename for your map:', this.mapFileName);
+        if (!filename) {
+            console.log('Save cancelled by user');
+            return false;
+        }
+        
+        // Ensure .json extension
+        const finalFilename = filename.endsWith('.json') ? filename : filename + '.json';
+        
+        // Create a blob and download link
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = finalFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up
+        URL.revokeObjectURL(url);
+        
+        console.log('Map saved successfully:', finalFilename);
+        return true;
     }
 
     // Load map data from file

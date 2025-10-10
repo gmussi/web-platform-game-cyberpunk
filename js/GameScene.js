@@ -152,6 +152,9 @@ class GameScene extends Phaser.Scene {
             this.createDarkOverlay();
         });
         
+        // Set up world bounds FIRST
+        this.setupWorldBounds();
+        
         // Create tilemap system
         this.tilemapSystem = new TilemapSystem(this);
         this.tilemapSystem.generateLevel();
@@ -159,10 +162,7 @@ class GameScene extends Phaser.Scene {
         // Load map data if available, otherwise use default
         this.loadMapData();
         
-        // Create collision bodies for the tilemap FIRST
-        this.tilemapSystem.createCollisionBodies();
-        
-        // Create player AFTER collision bodies are created
+        // Create player immediately (will be repositioned when map loads)
         this.createPlayer();
         
         // Create enemies
@@ -171,14 +171,16 @@ class GameScene extends Phaser.Scene {
         // Create portal
         this.createPortal();
         
-        // Setup collisions AFTER everything is created
+        // Setup collisions with default tilemap FIRST
+        this.tilemapSystem.createCollisionBodies();
         this.setupCollisions();
         
-        // Create UI
-        this.createUI();
         
         // Set up camera
         this.setupCamera();
+        
+        // Create UI
+        this.createUI();
         
         // Set up event listeners
         this.setupEventListeners();
@@ -191,20 +193,103 @@ class GameScene extends Phaser.Scene {
     }
 
     loadMapData() {
-        // Try to load example map, fallback to default if not available
-        this.mapSystem.loadMapFromURL('maps/example_map.json')
+        // Try to load map1.json, fallback to example_map.json if not available
+        this.mapSystem.loadMapFromURL('maps/map1.json')
             .then(mapData => {
                 console.log('Loaded map:', mapData.metadata.name);
                 this.mapData = mapData;
+                // Load tile data immediately after map data is loaded
+                this.loadTileDataFromMap();
+                // Create collision bodies AFTER tile data is loaded
+                this.tilemapSystem.createCollisionBodies();
+                // Setup collisions AFTER collision bodies are created
+                this.setupCollisions();
+            })
+            .catch(error => {
+                console.log('map1.json not found, trying example_map.json:', error.message);
+                return this.mapSystem.loadMapFromURL('maps/example_map.json');
+            })
+            .then(mapData => {
+                if (mapData) {
+                    console.log('Loaded map:', mapData.metadata.name);
+                    this.mapData = mapData;
+                    // Load tile data immediately after map data is loaded
+                    this.loadTileDataFromMap();
+                    // Create collision bodies AFTER tile data is loaded
+                    this.tilemapSystem.createCollisionBodies();
+                    // Setup collisions AFTER collision bodies are created
+                    this.setupCollisions();
+                }
             })
             .catch(error => {
                 console.log('Using default map data:', error.message);
                 this.mapData = MapSystem.createMapData();
+                // Load tile data immediately after map data is loaded
+                this.loadTileDataFromMap();
+                // Create collision bodies AFTER tile data is loaded
+                this.tilemapSystem.createCollisionBodies();
+                // Setup collisions AFTER collision bodies are created
+                this.setupCollisions();
             });
     }
 
+    loadTileDataFromMap() {
+        // Load tile data from map
+        if (this.mapData && this.mapData.tiles && Array.isArray(this.mapData.tiles)) {
+            console.log('Loading tile data from map...');
+            
+            // Clear existing tiles first
+            for (let y = 0; y < this.tilemapSystem.mapHeight; y++) {
+                for (let x = 0; x < this.tilemapSystem.mapWidth; x++) {
+                    this.tilemapSystem.setTile(x, y, TilemapSystem.TILE_TYPES.EMPTY);
+                }
+            }
+            
+            // Load tile data
+            console.log(`Map data tiles length: ${this.mapData.tiles.length}`);
+            console.log(`Tilemap system mapHeight: ${this.tilemapSystem.mapHeight}`);
+            console.log(`Tilemap system mapWidth: ${this.tilemapSystem.mapWidth}`);
+            
+            for (let y = 0; y < Math.min(this.mapData.tiles.length, this.tilemapSystem.mapHeight); y++) {
+                if (this.mapData.tiles[y] && Array.isArray(this.mapData.tiles[y])) {
+                    console.log(`Row ${y} length: ${this.mapData.tiles[y].length}`);
+                    for (let x = 0; x < Math.min(this.mapData.tiles[y].length, this.tilemapSystem.mapWidth); x++) {
+                        // Set tile data without triggering visual update for each tile
+                        this.tilemapSystem.tiles[y][x] = this.mapData.tiles[y][x];
+                        
+                        // Debug: Log specific tile (120, 13)
+                        if (x === 120 && y === 13) {
+                            console.log(`Loading tile at (120, 13): mapData=${this.mapData.tiles[y][x]}, tilemapSystem=${this.tilemapSystem.tiles[y][x]}`);
+                        }
+                    }
+                }
+            }
+            
+            // Redraw the entire visual layer once after loading all tiles
+            this.tilemapSystem.redrawVisualLayer();
+            
+            // Debug: Check specific tile (120, 13)
+            const debugTile = this.tilemapSystem.getTile(120, 13);
+            console.log(`Debug: Tile at (120, 13) = ${debugTile} (should be 3 for platform)`);
+            
+            // Debug: Count non-empty tiles
+            let nonEmptyTiles = 0;
+            for (let y = 0; y < this.tilemapSystem.mapHeight; y++) {
+                for (let x = 0; x < this.tilemapSystem.mapWidth; x++) {
+                    if (this.tilemapSystem.tiles[y][x] !== TilemapSystem.TILE_TYPES.EMPTY) {
+                        nonEmptyTiles++;
+                    }
+                }
+            }
+            
+            console.log(`Tile data loaded from map successfully. Non-empty tiles: ${nonEmptyTiles}`);
+        } else {
+            console.log('No tile data found in map, using default tilemap');
+        }
+    }
+
     setupWorldBounds() {
-        const worldWidth = 4100; // Extended world to match tilemap width
+        const worldWidth = 4128; // Extended world to match tilemap width (129 tiles * 32 pixels)
         const worldHeight = 800; // Match tilemap height (25 tiles * 32 pixels)
         
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
@@ -619,8 +704,8 @@ class GameScene extends Phaser.Scene {
             strokeThickness: 1
         }).setScrollFactor(0).setInteractive();
 
-        this.saveMapButton.on('pointerdown', () => {
-            this.saveCurrentMap();
+        this.saveMapButton.on('pointerdown', async () => {
+            await this.saveCurrentMap();
         });
 
         // Load map button (for testing)
@@ -666,12 +751,16 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    saveCurrentMap() {
+    async saveCurrentMap() {
         if (this.mapSystem) {
             const currentMapData = this.mapSystem.createMapFromGameState();
             if (currentMapData) {
-                this.mapSystem.saveMap(currentMapData);
-                console.log('Current game state saved as map');
+                const success = await this.mapSystem.saveMap(currentMapData);
+                if (success) {
+                    console.log('Current game state saved as map');
+                } else {
+                    console.log('Map save cancelled or failed');
+                }
             }
         }
     }
@@ -682,7 +771,7 @@ class GameScene extends Phaser.Scene {
 
     setupCamera() {
         // Set camera bounds for extended world with maximized playable area
-        this.cameras.main.setBounds(0, 0, 4100, 800);
+        this.cameras.main.setBounds(0, 0, 4128, 800);
         
         // Start camera following player
         this.cameras.main.startFollow(this.player);
@@ -792,6 +881,14 @@ class GameScene extends Phaser.Scene {
     }
     
     startBackgroundMusic() {
+        // Check if music is already initialized globally to prevent duplicates
+        if (window.gameMusicInitialized) {
+            console.log('Background music already initialized globally, skipping...');
+            return;
+        }
+        
+        window.gameMusicInitialized = true;
+        
         // Load and play the background music MP3 from local file
         this.load.audio('backgroundMusic', 'background_music.mp3');
         // Load Wilhelm scream sound effect
@@ -855,3 +952,4 @@ class GameScene extends Phaser.Scene {
         super.shutdown();
     }
 }
+

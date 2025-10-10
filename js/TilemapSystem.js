@@ -2,7 +2,7 @@ class TilemapSystem {
     constructor(scene) {
         this.scene = scene;
         this.tileSize = 32; // 32x32 pixel tiles
-        this.mapWidth = 128; // 128 tiles wide (4096 pixels)
+        this.mapWidth = 129; // 129 tiles wide (4128 pixels)
         this.mapHeight = 25; // 25 tiles tall (800 pixels)
         this.tiles = [];
         this.collisionLayer = null;
@@ -25,6 +25,8 @@ class TilemapSystem {
         // Create visual layer
         this.visualLayer = this.scene.add.graphics();
         this.visualLayer.setDepth(4);
+        this.visualLayer.setVisible(true);
+        console.log('Visual layer created with depth 4');
         
         // Initialize collision bodies array
         this.collisionBodies = [];
@@ -152,15 +154,24 @@ class TilemapSystem {
     redrawVisualLayer() {
         this.visualLayer.clear();
         
+        let tilesDrawn = 0;
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tileType = this.tiles[y][x];
                 if (tileType !== TilemapSystem.TILE_TYPES.EMPTY) {
                     const worldPos = this.tileToWorld(x, y);
                     this.drawTileVisual(worldPos.x, worldPos.y, tileType);
+                    tilesDrawn++;
+                    
+                    // Debug: Log specific tile (120, 13)
+                    if (x === 120 && y === 13) {
+                        console.log(`Drawing tile at (120, 13): type=${tileType}, worldPos=(${worldPos.x}, ${worldPos.y})`);
+                    }
                 }
             }
         }
+        
+        console.log(`RedrawVisualLayer: Drew ${tilesDrawn} tiles`);
     }
     
     // Create collision bodies for solid tiles using a single static group
