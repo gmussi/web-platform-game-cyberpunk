@@ -135,6 +135,31 @@ class CharacterSelectScene extends Phaser.Scene {
             fontSize: '16px',
             fill: '#00ffff'
         }).setOrigin(0.5);
+
+        // Map Editor button
+        this.mapEditorButton = this.add.text(600, 650, 'Map Editor (E)', {
+            fontSize: '18px',
+            fill: '#00ff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5).setInteractive();
+
+        this.mapEditorButton.on('pointerdown', () => {
+            this.scene.start('MapEditorScene');
+        });
+
+        this.mapEditorButton.on('pointerover', () => {
+            this.mapEditorButton.setFill('#ffffff');
+        });
+
+        this.mapEditorButton.on('pointerout', () => {
+            this.mapEditorButton.setFill('#00ff00');
+        });
+
+        // Keyboard input
+        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
     
     createCharacterAnimations() {
@@ -196,6 +221,13 @@ class CharacterSelectScene extends Phaser.Scene {
                 yoyo: true,
                 ease: 'Sine.easeInOut'
             });
+        }
+    }
+
+    update() {
+        // Handle keyboard input
+        if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
+            this.scene.start('MapEditorScene');
         }
     }
 

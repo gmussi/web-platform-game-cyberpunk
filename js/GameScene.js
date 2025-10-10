@@ -137,6 +137,9 @@ class GameScene extends Phaser.Scene {
     }
     
     create() {
+        // Initialize map system
+        this.mapSystem = new MapSystem(this);
+        
         // Set world bounds based on scroll direction
         this.setupWorldBounds();
         
@@ -153,14 +156,8 @@ class GameScene extends Phaser.Scene {
         this.tilemapSystem = new TilemapSystem(this);
         this.tilemapSystem.generateLevel();
         
-        // Define portal area for collision checking
-        this.portalArea = {
-            x: 4000,
-            y: 660,
-            width: 100,
-            height: 100,
-            buffer: 50 // Extra buffer around portal
-        };
+        // Load map data if available, otherwise use default
+        this.loadMapData();
         
         // Create collision bodies for the tilemap FIRST
         this.tilemapSystem.createCollisionBodies();
@@ -191,6 +188,19 @@ class GameScene extends Phaser.Scene {
         
         // Initialize debug counter
         this.frameCount = 0;
+    }
+
+    loadMapData() {
+        // Try to load example map, fallback to default if not available
+        this.mapSystem.loadMapFromURL('maps/example_map.json')
+            .then(mapData => {
+                console.log('Loaded map:', mapData.metadata.name);
+                this.mapData = mapData;
+            })
+            .catch(error => {
+                console.log('Using default map data:', error.message);
+                this.mapData = MapSystem.createMapData();
+            });
     }
 
     setupWorldBounds() {
@@ -324,21 +334,31 @@ class GameScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        // Paladin starts near the portal, other characters start at the beginning
+        // Get player start position from map data
         let startX = 100; // Default starting position
-        if (gameData.selectedCharacter === 'D') {
-            startX = 3800; // Paladin starts close to portal (portal is at x=4000)
+        let startY = 688; // Default starting position
+        
+        if (this.mapData && this.mapData.player) {
+            startX = this.mapData.player.startPosition.x;
+            startY = this.mapData.player.startPosition.y;
+        } else {
+            // Paladin starts near the portal, other characters start at the beginning
+            if (gameData.selectedCharacter === 'D') {
+                startX = 3800; // Paladin starts close to portal (portal is at x=4000)
+            }
+            
+            // Calculate ground level from tilemap (bottom 3 rows)
+            const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
+            const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
+            startY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
         }
         
-        // Calculate ground level from tilemap (bottom 3 rows)
-        const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
-        const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
-        const playerSpawnY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
-        
-        this.player = new Player(this, startX, playerSpawnY, gameData.selectedCharacter);
+        this.player = new Player(this, startX, startY, gameData.selectedCharacter);
         
         // Add player to physics groups for collision detection
         this.playerGroup = this.physics.add.group([this.player]);
+        
+        console.log(`Player created at position: (${startX}, ${startY})`);
     }
 
     // Helper function to find appropriate spawn position using tilemap
@@ -350,6 +370,61 @@ class GameScene extends Phaser.Scene {
     createEnemies() {
         this.enemies = [];
         
+        if (this.mapData && this.mapData.enemies) {
+            // Create enemies from map data
+            this.mapData.enemies.forEach(enemyData => {
+                let enemy;
+                
+                switch (enemyData.type) {
+                    case 'stationary':
+                        enemy = Enemy.createStationaryEnemy(this, enemyData.position.x, enemyData.position.y, enemyData.enemyType);
+                        break;
+                    case 'moving':
+                        enemy = Enemy.createMovingEnemy(this, enemyData.position.x, enemyData.position.y, enemyData.enemyType);
+                        break;
+                    case 'patrol':
+                        enemy = Enemy.createPatrolEnemy(this, enemyData.position.x, enemyData.position.y, enemyData.properties.patrolRange || 150, enemyData.enemyType);
+                        break;
+                    default:
+                        enemy = Enemy.createStationaryEnemy(this, enemyData.position.x, enemyData.position.y, enemyData.enemyType);
+                }
+                
+                // Apply properties from map data
+                if (enemyData.properties) {
+                    if (enemyData.properties.damage) enemy.damage = enemyData.properties.damage;
+                    if (enemyData.properties.health) enemy.health = enemyData.properties.health;
+                    if (enemyData.properties.maxHealth) enemy.maxHealth = enemyData.properties.maxHealth;
+                    if (enemyData.properties.speed) enemy.speed = enemyData.properties.speed;
+                    if (enemyData.properties.patrolRange) enemy.patrolRange = enemyData.properties.patrolRange;
+                }
+                
+                this.enemies.push(enemy);
+            });
+            
+            console.log(`Created ${this.enemies.length} enemies from map data`);
+        } else {
+            // Fallback to default enemy creation
+            this.createDefaultEnemies();
+        }
+        
+        // Add enemies to physics group
+        this.enemyGroup = this.physics.add.group(this.enemies);
+        
+        // Debug: Log enemy positions
+        console.log('Enemies spawned at positions:');
+        this.enemies.forEach((enemy, index) => {
+            console.log(`Enemy ${index}: x=${enemy.x}, y=${enemy.y}, type=${enemy.type}`);
+            console.log(`Enemy ${index} physics body: x=${enemy.body.x}, y=${enemy.body.y}, width=${enemy.body.width}, height=${enemy.body.height}`);
+        });
+        
+        // Debug: Log player physics body info
+        if (this.player) {
+            console.log(`Player physics body: x=${this.player.body.x}, y=${this.player.body.y}, width=${this.player.body.width}, height=${this.player.body.height}`);
+            console.log(`Player sprite: x=${this.player.x}, y=${this.player.y}, width=${this.player.width}, height=${this.player.height}`);
+        }
+    }
+
+    createDefaultEnemies() {
         // Stationary enemies (blocking paths) - position them on ground platforms
         const stationaryPositions = [
             { x: 400, preferGround: true },
@@ -385,29 +460,21 @@ class GameScene extends Phaser.Scene {
         }
         
         this.enemies.push(...stationaryEnemies, ...movingEnemies, ...patrolEnemies);
-        
-        // Add enemies to physics group
-        this.enemyGroup = this.physics.add.group(this.enemies);
-        
-        // Debug: Log enemy positions
-        console.log('Enemies spawned at positions:');
-        this.enemies.forEach((enemy, index) => {
-            console.log(`Enemy ${index}: x=${enemy.x}, y=${enemy.y}, type=${enemy.type}`);
-            console.log(`Enemy ${index} physics body: x=${enemy.body.x}, y=${enemy.body.y}, width=${enemy.body.width}, height=${enemy.body.height}`);
-        });
-        
-        // Debug: Log player physics body info
-        if (this.player) {
-            console.log(`Player physics body: x=${this.player.body.x}, y=${this.player.body.y}, width=${this.player.body.width}, height=${this.player.body.height}`);
-            console.log(`Player sprite: x=${this.player.x}, y=${this.player.y}, width=${this.player.width}, height=${this.player.height}`);
-        }
     }
 
     createPortal() {
-        // Create portal at the end of the map (near x=4000)
-        const portalX = 4000;
-        const groundY = 760; // Ground level from platform creation
-        const portalY = groundY - 100; // Position portal above ground level
+        // Get portal position from map data
+        let portalX = 4000;
+        let portalY = 660;
+        
+        if (this.mapData && this.mapData.portal) {
+            portalX = this.mapData.portal.position.x;
+            portalY = this.mapData.portal.position.y;
+        } else {
+            // Default portal position
+            const groundY = 760; // Ground level from platform creation
+            portalY = groundY - 100; // Position portal above ground level
+        }
         
         // Create animated portal sprite
         this.portalSprite = this.add.sprite(portalX, portalY, 'portal_frame_01');
@@ -430,7 +497,7 @@ class GameScene extends Phaser.Scene {
                 { key: 'portal_frame_11' },
                 { key: 'portal_frame_12' }
             ],
-            frameRate: 12, // 12 fps for smooth animation
+            frameRate: this.mapData?.portal?.animationSpeed || 12, // Use map data or default
             repeat: -1 // Loop infinitely
         });
         
@@ -452,7 +519,14 @@ class GameScene extends Phaser.Scene {
         console.log('Portal body enabled:', this.portalSprite.body.enable);
         console.log('Portal body size:', this.portalSprite.body.width, this.portalSprite.body.height);
         
-        // Portal is now just the animated sprite - no additional effects needed
+        // Define portal area for collision checking
+        this.portalArea = {
+            x: portalX,
+            y: portalY,
+            width: this.mapData?.portal?.size?.width || 100,
+            height: this.mapData?.portal?.size?.height || 100,
+            buffer: 50 // Extra buffer around portal
+        };
     }
 
     setupCollisions() {
@@ -519,6 +593,91 @@ class GameScene extends Phaser.Scene {
             stroke: '#000000',
             strokeThickness: 1
         }).setScrollFactor(0);
+
+        // Map management UI
+        this.createMapManagementUI();
+    }
+
+    createMapManagementUI() {
+        // Map info display
+        if (this.mapData && this.mapData.metadata) {
+            this.mapInfoText = this.add.text(50, 70, `Map: ${this.mapData.metadata.name}`, {
+                fontSize: '14px',
+                fill: '#ffffff',
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 1
+            }).setScrollFactor(0);
+        }
+
+        // Save map button (for testing)
+        this.saveMapButton = this.add.text(50, 100, 'Save Map (S)', {
+            fontSize: '12px',
+            fill: '#00ff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 1
+        }).setScrollFactor(0).setInteractive();
+
+        this.saveMapButton.on('pointerdown', () => {
+            this.saveCurrentMap();
+        });
+
+        // Load map button (for testing)
+        this.loadMapButton = this.add.text(150, 100, 'Load Map (L)', {
+            fontSize: '12px',
+            fill: '#00ff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 1
+        }).setScrollFactor(0).setInteractive();
+
+        this.loadMapButton.on('pointerdown', () => {
+            this.loadMapFromFile();
+        });
+
+        // Create map input for file loading
+        this.createMapFileInput();
+    }
+
+    createMapFileInput() {
+        // Create hidden file input
+        this.mapFileInput = document.createElement('input');
+        this.mapFileInput.type = 'file';
+        this.mapFileInput.accept = '.json';
+        this.mapFileInput.style.display = 'none';
+        document.body.appendChild(this.mapFileInput);
+
+        this.mapFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                this.mapSystem.loadMap(file)
+                    .then(mapData => {
+                        console.log('Map loaded from file:', mapData.metadata.name);
+                        this.mapData = mapData;
+                        // Restart the scene with new map data
+                        this.scene.restart();
+                    })
+                    .catch(error => {
+                        console.error('Error loading map:', error);
+                        alert('Error loading map: ' + error.message);
+                    });
+            }
+        });
+    }
+
+    saveCurrentMap() {
+        if (this.mapSystem) {
+            const currentMapData = this.mapSystem.createMapFromGameState();
+            if (currentMapData) {
+                this.mapSystem.saveMap(currentMapData);
+                console.log('Current game state saved as map');
+            }
+        }
+    }
+
+    loadMapFromFile() {
+        this.mapFileInput.click();
     }
 
     setupCamera() {
@@ -549,6 +708,10 @@ class GameScene extends Phaser.Scene {
             // Remove enemy from groups
             this.enemies = this.enemies.filter(e => e !== enemy);
         });
+
+        // Map management keyboard shortcuts
+        this.mapSaveKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.mapLoadKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L);
     }
 
     updateHealthBar(health) {
@@ -573,6 +736,15 @@ class GameScene extends Phaser.Scene {
     }
 
     update() {
+        // Handle map management keyboard shortcuts
+        if (Phaser.Input.Keyboard.JustDown(this.mapSaveKey)) {
+            this.saveCurrentMap();
+        }
+        
+        if (Phaser.Input.Keyboard.JustDown(this.mapLoadKey)) {
+            this.loadMapFromFile();
+        }
+
         // Update player
         if (this.player) {
             this.player.update();
@@ -674,6 +846,12 @@ class GameScene extends Phaser.Scene {
     shutdown() {
         // Clean up background music when scene is destroyed
         this.stopBackgroundMusic();
+        
+        // Clean up map file input
+        if (this.mapFileInput && this.mapFileInput.parentNode) {
+            this.mapFileInput.parentNode.removeChild(this.mapFileInput);
+        }
+        
         super.shutdown();
     }
 }
