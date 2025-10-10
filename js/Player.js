@@ -66,6 +66,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Start with breathing-idle animation
         this.play(`${charName}_breathing_idle`);
+        
+        console.log(`👤 Player created! Character: ${charName}, Ready for input`);
     }
 
     update() {
@@ -142,6 +144,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
         
         if (this.isGrounded && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            console.log(`🚀 Player jumped! Character: ${this.charName}`);
             this.setVelocityY(-this.jumpPower);
             this.scene.events.emit('playerJumped');
             

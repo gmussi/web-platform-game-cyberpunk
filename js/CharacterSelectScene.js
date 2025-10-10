@@ -28,6 +28,8 @@ class CharacterSelectScene extends Phaser.Scene {
     }
 
     create() {
+        console.log(`🏠 CharacterSelectScene started!`);
+        
         // Create character animations for selection screen
         this.createCharacterAnimations();
         
@@ -232,9 +234,14 @@ class CharacterSelectScene extends Phaser.Scene {
     }
 
     selectCharacter(characterKey) {
+        console.log(`🎮 Character selected: ${characterKey} (${characters[characterKey].name})`);
+        
         // Store selected character data
         gameData.selectedCharacter = characterKey;
         gameData.playerHealth = gameData.maxHealth; // Reset health
+        
+        console.log(`📊 Game data updated - Character: ${gameData.selectedCharacter}, Health: ${gameData.playerHealth}`);
+        console.log(`🚀 Starting GameScene...`);
         
         // Start the game scene
         this.scene.start('GameScene');

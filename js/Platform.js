@@ -171,7 +171,6 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
         // Calculate how many platforms we need to cover the full width
         // Ensure we have enough platforms to cover the entire width
         const platformsNeeded = Math.ceil(width / platformWidth);
-        console.log(`Creating ground platforms: startX=${startX}, width=${width}, platformsNeeded=${platformsNeeded}`);
         
         for (let i = 0; i < platformsNeeded; i++) {
             const x = startX + (i * platformWidth);
@@ -182,7 +181,6 @@ class Platform extends Phaser.Physics.Arcade.Sprite {
             const platform = new Platform(scene, x, y, currentPlatformWidth, 40);
             platform.setTint(0xcccccc); // Light gray for ground platforms
             platforms.push(platform);
-            console.log(`Ground platform ${i}: x=${x}, y=${y}, width=${currentPlatformWidth}`);
         }
         
         return platforms;

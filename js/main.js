@@ -49,3 +49,6 @@ const characters = {
 
 // Start the game
 const game = new Phaser.Game(config);
+
+// Make game accessible globally for testing
+window.game = game;

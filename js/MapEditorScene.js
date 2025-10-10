@@ -5,6 +5,9 @@ class MapEditorScene extends Phaser.Scene {
         // Initialize HUD visibility
         this.hudVisible = true;
         this.hudElements = [];
+        
+        // Flag to prevent default map override during custom map loading
+        this.isLoadingCustomMap = false;
     }
 
     preload() {
@@ -23,7 +26,6 @@ class MapEditorScene extends Phaser.Scene {
         
         // Add tileset loading completion handler
         this.load.on('complete', () => {
-            console.log('Map editor assets loaded successfully');
             // Create individual tile textures from tileset
             this.createTileTextures();
         });
@@ -62,6 +64,11 @@ class MapEditorScene extends Phaser.Scene {
     }
     
     createTileTextures() {
+        // Check if tileset_sprites already exists to prevent duplicate texture creation
+        if (this.textures.exists('tileset_sprites')) {
+            return; // Texture already exists, skip creation
+        }
+        
         // Create individual tile textures from the 8x8 tileset (64 tiles total)
         const tileSize = 32; // Each tile is 32x32 pixels
         const tilesPerRow = 8; // 8 tiles per row in the tileset
@@ -74,10 +81,11 @@ class MapEditorScene extends Phaser.Scene {
             endFrame: 63
         });
         
-        console.log('Map editor: Created tileset spritesheet with 64 individual tile textures');
     }
 
     create() {
+        console.log(`🗺️ MapEditorScene started!`);
+        
         // Initialize map system
         this.mapSystem = new MapSystem(this);
         
@@ -111,19 +119,27 @@ class MapEditorScene extends Phaser.Scene {
     }
 
     loadDefaultMap() {
-        console.log('MapEditorScene: Starting default map load...');
+        // Don't load default map if we're currently loading a custom map
+        if (this.isLoadingCustomMap) {
+            return;
+        }
+        
+        // TEMPORARY: Always skip default map loading to test if this is the issue
+        return;
+        
         // Try to load default.json map file
         this.mapSystem.loadMapFromURL('maps/default.json')
             .then(mapData => {
-                console.log('MapEditorScene: Loaded default map:', mapData.metadata.name);
-                console.log('MapEditorScene: Map data size:', JSON.stringify(mapData).length, 'characters');
+                // Double-check flag in case it changed during async operation
+                if (this.isLoadingCustomMap) {
+                    return;
+                }
+                
                 this.mapData = mapData;
                 this.loadTileDataFromMap();
                 this.updatePreviewObjects();
-                console.log('MapEditorScene: Map loading completed successfully');
             })
             .catch(error => {
-                console.log('default.json not found, creating new map:', error.message);
                 // Create a new empty map if default.json doesn't exist
                 this.mapData = {
                     version: "1.0",
@@ -379,7 +395,6 @@ class MapEditorScene extends Phaser.Scene {
                 }
                 
                 this.closeSpritePicker();
-                console.log(`Selected sprite index: ${i}`);
             });
 
             spriteButton.on('pointerover', () => {
@@ -448,7 +463,6 @@ class MapEditorScene extends Phaser.Scene {
             }
         });
         
-        console.log(`HUD ${this.hudVisible ? 'shown' : 'hidden'}`);
     }
     
     toggleGrid() {
@@ -456,7 +470,6 @@ class MapEditorScene extends Phaser.Scene {
         this.gridGraphics.setVisible(this.gridVisible);
         this.gridToggleButton.setText(`Grid: ${this.gridVisible ? 'ON' : 'OFF'}`);
         this.gridToggleButton.setBackgroundColor(this.gridVisible ? '#00aa00' : '#aa0000');
-        console.log(`Grid ${this.gridVisible ? 'shown' : 'hidden'}`);
     }
 
     createMapButtons() {
@@ -584,10 +597,8 @@ class MapEditorScene extends Phaser.Scene {
         this.input.on('pointerdown', (pointer) => {
             // Check if click is on UI elements first
             const isOnUI = this.isClickOnUI(pointer);
-            console.log(`Click at (${pointer.x}, ${pointer.y}), isOnUI: ${isOnUI}`);
             
             if (isOnUI) {
-                console.log('Click detected on UI - skipping object placement');
                 return; // Don't process placement if clicking on UI
             }
             
@@ -664,7 +675,6 @@ class MapEditorScene extends Phaser.Scene {
         for (const bounds of uiBounds) {
             if (pointer.x >= bounds.x && pointer.x <= bounds.x + bounds.width &&
                 pointer.y >= bounds.y && pointer.y <= bounds.y + bounds.height) {
-                console.log(`Click detected in UI bounds: (${bounds.x}, ${bounds.y}) to (${bounds.x + bounds.width}, ${bounds.y + bounds.height})`);
                 return true;
             }
         }
@@ -685,11 +695,9 @@ class MapEditorScene extends Phaser.Scene {
     placeObject(x, y) {
         // Check if a tool is selected
         if (!this.selectedTool) {
-            console.log('No tool selected. Please select a tool first.');
             return;
         }
         
-        console.log(`Placing ${this.selectedTool} at world coordinates: (${Math.round(x)}, ${Math.round(y)})`);
         
         switch (this.selectedTool) {
             case 'player':
@@ -767,7 +775,6 @@ class MapEditorScene extends Phaser.Scene {
             tilePos.y >= 0 && tilePos.y < this.tilemapSystem.mapHeight) {
             
             this.tilemapSystem.setTile(tilePos.x, tilePos.y, tileType, spriteIndex);
-            console.log(`Placed tile type ${tileType} with sprite index ${spriteIndex} at tile coordinates: (${tilePos.x}, ${tilePos.y})`);
         }
     }
 
@@ -780,7 +787,6 @@ class MapEditorScene extends Phaser.Scene {
             tilePos.y >= 0 && tilePos.y < this.tilemapSystem.mapHeight) {
             
             this.tilemapSystem.setTile(tilePos.x, tilePos.y, TilemapSystem.TILE_TYPES.EMPTY);
-            console.log(`Erased tile at tile coordinates: (${tilePos.x}, ${tilePos.y})`);
         }
     }
 
@@ -820,9 +826,7 @@ class MapEditorScene extends Phaser.Scene {
         
         const success = await this.mapSystem.saveMap(this.mapData);
         if (success) {
-            console.log('Map saved from editor');
         } else {
-            console.log('Map save cancelled or failed');
         }
     }
 
@@ -850,7 +854,6 @@ class MapEditorScene extends Phaser.Scene {
             }
         }
         
-        console.log('Tile data with sprite indices saved to map');
     }
 
     loadMap() {
@@ -864,16 +867,19 @@ class MapEditorScene extends Phaser.Scene {
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
+                this.isLoadingCustomMap = true; // Set flag to prevent default map override
+                
                 this.mapSystem.loadMap(file)
                     .then(mapData => {
                         this.mapData = mapData;
                         this.loadTileDataFromMap();
                         this.updatePreviewObjects();
-                        console.log('Map loaded in editor:', mapData.metadata.name);
+                        this.isLoadingCustomMap = false; // Clear flag
                     })
                     .catch(error => {
                         console.error('Error loading map:', error);
                         alert('Error loading map: ' + error.message);
+                        this.isLoadingCustomMap = false; // Clear flag on error
                     });
             }
             document.body.removeChild(fileInput);
@@ -882,7 +888,29 @@ class MapEditorScene extends Phaser.Scene {
         fileInput.click();
     }
 
+    // Method to load a specific map file programmatically (for testing)
+    async loadMapFromURL(url) {
+        console.log(`🔄 Loading map from URL: ${url}`);
+        this.isLoadingCustomMap = true;
+        
+        try {
+            const mapData = await this.mapSystem.loadMapFromURL(url);
+            this.mapData = mapData;
+            this.loadTileDataFromMap();
+            this.updatePreviewObjects();
+            this.isLoadingCustomMap = false;
+            console.log(`✅ Map loaded successfully from URL: ${url}`);
+            return mapData;
+        } catch (error) {
+            console.error('Error loading map from URL:', error);
+            this.isLoadingCustomMap = false;
+            throw error;
+        }
+    }
+
     loadTileDataFromMap() {
+        console.log(`🗺️ Loading tile data from map: ${this.mapData.metadata?.name || 'Unknown'}`);
+        
         // Load tile data from map
         if (this.mapData.tiles && Array.isArray(this.mapData.tiles)) {
             // Clear existing tiles
@@ -905,12 +933,17 @@ class MapEditorScene extends Phaser.Scene {
                         } else if (tileData && typeof tileData === 'object') {
                             // New format: object with type and spriteIndex
                             this.tilemapSystem.setTile(x, y, tileData.type, tileData.spriteIndex);
+                            
+                            // Log tile changes for first column, last row
+                            if (x === 0 && y === this.tilemapSystem.mapHeight - 1) {
+                                console.log(`🔧 Tile changed at first column, last row (${x}, ${y}): type=${tileData.type}, spriteIndex=${tileData.spriteIndex}`);
+                            }
                         }
                     }
                 }
             }
             
-            console.log('Tile data loaded from map');
+            console.log(`✅ Tile data loaded successfully. Map dimensions: ${this.mapData.tiles.length} rows x ${this.mapData.tiles[0]?.length || 0} columns`);
         }
     }
 
@@ -925,7 +958,6 @@ class MapEditorScene extends Phaser.Scene {
         }
         
         this.updatePreviewObjects();
-        console.log('All objects and tiles cleared');
     }
 
     update() {

@@ -6,7 +6,11 @@
   "scripts": {
     "start": "npx http-server -p 8000 -o",
     "dev": "npx http-server -p 8000 -o",
-    "serve": "npx http-server -p 8000"
+    "serve": "npx http-server -p 8000",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug"
   },
   "keywords": [
     "phaser",
@@ -17,6 +21,7 @@
   ],
   "author": "Game Developer",
   "license": "MIT",
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
 }

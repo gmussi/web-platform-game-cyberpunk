@@ -49,11 +49,9 @@ class MapSystem {
             await writable.write(jsonString);
             await writable.close();
             
-            console.log('Map saved successfully with File System Access API');
             return true;
         } catch (error) {
             if (error.name === 'AbortError') {
-                console.log('Save cancelled by user');
                 return false;
             }
             throw error;
@@ -67,7 +65,6 @@ class MapSystem {
         // Prompt for filename
         const filename = prompt('Enter filename for your map:', this.mapFileName);
         if (!filename) {
-            console.log('Save cancelled by user');
             return false;
         }
         
@@ -89,7 +86,6 @@ class MapSystem {
         // Clean up
         URL.revokeObjectURL(url);
         
-        console.log('Map saved successfully:', finalFilename);
         return true;
     }
 
@@ -110,7 +106,6 @@ class MapSystem {
                     // Validate map data structure
                     if (this.validateMapData(mapData)) {
                         this.mapData = mapData;
-                        console.log('Map loaded successfully:', mapData.metadata.name);
                         resolve(mapData);
                     } else {
                         reject(new Error('Invalid map data format'));
@@ -135,8 +130,6 @@ class MapSystem {
             const cacheBuster = `?t=${Date.now()}`;
             const urlWithCacheBuster = url + cacheBuster;
             
-            console.log('Loading map from URL:', urlWithCacheBuster);
-            
             const response = await fetch(urlWithCacheBuster, {
                 cache: 'no-cache',
                 headers: {
@@ -154,7 +147,6 @@ class MapSystem {
             
             if (this.validateMapData(mapData)) {
                 this.mapData = mapData;
-                console.log('Map loaded from URL:', mapData.metadata.name);
                 return mapData;
             } else {
                 throw new Error('Invalid map data format');
@@ -167,9 +159,6 @@ class MapSystem {
 
     // Validate map data structure
     validateMapData(mapData) {
-        console.log('Validating map data...');
-        console.log('Map data keys:', Object.keys(mapData));
-        
         const requiredFields = ['version', 'metadata', 'world', 'player', 'portal', 'enemies'];
         
         for (const field of requiredFields) {
@@ -177,35 +166,25 @@ class MapSystem {
                 console.error(`Missing required field: ${field}`);
                 return false;
             }
-            console.log(`✓ Field ${field} exists`);
         }
 
         // Validate player data
-        console.log('Validating player data...');
-        console.log('Player data:', mapData.player);
         if (!mapData.player.startPosition || typeof mapData.player.startPosition.x !== 'number' || typeof mapData.player.startPosition.y !== 'number') {
             console.error('Invalid player start position');
             return false;
         }
-        console.log('✓ Player data valid');
 
         // Validate portal data
-        console.log('Validating portal data...');
-        console.log('Portal data:', mapData.portal);
         if (!mapData.portal.position || typeof mapData.portal.position.x !== 'number' || typeof mapData.portal.position.y !== 'number') {
             console.error('Invalid portal position');
             return false;
         }
-        console.log('✓ Portal data valid');
 
         // Validate enemies array
-        console.log('Validating enemies data...');
-        console.log('Enemies data:', mapData.enemies);
         if (!Array.isArray(mapData.enemies)) {
             console.error('Enemies must be an array');
             return false;
         }
-        console.log('✓ Enemies data valid');
 
         for (const enemy of mapData.enemies) {
             if (!enemy.id || !enemy.type || !enemy.position || !enemy.enemyType) {
@@ -214,7 +193,6 @@ class MapSystem {
             }
         }
 
-        console.log('✓ All map data validation passed');
         return true;
     }
 

@@ -26,7 +26,6 @@ class TilemapSystem {
         this.visualLayer = this.scene.add.graphics();
         this.visualLayer.setDepth(4);
         this.visualLayer.setVisible(true);
-        console.log('Visual layer created with depth 4');
         
         // Initialize collision bodies array
         this.collisionBodies = [];
@@ -168,7 +167,6 @@ class TilemapSystem {
             return;
         }
         
-        console.log(`Drawing tile at (${worldX}, ${worldY}), type: ${tileType}, image: ${tileImage}, spriteIndex: ${spriteIndex}`);
         
         // Determine which tile image to use
         let tileIndex = 0; // Default to first tile
@@ -188,7 +186,6 @@ class TilemapSystem {
             }
         }
         
-        console.log(`Using tileIndex: ${tileIndex} for tile at (${worldX}, ${worldY})`);
         
         // Create sprite for this tile using spritesheet frames
         const tileSprite = this.scene.add.image(worldX + this.tileSize/2, worldY + this.tileSize/2, 'tileset_sprites', tileIndex);
@@ -247,22 +244,18 @@ class TilemapSystem {
                     
                     // Debug: Log specific tile (120, 13)
                     if (x === 120 && y === 13) {
-                        console.log(`Drawing tile at (120, 13): type=${tileType}, image=${tileImage}, spriteIndex=${spriteIndex}, worldPos=(${worldPos.x}, ${worldPos.y})`);
                     }
                 }
             }
         }
         
-        console.log(`RedrawVisualLayer: Drew ${tilesDrawn} tiles`);
     }
     
     // Method to redraw tiles after textures are ready
     redrawTilesAfterTexturesReady() {
         if (this.scene.textures.exists('tileset_sprites')) {
-            console.log('Tileset textures ready, redrawing tiles...');
             this.redrawVisualLayer();
         } else {
-            console.log('Tileset textures not ready yet, will retry...');
             // Retry after a short delay
             this.scene.time.delayedCall(100, () => {
                 this.redrawTilesAfterTexturesReady();
@@ -272,8 +265,6 @@ class TilemapSystem {
     
     // Create collision bodies for solid tiles using a single static group
     createCollisionBodies() {
-        console.log('Creating collision bodies...');
-        console.log(`Map dimensions: ${this.mapWidth}x${this.mapHeight}`);
         
         // Clear existing collision bodies
         this.collisionBodies = [];
@@ -297,7 +288,6 @@ class TilemapSystem {
         this.collisionBodies.push(groundBody);
         this.collisionGroup.add(groundBody);
         
-        console.log(`Created single ground collision body: width=${groundWidth}, height=${groundHeight}, y=${groundWorldY + groundHeight/2}`);
         
         // Create individual collision bodies for solid tiles (excluding ground)
         let solidTilesCount = 0;
@@ -316,10 +306,7 @@ class TilemapSystem {
             }
         }
         
-        console.log(`Created ${solidTilesCount} individual collision bodies for solid tiles`);
         
-        console.log(`Created ${this.collisionBodies.length} collision bodies for tilemap`);
-        console.log(`Collision group size: ${this.collisionGroup.children.size}`);
         return this.collisionGroup;
     }
     
@@ -337,7 +324,6 @@ class TilemapSystem {
         tileBody.body.setAllowGravity(false);
         tileBody.setVisible(false); // Invisible collision body
         
-        console.log(`Created collision body at (${worldX}, ${worldY}) for tile type ${tileType}`);
         
         return tileBody;
     }

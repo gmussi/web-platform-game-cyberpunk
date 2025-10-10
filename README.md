@@ -64,6 +64,17 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Sound Effects**: Wilhelm scream sound effect on player damage
 - **Audio Management**: Volume control and proper cleanup
 
+### Map System & Editor
+
+- **Map Editor**: Full-featured level editor accessible from the game
+- **Tile-Based System**: 32x32 pixel tile system with collision detection
+- **Custom Maps**: Save and load custom map files in JSON format
+- **Real-Time Editing**: Place tiles, enemies, player spawn, and portal positions
+- **Visual Tools**: Grid overlay, sprite picker, and coordinate display
+- **Map Validation**: Automatic validation of map data structure and integrity
+- **File System Integration**: Uses modern File System Access API with fallback
+- **Map Management**: Built-in save/load functionality with keyboard shortcuts (S/L keys)
+
 ## File Structure
 
 ```
@@ -115,11 +126,30 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 │   ├── GameScene.js             # Main gameplay scene
 │   ├── GameOverScene.js         # Game over screen
 │   ├── VictoryScene.js          # Victory screen
+│   ├── MapEditorScene.js        # Map editor for creating custom levels
 │   ├── Player.js                # Player class with movement and physics
 │   ├── Enemy.js                 # Enemy class with different behaviors
 │   ├── Platform.js              # Platform class for level generation
+│   ├── MapSystem.js             # Map loading, saving, and validation system
+│   ├── TilemapSystem.js         # Tile-based level system with collision detection
 │   ├── HeroSpriteGenerator.js   # Procedural hero sprite generation (fallback)
-│   └── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
+│   ├── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
+│   └── CyberpunkBackgroundGenerator.js # Procedural background generation
+├── maps/
+│   ├── default.json             # Default game map with platforms, enemies, and portal
+│   └── modified.json            # Modified map for testing custom level loading
+├── tests/
+│   ├── game-loading.spec.js     # Tests for game loading and initialization
+│   ├── game-controls.spec.js    # Tests for player controls and movement
+│   ├── map-editor.spec.js       # Tests for map editor functionality
+│   └── helpers/
+│       └── game-test-helper.js  # Utility functions for game testing
+├── package.json                 # Node.js dependencies and npm scripts
+├── package-lock.json            # Locked dependency versions
+├── playwright.config.js         # Playwright test configuration
+├── TESTING.md                   # Comprehensive testing documentation
+├── MAP_SYSTEM_README.md         # Map system documentation and usage guide
+└── test-setup-summary.sh        # Test setup verification script
 ```
 
 ## How to Run
@@ -143,12 +173,41 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 
 3. Navigate to `http://localhost:8000` in your browser
 
+## Testing
+
+This project includes comprehensive automated testing using Playwright. For detailed testing information, see [TESTING.md](TESTING.md).
+
+### Quick Test Commands
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with UI (interactive mode)
+npm run test:ui
+
+# Run tests in headed mode (see browser)
+npm run test:headed
+
+# Run tests in debug mode
+npm run test:debug
+```
+
+The test suite covers:
+
+- Game loading and initialization
+- Player controls and movement
+- Map editor functionality
+- Cross-browser compatibility (Chromium, Firefox, WebKit)
+- Mobile device testing
+
 ## Game Architecture
 
 ### Scene System
 
 - **CharacterSelectScene**: Handles character selection with procedural sprite generation
 - **GameScene**: Main gameplay with physics, collision, audio, and procedural content
+- **MapEditorScene**: Full-featured map editor with tile placement and object management
 - **GameOverScene**: End game state with restart option and character info
 - **VictoryScene**: Victory celebration with particle effects and play again option
 
@@ -157,8 +216,11 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Player**: Handles movement, jumping, health, collision, and visual effects
 - **Enemy**: Different enemy types with AI behaviors and procedural sprites
 - **Platform**: Platform generation with neon lighting and collision detection
+- **MapSystem**: Map loading, saving, validation, and file management
+- **TilemapSystem**: Tile-based level system with collision detection and rendering
 - **HeroSpriteGenerator**: Creates unique character sprites procedurally
 - **RobotSpriteGenerator**: Generates enemy robot sprites with different designs
+- **CyberpunkBackgroundGenerator**: Procedural background generation system
 
 ### Extensibility Features
 
@@ -219,12 +281,25 @@ Each character (`char1` through `char4`) includes:
 3. Add new enemy creation methods
 4. Place enemies in `GameScene.createEnemies()`
 
+### Using the Map Editor
+
+1. **Access**: Press 'M' key in-game or click "Map Editor" button
+2. **Tools**: Select from Player, Portal, Enemy1, Enemy2, Solid tiles, or Erase
+3. **Tile Placement**: Click to place tiles, right-click to remove
+4. **Sprite Selection**: Press 'T' to open sprite picker for solid tiles
+5. **Navigation**: Use arrow keys or WASD to move around the map
+6. **Saving**: Press 'S' or click "Save Map" to download your custom map
+7. **Loading**: Press 'L' or click "Load Map" to load a custom map file
+8. **Grid**: Press 'G' to toggle grid overlay
+9. **HUD**: Press 'H' to hide/show the editor interface
+
 ### Adding New Levels
 
-1. Modify platform generation in `GameScene.createPlatforms()`
-2. Adjust world bounds in `setupWorldBounds()`
-3. Add new enemy placements
-4. Add custom background images to `img/` directory
+1. **Using Map Editor**: Create custom levels with the built-in editor
+2. **Manual Creation**: Modify platform generation in `GameScene.createPlatforms()`
+3. **Map Files**: Create JSON map files following the format in `maps/default.json`
+4. **Validation**: Use `MapSystem.validateMapData()` to ensure proper structure
+5. **Background**: Add custom background images to `img/` directory
 
 ## Technical Details
 
@@ -241,6 +316,10 @@ Each character (`char1` through `char4`) includes:
 - **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
 - **Animated Sprites**: Portal uses clean 12-frame sprite animation, characters have walking/idle/jump animations
 - **Memory Management**: Proper cleanup of generated textures and audio resources
+- **Map System**: JSON-based map format with validation and file system integration
+- **Tile System**: 32x32 pixel tile-based level system with collision detection
+- **File System**: Modern File System Access API with fallback for map saving/loading
+- **Testing**: Comprehensive Playwright test suite with cross-browser and mobile testing
 
 ## Browser Compatibility
 
@@ -261,3 +340,8 @@ Each character (`char1` through `char4`) includes:
 - More complex enemy AI behaviors
 - Weather effects and dynamic backgrounds
 - Character-specific abilities and special moves
+- Advanced map editor features (layers, scripting, triggers)
+- Map sharing and community features
+- Performance optimizations for larger maps
+- Advanced tile types (water, lava, moving platforms)
+- Map templates and presets

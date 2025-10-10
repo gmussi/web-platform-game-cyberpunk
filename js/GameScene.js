@@ -685,13 +685,13 @@ class GameScene extends Phaser.Scene {
     createUI() {
         // Character name display
         const characterName = characters[gameData.selectedCharacter].name;
-        this.characterNameText = this.add.text(50, 30, characterName, {
+        this.characterNameText = this.add.text(50, 5, characterName, {
             fontSize: '20px',
             fill: '#ffffff',
             fontStyle: 'bold',
             stroke: '#000000',
             strokeThickness: 2
-        }).setScrollFactor(0);
+        }).setScrollFactor(0).setDepth(100);
 
         // Calculate health bar position after character name
         const characterNameWidth = characterName.length * 12; // Approximate width
@@ -699,28 +699,28 @@ class GameScene extends Phaser.Scene {
         this.healthBarX = healthBarStartX + 100; // Store for updateHealthBar method
 
         // Health bar background (aligned with character name text)
-        this.healthBarBg = this.add.rectangle(this.healthBarX, 40, 200, 20, 0x333333)
-            .setScrollFactor(0);
+        this.healthBarBg = this.add.rectangle(this.healthBarX, 15, 200, 20, 0x333333)
+            .setScrollFactor(0).setDepth(100);
         
         // Health bar (aligned with character name text)
-        this.healthBar = this.add.rectangle(this.healthBarX, 40, 200, 20, 0x00ff00)
-            .setScrollFactor(0);
+        this.healthBar = this.add.rectangle(this.healthBarX, 15, 200, 20, 0x00ff00)
+            .setScrollFactor(0).setDepth(101);
         
         // Health text (aligned with character name text)
-        this.healthText = this.add.text(this.healthBarX, 40, `${gameData.maxHealth}/${gameData.maxHealth}`, {
+        this.healthText = this.add.text(this.healthBarX, 15, `${gameData.maxHealth}/${gameData.maxHealth}`, {
             fontSize: '14px',
             fill: '#fff',
             fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0);
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(102);
 
         // Instructions
-        this.add.text(500, 30, 'Arrow Keys: Move | Space: Jump', {
+        this.add.text(500, 5, 'Arrow Keys: Move | Space: Jump', {
             fontSize: '14px',
             fill: '#ffffff',
             fontStyle: 'bold',
             stroke: '#000000',
             strokeThickness: 1
-        }).setScrollFactor(0);
+        }).setScrollFactor(0).setDepth(100);
 
         // Map management UI
         this.createMapManagementUI();
@@ -735,34 +735,11 @@ class GameScene extends Phaser.Scene {
                 fontStyle: 'bold',
                 stroke: '#000000',
                 strokeThickness: 1
-            }).setScrollFactor(0);
+            }).setScrollFactor(0).setDepth(100);
         }
 
-        // Save map button (for testing)
-        this.saveMapButton = this.add.text(50, 100, 'Save Map (S)', {
-            fontSize: '12px',
-            fill: '#00ff00',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 1
-        }).setScrollFactor(0).setInteractive();
-
-        this.saveMapButton.on('pointerdown', async () => {
-            await this.saveCurrentMap();
-        });
-
-        // Load map button (for testing)
-        this.loadMapButton = this.add.text(150, 100, 'Load Map (L)', {
-            fontSize: '12px',
-            fill: '#00ff00',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 1
-        }).setScrollFactor(0).setInteractive();
-
-        this.loadMapButton.on('pointerdown', () => {
-            this.loadMapFromFile();
-        });
+        // Save and Load functionality is available via keyboard shortcuts (S and L keys)
+        // No visible buttons needed
 
         // Create map input for file loading
         this.createMapFileInput();
@@ -783,8 +760,8 @@ class GameScene extends Phaser.Scene {
                     .then(mapData => {
                         console.log('Map loaded from file:', mapData.metadata.name);
                         this.mapData = mapData;
-                        // Restart the scene with new map data
-                        this.scene.restart();
+                        // Reload the map data without restarting the scene
+                        this.reloadMapData();
                     })
                     .catch(error => {
                         console.error('Error loading map:', error);
@@ -792,6 +769,39 @@ class GameScene extends Phaser.Scene {
                     });
             }
         });
+    }
+
+    reloadMapData() {
+        console.log('Reloading map data without scene restart...');
+        
+        // Clear existing enemies
+        if (this.enemies) {
+            this.enemies.forEach(enemy => enemy.destroy());
+            this.enemies = [];
+        }
+        
+        // Clear existing portal
+        if (this.portalSprite) {
+            this.portalSprite.destroy();
+            this.portalSprite = null;
+        }
+        
+        // Reload tile data
+        this.loadTileDataFromMap();
+        
+        // Recreate collision bodies
+        this.tilemapSystem.createCollisionBodies();
+        
+        // Recreate enemies
+        this.createEnemies();
+        
+        // Recreate portal
+        this.createPortal();
+        
+        // Update player position
+        this.updateObjectsFromMapData();
+        
+        console.log('Map data reloaded successfully');
     }
 
     async saveCurrentMap() {
