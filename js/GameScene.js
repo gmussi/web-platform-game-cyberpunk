@@ -160,9 +160,6 @@ class GameScene extends Phaser.Scene {
         // Create portal
         this.createPortal();
         
-        // Create hitbox visualizations
-        this.createHitboxVisualizations();
-        
         // Set up collisions
         this.setupCollisions();
         
@@ -533,78 +530,6 @@ class GameScene extends Phaser.Scene {
         // Portal is now just the animated sprite - no additional effects needed
     }
 
-    createHitboxVisualizations() {
-        // Create hitbox graphics for player
-        this.playerHitbox = this.add.graphics();
-        this.playerHitbox.setDepth(50); // Above everything else
-        
-        // Create hitbox graphics for enemies
-        this.enemyHitboxes = this.add.graphics();
-        this.enemyHitboxes.setDepth(50); // Above everything else
-        
-        console.log('Hitbox visualizations created');
-    }
-
-    updateHitboxVisualizations() {
-        // Clear previous hitbox drawings
-        this.playerHitbox.clear();
-        this.enemyHitboxes.clear();
-        
-        // Draw player hitbox
-        if (this.player && this.player.body) {
-            const playerBody = this.player.body;
-            this.playerHitbox.lineStyle(3, 0x00ff00, 0.8); // Green outline
-            
-            // Use physics body position (now properly offset)
-            const hitboxX = playerBody.x;
-            const hitboxY = playerBody.y - 8; // Small offset above player
-            
-            this.playerHitbox.strokeRect(
-                hitboxX,
-                hitboxY,
-                playerBody.width,
-                playerBody.height
-            );
-            
-            // Add debug info
-            this.playerHitbox.fillStyle(0x00ff00, 0.3);
-            this.playerHitbox.fillRect(
-                hitboxX,
-                hitboxY,
-                playerBody.width,
-                playerBody.height
-            );
-        }
-        
-        // Draw enemy hitboxes
-        this.enemies.forEach((enemy, index) => {
-            if (enemy && enemy.body && enemy.active) {
-                const enemyBody = enemy.body;
-                this.enemyHitboxes.lineStyle(2, 0xff0000, 0.8); // Red outline
-                
-                // Use physics body position (now properly offset)
-                const hitboxX = enemyBody.x;
-                const hitboxY = enemyBody.y - 8; // Small offset above enemy
-                
-                this.enemyHitboxes.strokeRect(
-                    hitboxX,
-                    hitboxY,
-                    enemyBody.width,
-                    enemyBody.height
-                );
-                
-                // Add debug info
-                this.enemyHitboxes.fillStyle(0xff0000, 0.2);
-                this.enemyHitboxes.fillRect(
-                    hitboxX,
-                    hitboxY,
-                    enemyBody.width,
-                    enemyBody.height
-                );
-            }
-        });
-    }
-
     setupCollisions() {
         // Player vs Platforms
         this.physics.add.collider(this.player, this.platforms);
@@ -753,9 +678,6 @@ class GameScene extends Phaser.Scene {
         if (this.player) {
             this.updateHealthBar(this.player.health);
         }
-        
-        // Update hitbox visualizations
-        this.updateHitboxVisualizations();
         
         // Manual portal collision check (backup) - only checks animated portal sprite
         if (this.player && this.portalSprite) {

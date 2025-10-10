@@ -31,13 +31,13 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 ### Game World
 
 - **Platforms**: Multiple platforms at varying heights with neon-lit edges
-- **Background**: Procedurally generated cyberpunk cityscape with:
-  - Detailed building skyline with neon-lit windows
+- **Background**: Custom cyberpunk cityscape backgrounds with:
+  - Three unique high-quality background images (1728x576px, ~800KB each)
+  - Random background selection on each map load
   - Atmospheric effects (floating particles, fog, rain)
-  - Street lights and neon signs
-  - Dark overlay for atmospheric depth
   - **Parallax scrolling** for enhanced depth perception
-- **World Size**: Large 4100px wide world for exploration
+- **World Size**: Large 4100px wide × 800px tall world for exploration
+- **Maximized Playable Area**: Ground positioned at bottom of screen for maximum vertical space
 - **Animated Portal**: Victory condition - reach the animated portal at the end of the level with smooth 12-frame sprite animation
 
 ### Enemies
@@ -72,6 +72,11 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 ├── wilhelmscream.mp3            # Wilhelm scream sound effect
 ├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
 ├── img/
+│   ├── background1.png          # Custom cyberpunk background image 1
+│   ├── background2.png          # Custom cyberpunk background image 2
+│   ├── background3.png          # Custom cyberpunk background image 3
+│   ├── homebg.png               # Home screen background image
+│   ├── logo.png                 # Game logo
 │   ├── char1/                   # Cyber Warrior character sprites
 │   │   ├── metadata.json       # Character metadata and animation definitions
 │   │   ├── rotations/          # 4-directional character sprites
@@ -114,8 +119,7 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 │   ├── Enemy.js                 # Enemy class with different behaviors
 │   ├── Platform.js              # Platform class for level generation
 │   ├── HeroSpriteGenerator.js   # Procedural hero sprite generation (fallback)
-│   ├── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
-│   └── CyberpunkBackgroundGenerator.js # Procedural background generation
+│   └── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
 ```
 
 ## How to Run
@@ -125,11 +129,13 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 2. **Local Server** (recommended for development):
 
    ```bash
+   # Using Node.js (recommended)
+   npm start
+   # or
+   npx http-server -p 8000 -o
+
    # Using Python
    python -m http.server 8000
-
-   # Using Node.js
-   npx http-server
 
    # Using PHP
    php -S localhost:8000
@@ -153,14 +159,13 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **Platform**: Platform generation with neon lighting and collision detection
 - **HeroSpriteGenerator**: Creates unique character sprites procedurally
 - **RobotSpriteGenerator**: Generates enemy robot sprites with different designs
-- **CyberpunkBackgroundGenerator**: Creates detailed cityscape backgrounds
 
 ### Extensibility Features
 
 - **Modular Design**: Easy to add new characters, enemies, or levels
 - **Configuration**: Game data centralized in `main.js`
 - **Event System**: Loose coupling between game components
-- **Procedural Generation**: All sprites and backgrounds generated programmatically
+- **Procedural Generation**: Enemy sprites generated programmatically, custom background images
 - **Audio System**: Integrated sound management with volume control
 - **Visual Effects**: Particle systems, glow effects, and atmospheric elements
 
@@ -219,7 +224,7 @@ Each character (`char1` through `char4`) includes:
 1. Modify platform generation in `GameScene.createPlatforms()`
 2. Adjust world bounds in `setupWorldBounds()`
 3. Add new enemy placements
-4. Customize background elements in `CyberpunkBackgroundGenerator.js`
+4. Add custom background images to `img/` directory
 
 ## Technical Details
 
@@ -228,11 +233,11 @@ Each character (`char1` through `char4`) includes:
 - **Collision Detection**: Built-in Phaser collision system with damage cooldowns
 - **Camera**: Smooth following with deadzone and world bounds
 - **Parallax System**: Multi-layer scrolling with different speeds for depth effect
-- **Window Size**: Larger 1200x800 display for better gameplay experience
+- **Window Size**: Larger 1200x800 display with maximized 800px tall playable area
 - **Audio**: Web Audio API integration with background music and sound effects
 - **Performance**: Optimized for 60fps gameplay with efficient sprite generation
 - **Character Sprites**: High-quality pixel art character sprites with multiple animation states
-- **Procedural Content**: Backgrounds and enemy sprites generated programmatically using Phaser Graphics
+- **Background System**: Custom high-quality background images with random selection and parallax scrolling
 - **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
 - **Animated Sprites**: Portal uses clean 12-frame sprite animation, characters have walking/idle/jump animations
 - **Memory Management**: Proper cleanup of generated textures and audio resources
