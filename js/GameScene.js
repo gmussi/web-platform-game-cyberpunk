@@ -146,6 +146,7 @@ class GameScene extends Phaser.Scene {
         // Wait a bit for background images to fully load, then create background
         this.time.delayedCall(1000, () => {
             this.createBackground();
+            this.createDarkOverlay();
         });
         
         // Create platforms
@@ -250,6 +251,18 @@ class GameScene extends Phaser.Scene {
         this.addAtmosphericElements();
     }
     
+    createDarkOverlay() {
+        // Create a dark overlay to make the background darker
+        const worldWidth = 4100;
+        const worldHeight = 800;
+        
+        // Create a semi-transparent dark rectangle covering the entire world
+        this.darkOverlay = this.add.rectangle(worldWidth / 2, worldHeight / 2, worldWidth, worldHeight, 0x000000, 0.4);
+        this.darkOverlay.setScrollFactor(0.2); // Slight parallax effect
+        this.darkOverlay.setDepth(1); // Above background but below game elements
+        
+        console.log('Dark overlay created');
+    }
     
     createFallbackBackground() {
         // Create a simple colored background as fallback
@@ -299,30 +312,30 @@ class GameScene extends Phaser.Scene {
         console.log('Ground platform positions:', groundPlatforms.map(p => p.x));
         this.platforms.push(...groundPlatforms);
         
-        // Floating platforms with better spacing and distribution
+        // Floating platforms with increased spacing and fewer platforms
         // Adjust all platform heights relative to new ground level (760px)
         // Pass existing platforms to ensure no collisions
-        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 300, 700, 6, 400, this.platforms);
+        const floatingPlatforms1 = Platform.createFloatingPlatforms(this, 400, 700, 3, 600, this.platforms);
         this.platforms.push(...floatingPlatforms1);
         
-        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 800, 650, 5, 450, this.platforms);
+        const floatingPlatforms2 = Platform.createFloatingPlatforms(this, 1200, 650, 3, 600, this.platforms);
         this.platforms.push(...floatingPlatforms2);
         
-        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 1400, 600, 6, 400, this.platforms);
+        const floatingPlatforms3 = Platform.createFloatingPlatforms(this, 2000, 600, 3, 600, this.platforms);
         this.platforms.push(...floatingPlatforms3);
         
-        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2000, 680, 5, 450, this.platforms);
+        const floatingPlatforms4 = Platform.createFloatingPlatforms(this, 2800, 680, 3, 600, this.platforms);
         this.platforms.push(...floatingPlatforms4);
         
-        // Create platform sequences with better spacing
+        // Create platform sequences with increased spacing
         // Pass existing platforms to ensure no collisions
-        const sequence1 = Platform.createPlatformSequence(this, 600, 650, 4, 300, 80, this.platforms);
+        const sequence1 = Platform.createPlatformSequence(this, 800, 650, 3, 500, 80, this.platforms);
         this.platforms.push(...sequence1);
         
-        const sequence2 = Platform.createPlatformSequence(this, 1600, 600, 4, 350, 100, this.platforms);
+        const sequence2 = Platform.createPlatformSequence(this, 2000, 600, 3, 600, 100, this.platforms);
         this.platforms.push(...sequence2);
         
-        const sequence3 = Platform.createPlatformSequence(this, 2400, 620, 3, 400, 90, this.platforms);
+        const sequence3 = Platform.createPlatformSequence(this, 3200, 620, 2, 700, 90, this.platforms);
         this.platforms.push(...sequence3);
     }
 
@@ -357,7 +370,7 @@ class GameScene extends Phaser.Scene {
             // Enemy physics body bottom should be at platform top
             // Enemy center should be at: platform top - (enemyPhysicsHeight/2 - enemyPhysicsOffsetY)
             const groundPlatformTop = groundY - groundPlatformHeight / 2;
-            const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY);
+            const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY) - 3;
             return { x: x, y: enemyCenterY };
         }
         
@@ -403,7 +416,7 @@ class GameScene extends Phaser.Scene {
         if (bestPlatform && bestScore > 0) {
             // Position enemy so their feet touch the platform surface
             const platformTop = bestPlatform.y - bestPlatform.height / 2;
-            const enemyCenterY = platformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY);
+            const enemyCenterY = platformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY) - 3;
             return { 
                 x: bestPlatform.x, 
                 y: enemyCenterY
@@ -413,7 +426,7 @@ class GameScene extends Phaser.Scene {
         // Fallback to ground if no suitable platform found
         console.warn(`No suitable platform found for X=${x}, falling back to ground`);
         const groundPlatformTop = groundY - groundPlatformHeight / 2;
-        const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY);
+        const enemyCenterY = groundPlatformTop - (enemyPhysicsHeight / 2 - enemyPhysicsOffsetY) - 3;
         return { x: x, y: enemyCenterY };
     }
 
