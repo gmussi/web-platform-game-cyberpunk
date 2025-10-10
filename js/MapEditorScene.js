@@ -94,34 +94,8 @@ class MapEditorScene extends Phaser.Scene {
         // Create grid overlay for tile editing
         this.createGridOverlay();
         
-        // Initialize map data with basic structure
-        this.mapData = {
-            version: "1.0",
-            metadata: {
-                name: "New Map",
-                description: "A new map created in the editor",
-                created: new Date().toISOString(),
-                author: "Map Editor"
-            },
-            world: {
-                width: 4100,
-                height: 800,
-                tileSize: 32
-            },
-            player: {
-                startPosition: { x: 100, y: 688 },
-                character: "A"
-            },
-            portal: {
-                position: { x: 4000, y: 660 },
-                size: { width: 100, height: 100 }
-            },
-            enemies: [],
-            platforms: [],
-            collectibles: [],
-            checkpoints: [],
-            tiles: []
-        };
+        // Load default map data
+        this.loadDefaultMap();
         
         // Create UI
         this.createEditorUI();
@@ -134,9 +108,49 @@ class MapEditorScene extends Phaser.Scene {
         
         // Create preview objects
         this.createPreviewObjects();
-        
-        // Initialize preview objects from map data
-        this.updatePreviewObjects();
+    }
+
+    loadDefaultMap() {
+        // Try to load default.json map file
+        this.mapSystem.loadMapFromURL('maps/default.json')
+            .then(mapData => {
+                console.log('Loaded default map in editor:', mapData.metadata.name);
+                this.mapData = mapData;
+                this.loadTileDataFromMap();
+                this.updatePreviewObjects();
+            })
+            .catch(error => {
+                console.log('default.json not found, creating new map:', error.message);
+                // Create a new empty map if default.json doesn't exist
+                this.mapData = {
+                    version: "1.0",
+                    metadata: {
+                        name: "New Map",
+                        description: "A new map created in the editor",
+                        created: new Date().toISOString(),
+                        author: "Map Editor"
+                    },
+                    world: {
+                        width: 4100,
+                        height: 800,
+                        tileSize: 32
+                    },
+                    player: {
+                        startPosition: { x: 100, y: 688 },
+                        character: "A"
+                    },
+                    portal: {
+                        position: { x: 4000, y: 660 },
+                        size: { width: 100, height: 100 }
+                    },
+                    enemies: [],
+                    platforms: [],
+                    collectibles: [],
+                    checkpoints: [],
+                    tiles: []
+                };
+                this.updatePreviewObjects();
+            });
     }
 
     createBackground() {
