@@ -1,9 +1,16 @@
 class MapEditorScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MapEditorScene' });
+        
+        // Initialize HUD visibility
+        this.hudVisible = true;
+        this.hudElements = [];
     }
 
     preload() {
+        // Load tileset image
+        this.load.image('tileset', 'img/Tileset.png');
+        
         // Load the same assets as GameScene
         for (let i = 1; i <= 12; i++) {
             const frameNumber = i.toString().padStart(2, '0');
@@ -13,6 +20,13 @@ class MapEditorScene extends Phaser.Scene {
         this.load.image('background1', 'img/background1.png');
         this.load.image('background2', 'img/background2.png');
         this.load.image('background3', 'img/background3.png');
+        
+        // Add tileset loading completion handler
+        this.load.on('complete', () => {
+            console.log('Map editor assets loaded successfully');
+            // Create individual tile textures from tileset
+            this.createTileTextures();
+        });
         
         // Load character sprites
         this.loadCharacterSprites();
@@ -45,6 +59,22 @@ class MapEditorScene extends Phaser.Scene {
             this.load.image(`${enemy}_east`, `img/${enemy}/rotations/east.png`);
             this.load.image(`${enemy}_north`, `img/${enemy}/rotations/north.png`);
         });
+    }
+    
+    createTileTextures() {
+        // Create individual tile textures from the 8x8 tileset (64 tiles total)
+        const tileSize = 32; // Each tile is 32x32 pixels
+        const tilesPerRow = 8; // 8 tiles per row in the tileset
+        
+        // Use addSpriteSheet to create individual tile textures
+        this.textures.addSpriteSheet('tileset_sprites', this.textures.get('tileset').getSourceImage(), {
+            frameWidth: tileSize,
+            frameHeight: tileSize,
+            startFrame: 0,
+            endFrame: 63
+        });
+        
+        console.log('Map editor: Created tileset spritesheet with 64 individual tile textures');
     }
 
     create() {
@@ -167,6 +197,27 @@ class MapEditorScene extends Phaser.Scene {
         
         // Grid toggle
         this.createGridToggle();
+        
+        // Add keyboard shortcut hint
+        const shortcutHint = this.add.text(50, 280, 'Press T to open tile selector', {
+            fontSize: '12px',
+            fill: '#ffff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 1
+        }).setScrollFactor(0);
+        
+        // Add H key hint
+        const hudHint = this.add.text(50, 300, 'Press H to hide/show HUD', {
+            fontSize: '12px',
+            fill: '#ffff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 1
+        }).setScrollFactor(0);
+        
+        // Register hints with HUD system
+        this.hudElements.push(shortcutHint, hudHint);
     }
 
     createToolSelection() {
@@ -175,13 +226,12 @@ class MapEditorScene extends Phaser.Scene {
             { name: 'Portal', key: 'portal', color: '#ff00ff' },
             { name: 'Enemy1', key: 'enemy1', color: '#ff0000' },
             { name: 'Enemy2', key: 'enemy2', color: '#ff8800' },
-            { name: 'Ground', key: 'ground', color: '#8B4513' },
-            { name: 'Platform', key: 'platform', color: '#FFFFFF' },
-            { name: 'Wall', key: 'wall', color: '#696969' },
+            { name: 'Solid', key: 'solid', color: '#8B4513' },
             { name: 'Erase', key: 'erase', color: '#000000' }
         ];
 
         this.selectedTool = null; // Start with no tool selected
+        this.selectedSpriteIndex = null; // Track selected sprite for solid tiles
         this.toolButtons = [];
 
         tools.forEach((tool, index) => {
@@ -196,12 +246,35 @@ class MapEditorScene extends Phaser.Scene {
             }).setScrollFactor(0).setInteractive();
 
             button.on('pointerdown', () => {
-                this.selectedTool = tool.key;
-                this.updateToolSelection();
+                if (tool.key === 'solid') {
+                    this.openSpritePicker();
+                } else {
+                    this.selectedTool = tool.key;
+                    this.selectedSpriteIndex = null;
+                    this.updateToolSelection();
+                }
             });
+
+            // Add sprite preview for solid button
+            if (tool.key === 'solid') {
+                this.solidButtonSprite = this.add.image(button.x + 50, button.y, 'tileset_sprites', 0);
+                this.solidButtonSprite.setScrollFactor(0);
+                this.solidButtonSprite.setDisplaySize(24, 24);
+                this.solidButtonSprite.setDepth(button.depth + 1);
+            }
 
             this.toolButtons.push({ button, tool });
         });
+        
+        // Register tool buttons with HUD system
+        this.toolButtons.forEach(({ button }) => {
+            this.hudElements.push(button);
+        });
+        
+        // Register solid button sprite with HUD system
+        if (this.solidButtonSprite) {
+            this.hudElements.push(this.solidButtonSprite);
+        }
     }
 
     updateToolSelection() {
@@ -209,6 +282,139 @@ class MapEditorScene extends Phaser.Scene {
             button.setFill('#ffffff'); // Always white text
             button.setBackgroundColor(this.selectedTool === tool.key ? tool.color : '#444444');
         });
+    }
+
+    openSpritePicker() {
+        // Close existing sprite picker if open
+        if (this.spritePicker) {
+            this.closeSpritePicker();
+            return;
+        }
+
+        // Create sprite picker background
+        this.spritePicker = this.add.rectangle(600, 300, 400, 500, 0x000000, 0.8);
+        this.spritePicker.setScrollFactor(0);
+        this.spritePicker.setDepth(1000);
+
+        // Create title
+        this.add.text(600, 100, 'Select Sprite', {
+            fontSize: '18px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setScrollFactor(0).setDepth(1001).setOrigin(0.5);
+
+        // Create sprite grid (8x8 = 64 sprites)
+        this.spriteButtons = [];
+        const spriteSize = 32;
+        const spacing = 40;
+        const startX = 600 - (4 * spacing);
+        const startY = 150;
+
+        for (let i = 0; i < 64; i++) {
+            const x = startX + (i % 8) * spacing;
+            const y = startY + Math.floor(i / 8) * spacing;
+
+            // Create sprite preview
+            const spriteButton = this.add.image(x, y, 'tileset_sprites', i);
+            spriteButton.setScrollFactor(0);
+            spriteButton.setDepth(1001);
+            spriteButton.setDisplaySize(spriteSize, spriteSize);
+            spriteButton.setInteractive();
+
+            // Add border
+            const border = this.add.rectangle(x, y, spriteSize + 4, spriteSize + 4, 0xffffff, 0.3);
+            border.setScrollFactor(0);
+            border.setDepth(1000);
+
+            spriteButton.on('pointerdown', () => {
+                this.selectedSpriteIndex = i;
+                this.selectedTool = 'solid';
+                this.updateToolSelection();
+                
+                // Update solid button sprite preview
+                if (this.solidButtonSprite) {
+                    this.solidButtonSprite.setFrame(i);
+                }
+                
+                this.closeSpritePicker();
+                console.log(`Selected sprite index: ${i}`);
+            });
+
+            spriteButton.on('pointerover', () => {
+                border.setFillStyle(0x00ff00, 0.5);
+            });
+
+            spriteButton.on('pointerout', () => {
+                border.setFillStyle(0xffffff, 0.3);
+            });
+
+            this.spriteButtons.push({ sprite: spriteButton, border });
+        }
+
+        // Add close button
+        const closeButton = this.add.text(600, 450, 'Close', {
+            fontSize: '14px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            backgroundColor: '#aa0000',
+            padding: { x: 10, y: 6 }
+        }).setScrollFactor(0).setDepth(1001).setOrigin(0.5).setInteractive();
+
+        closeButton.on('pointerdown', () => {
+            this.closeSpritePicker();
+        });
+    }
+
+    closeSpritePicker() {
+        if (this.spritePicker) {
+            this.spritePicker.destroy();
+            this.spritePicker = null;
+        }
+
+        if (this.spriteButtons) {
+            this.spriteButtons.forEach(({ sprite, border }) => {
+                sprite.destroy();
+                border.destroy();
+            });
+            this.spriteButtons = [];
+        }
+
+        // Destroy close button
+        const closeButton = this.children.list.find(child => 
+            child.text === 'Close' && child.depth === 1001
+        );
+        if (closeButton) {
+            closeButton.destroy();
+        }
+
+        // Destroy title
+        const title = this.children.list.find(child => 
+            child.text === 'Select Sprite' && child.depth === 1001
+        );
+        if (title) {
+            title.destroy();
+        }
+    }
+
+    toggleHUD() {
+        this.hudVisible = !this.hudVisible;
+        
+        // Toggle visibility of all HUD elements
+        this.hudElements.forEach(element => {
+            if (element) {
+                element.setVisible(this.hudVisible);
+            }
+        });
+        
+        console.log(`HUD ${this.hudVisible ? 'shown' : 'hidden'}`);
+    }
+    
+    toggleGrid() {
+        this.gridVisible = !this.gridVisible;
+        this.gridGraphics.setVisible(this.gridVisible);
+        this.gridToggleButton.setText(`Grid: ${this.gridVisible ? 'ON' : 'OFF'}`);
+        this.gridToggleButton.setBackgroundColor(this.gridVisible ? '#00aa00' : '#aa0000');
+        console.log(`Grid ${this.gridVisible ? 'shown' : 'hidden'}`);
     }
 
     createMapButtons() {
@@ -271,6 +477,9 @@ class MapEditorScene extends Phaser.Scene {
         this.backButton.on('pointerdown', () => {
             this.scene.start('GameScene');
         });
+        
+        // Register map buttons with HUD system
+        this.hudElements.push(this.saveButton, this.loadButton, this.clearButton, this.backButton);
     }
 
     createObjectInfo() {
@@ -289,6 +498,9 @@ class MapEditorScene extends Phaser.Scene {
             stroke: '#000000',
             strokeThickness: 1
         }).setScrollFactor(0);
+        
+        // Register object info with HUD system
+        this.hudElements.push(this.objectInfoText, this.coordinateText);
     }
 
     createGridToggle() {
@@ -309,6 +521,9 @@ class MapEditorScene extends Phaser.Scene {
             this.gridToggleButton.setText(`Grid: ${this.gridVisible ? 'ON' : 'OFF'}`);
             this.gridToggleButton.setBackgroundColor(this.gridVisible ? '#00aa00' : '#aa0000');
         });
+        
+        // Register grid toggle with HUD system
+        this.hudElements.push(this.gridToggleButton);
     }
 
     setupCamera() {
@@ -343,7 +558,7 @@ class MapEditorScene extends Phaser.Scene {
             } else {
                 this.placeObject(worldX, worldY);
                 // Start dragging for tile tools
-                if (this.selectedTool && ['ground', 'platform', 'wall', 'erase'].includes(this.selectedTool)) {
+                if (this.selectedTool && ['ground', 'platform', 'wall', 'solid', 'erase'].includes(this.selectedTool)) {
                     this.isDragging = true;
                 }
             }
@@ -367,11 +582,31 @@ class MapEditorScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.wasdKeys = this.input.keyboard.addKeys('W,S,A,D');
         
+        // Add T key handler for tile selector
+        this.input.keyboard.on('keydown-T', () => {
+            this.openSpritePicker();
+        });
+        
+        // Add H key handler for HUD toggle
+        this.input.keyboard.on('keydown-H', () => {
+            this.toggleHUD();
+        });
+        
+        // Add G key handler for grid toggle
+        this.input.keyboard.on('keydown-G', () => {
+            this.toggleGrid();
+        });
+        
         // Camera controls
         this.cameraSpeed = 10; // Increased speed for better navigation
     }
 
     isClickOnUI(pointer) {
+        // If HUD is hidden, don't block any clicks
+        if (!this.hudVisible) {
+            return false;
+        }
+        
         // Check if click is within UI button areas - using generous bounds
         const uiBounds = [
             // Tool buttons area - expanded
@@ -426,13 +661,11 @@ class MapEditorScene extends Phaser.Scene {
                 this.addEnemy(x, y, this.selectedTool);
                 break;
             case 'ground':
-                this.placeTile(x, y, TilemapSystem.TILE_TYPES.GROUND);
-                break;
             case 'platform':
-                this.placeTile(x, y, TilemapSystem.TILE_TYPES.PLATFORM);
-                break;
             case 'wall':
-                this.placeTile(x, y, TilemapSystem.TILE_TYPES.WALL);
+            case 'solid':
+                // All solid tiles now use the same SOLID type with selected sprite
+                this.placeTile(x, y, TilemapSystem.TILE_TYPES.SOLID, this.selectedSpriteIndex);
                 break;
             case 'erase':
                 this.eraseTile(x, y);
@@ -483,7 +716,7 @@ class MapEditorScene extends Phaser.Scene {
         this.updatePreviewObjects();
     }
 
-    placeTile(x, y, tileType) {
+    placeTile(x, y, tileType, spriteIndex = null) {
         // Convert world coordinates to tile coordinates
         const tilePos = this.tilemapSystem.worldToTile(x, y);
         
@@ -491,8 +724,8 @@ class MapEditorScene extends Phaser.Scene {
         if (tilePos.x >= 0 && tilePos.x < this.tilemapSystem.mapWidth && 
             tilePos.y >= 0 && tilePos.y < this.tilemapSystem.mapHeight) {
             
-            this.tilemapSystem.setTile(tilePos.x, tilePos.y, tileType);
-            console.log(`Placed tile type ${tileType} at tile coordinates: (${tilePos.x}, ${tilePos.y})`);
+            this.tilemapSystem.setTile(tilePos.x, tilePos.y, tileType, spriteIndex);
+            console.log(`Placed tile type ${tileType} with sprite index ${spriteIndex} at tile coordinates: (${tilePos.x}, ${tilePos.y})`);
         }
     }
 

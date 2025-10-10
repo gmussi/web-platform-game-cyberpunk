@@ -4,6 +4,9 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Load tileset image
+        this.load.image('tileset', 'img/Tileset.png');
+        
         // Load portal animation frames
         for (let i = 1; i <= 12; i++) {
             const frameNumber = i.toString().padStart(2, '0');
@@ -18,6 +21,8 @@ class GameScene extends Phaser.Scene {
         // Add timeout for loading
         this.load.on('complete', () => {
             console.log('All assets loaded successfully');
+            // Create individual tile textures from tileset
+            this.createTileTextures();
         });
         
         this.load.on('progress', (progress) => {
@@ -78,6 +83,22 @@ class GameScene extends Phaser.Scene {
             this.load.image(`${enemy}_east`, `img/${enemy}/rotations/east.png`);
             this.load.image(`${enemy}_north`, `img/${enemy}/rotations/north.png`);
         });
+    }
+    
+    createTileTextures() {
+        // Create individual tile textures from the 8x8 tileset (64 tiles total)
+        const tileSize = 32; // Each tile is 32x32 pixels
+        const tilesPerRow = 8; // 8 tiles per row in the tileset
+        
+        // Use addSpriteSheet to create individual tile textures
+        this.textures.addSpriteSheet('tileset_sprites', this.textures.get('tileset').getSourceImage(), {
+            frameWidth: tileSize,
+            frameHeight: tileSize,
+            startFrame: 0,
+            endFrame: 63
+        });
+        
+        console.log('Created tileset spritesheet with 64 individual tile textures');
     }
     
     createCharacterAnimations() {
