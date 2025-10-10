@@ -2,11 +2,12 @@ class MapSystem {
     constructor(scene) {
         this.scene = scene;
         this.mapData = null;
-        this.mapFileName = 'game_map.json';
+        this.mapFileName = 'default.json';
     }
 
-    // Map data structure
+    // Map data structure - DEPRECATED: Use loadMapFromURL instead
     static createMapData() {
+        console.warn('createMapData() is deprecated. Maps should be loaded from JSON files.');
         return {
             version: "1.0",
             metadata: {
@@ -343,6 +344,9 @@ class MapSystem {
 
     // Validate map data structure
     validateMapData(mapData) {
+        console.log('Validating map data...');
+        console.log('Map data keys:', Object.keys(mapData));
+        
         const requiredFields = ['version', 'metadata', 'world', 'player', 'portal', 'enemies'];
         
         for (const field of requiredFields) {
@@ -350,25 +354,35 @@ class MapSystem {
                 console.error(`Missing required field: ${field}`);
                 return false;
             }
+            console.log(`✓ Field ${field} exists`);
         }
 
         // Validate player data
+        console.log('Validating player data...');
+        console.log('Player data:', mapData.player);
         if (!mapData.player.startPosition || typeof mapData.player.startPosition.x !== 'number' || typeof mapData.player.startPosition.y !== 'number') {
             console.error('Invalid player start position');
             return false;
         }
+        console.log('✓ Player data valid');
 
         // Validate portal data
+        console.log('Validating portal data...');
+        console.log('Portal data:', mapData.portal);
         if (!mapData.portal.position || typeof mapData.portal.position.x !== 'number' || typeof mapData.portal.position.y !== 'number') {
             console.error('Invalid portal position');
             return false;
         }
+        console.log('✓ Portal data valid');
 
         // Validate enemies array
+        console.log('Validating enemies data...');
+        console.log('Enemies data:', mapData.enemies);
         if (!Array.isArray(mapData.enemies)) {
             console.error('Enemies must be an array');
             return false;
         }
+        console.log('✓ Enemies data valid');
 
         for (const enemy of mapData.enemies) {
             if (!enemy.id || !enemy.type || !enemy.position || !enemy.enemyType) {
@@ -377,6 +391,7 @@ class MapSystem {
             }
         }
 
+        console.log('✓ All map data validation passed');
         return true;
     }
 

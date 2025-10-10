@@ -86,19 +86,34 @@ class GameScene extends Phaser.Scene {
     }
     
     createTileTextures() {
+        console.log('GameScene: Creating tile textures...');
+        
+        // Check if tileset image exists
+        if (!this.textures.exists('tileset')) {
+            console.error('Tileset image not found!');
+            return;
+        }
+        
+        console.log('Tileset image found, creating spritesheet...');
+        
         // Create individual tile textures from the 8x8 tileset (64 tiles total)
         const tileSize = 32; // Each tile is 32x32 pixels
         const tilesPerRow = 8; // 8 tiles per row in the tileset
         
-        // Use addSpriteSheet to create individual tile textures
-        this.textures.addSpriteSheet('tileset_sprites', this.textures.get('tileset').getSourceImage(), {
-            frameWidth: tileSize,
-            frameHeight: tileSize,
-            startFrame: 0,
-            endFrame: 63
-        });
-        
-        console.log('Created tileset spritesheet with 64 individual tile textures');
+        try {
+            // Use addSpriteSheet to create individual tile textures
+            this.textures.addSpriteSheet('tileset_sprites', this.textures.get('tileset').getSourceImage(), {
+                frameWidth: tileSize,
+                frameHeight: tileSize,
+                startFrame: 0,
+                endFrame: 63
+            });
+            
+            console.log('GameScene: Created tileset spritesheet with 64 individual tile textures');
+            console.log('Available textures:', Object.keys(this.textures.list));
+        } catch (error) {
+            console.error('Error creating tileset spritesheet:', error);
+        }
     }
     
     createCharacterAnimations() {
@@ -167,18 +182,15 @@ class GameScene extends Phaser.Scene {
         // Create character animations
         this.createCharacterAnimations();
 
-        // Wait a bit for background images to fully load, then create background
-        this.time.delayedCall(1000, () => {
-            this.createBackground();
-            this.createDarkOverlay();
-        });
+        // Create background immediately
+        this.createBackground();
+        this.createDarkOverlay();
         
         // Set up world bounds FIRST
         this.setupWorldBounds();
         
         // Create tilemap system
         this.tilemapSystem = new TilemapSystem(this);
-        this.tilemapSystem.generateLevel();
         
         // Load map data if available, otherwise use default
         this.loadMapData();
@@ -191,11 +203,6 @@ class GameScene extends Phaser.Scene {
         
         // Create portal
         this.createPortal();
-        
-        // Setup collisions with default tilemap FIRST
-        this.tilemapSystem.createCollisionBodies();
-        this.setupCollisions();
-        
         
         // Set up camera
         this.setupCamera();
@@ -214,10 +221,10 @@ class GameScene extends Phaser.Scene {
     }
 
     loadMapData() {
-        // Try to load map1.json, fallback to example_map.json if not available
-        this.mapSystem.loadMapFromURL('maps/map1.json')
+        // Load default.json map file
+        this.mapSystem.loadMapFromURL('maps/default.json')
             .then(mapData => {
-                console.log('Loaded map:', mapData.metadata.name);
+                console.log('Loaded default map:', mapData.metadata.name);
                 this.mapData = mapData;
                 // Load tile data immediately after map data is loaded
                 this.loadTileDataFromMap();
@@ -225,25 +232,11 @@ class GameScene extends Phaser.Scene {
                 this.tilemapSystem.createCollisionBodies();
                 // Setup collisions AFTER collision bodies are created
                 this.setupCollisions();
+                // Reposition objects based on map data
+                this.updateObjectsFromMapData();
             })
             .catch(error => {
-                console.log('map1.json not found, trying example_map.json:', error.message);
-                return this.mapSystem.loadMapFromURL('maps/example_map.json');
-            })
-            .then(mapData => {
-                if (mapData) {
-                    console.log('Loaded map:', mapData.metadata.name);
-                    this.mapData = mapData;
-                    // Load tile data immediately after map data is loaded
-                    this.loadTileDataFromMap();
-                    // Create collision bodies AFTER tile data is loaded
-                    this.tilemapSystem.createCollisionBodies();
-                    // Setup collisions AFTER collision bodies are created
-                    this.setupCollisions();
-                }
-            })
-            .catch(error => {
-                console.log('Using default map data:', error.message);
+                console.log('default.json not found, using fallback map data:', error.message);
                 this.mapData = MapSystem.createMapData();
                 // Load tile data immediately after map data is loaded
                 this.loadTileDataFromMap();
@@ -251,6 +244,8 @@ class GameScene extends Phaser.Scene {
                 this.tilemapSystem.createCollisionBodies();
                 // Setup collisions AFTER collision bodies are created
                 this.setupCollisions();
+                // Reposition objects based on map data
+                this.updateObjectsFromMapData();
             });
     }
 
@@ -275,19 +270,18 @@ class GameScene extends Phaser.Scene {
                 if (this.mapData.tiles[y] && Array.isArray(this.mapData.tiles[y])) {
                     console.log(`Row ${y} length: ${this.mapData.tiles[y].length}`);
                     for (let x = 0; x < Math.min(this.mapData.tiles[y].length, this.tilemapSystem.mapWidth); x++) {
-                        // Set tile data without triggering visual update for each tile
-                        this.tilemapSystem.tiles[y][x] = this.mapData.tiles[y][x];
+                        // Use setTile to trigger visual updates (same as MapEditorScene)
+                        this.tilemapSystem.setTile(x, y, this.mapData.tiles[y][x]);
                         
                         // Debug: Log specific tile (120, 13)
                         if (x === 120 && y === 13) {
-                            console.log(`Loading tile at (120, 13): mapData=${this.mapData.tiles[y][x]}, tilemapSystem=${this.tilemapSystem.tiles[y][x]}`);
+                            console.log(`Loading tile at (120, 13): mapData=${this.mapData.tiles[y][x]}, tilemapSystem=${this.tilemapSystem.getTile(x, y)}`);
                         }
                     }
                 }
             }
             
-            // Redraw the entire visual layer once after loading all tiles
-            this.tilemapSystem.redrawVisualLayer();
+            console.log('Tile data loaded from map successfully');
             
             // Debug: Check specific tile (120, 13)
             const debugTile = this.tilemapSystem.getTile(120, 13);
@@ -440,24 +434,19 @@ class GameScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        // Get player start position from map data
+        // Create player with default position (will be repositioned when map loads)
         let startX = 100; // Default starting position
         let startY = 688; // Default starting position
         
-        if (this.mapData && this.mapData.player) {
-            startX = this.mapData.player.startPosition.x;
-            startY = this.mapData.player.startPosition.y;
-        } else {
-            // Paladin starts near the portal, other characters start at the beginning
-            if (gameData.selectedCharacter === 'D') {
-                startX = 3800; // Paladin starts close to portal (portal is at x=4000)
-            }
-            
-            // Calculate ground level from tilemap (bottom 3 rows)
-            const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
-            const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
-            startY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
+        // Paladin starts near the portal, other characters start at the beginning
+        if (gameData.selectedCharacter === 'D') {
+            startX = 3800; // Paladin starts close to portal (portal is at x=4000)
         }
+        
+        // Calculate ground level from tilemap (bottom 3 rows)
+        const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
+        const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
+        startY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
         
         this.player = new Player(this, startX, startY, gameData.selectedCharacter);
         
@@ -465,6 +454,41 @@ class GameScene extends Phaser.Scene {
         this.playerGroup = this.physics.add.group([this.player]);
         
         console.log(`Player created at position: (${startX}, ${startY})`);
+    }
+
+    repositionPlayer() {
+        // Reposition player based on map data
+        if (this.mapData && this.mapData.player && this.player) {
+            const startX = this.mapData.player.startPosition.x;
+            const startY = this.mapData.player.startPosition.y;
+            
+            this.player.setPosition(startX, startY);
+            console.log(`Player repositioned to map position: (${startX}, ${startY})`);
+        }
+    }
+
+    updateObjectsFromMapData() {
+        // Update player position
+        this.repositionPlayer();
+        
+        // Update portal position
+        if (this.mapData && this.mapData.portal && this.portalSprite) {
+            const portalX = this.mapData.portal.position.x;
+            const portalY = this.mapData.portal.position.y;
+            
+            this.portalSprite.setPosition(portalX, portalY);
+            console.log(`Portal repositioned to map position: (${portalX}, ${portalY})`);
+        }
+        
+        // Update enemy positions
+        if (this.mapData && this.mapData.enemies && this.enemies) {
+            this.mapData.enemies.forEach((enemyData, index) => {
+                if (this.enemies[index]) {
+                    this.enemies[index].setPosition(enemyData.position.x, enemyData.position.y);
+                    console.log(`Enemy ${index} repositioned to: (${enemyData.position.x}, ${enemyData.position.y})`);
+                }
+            });
+        }
     }
 
     // Helper function to find appropriate spawn position using tilemap

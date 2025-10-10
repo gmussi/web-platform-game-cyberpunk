@@ -44,7 +44,7 @@ Access the map editor from the character selection screen:
 
 ### Example Map
 
-The system includes a comprehensive example map (`maps/example_map.json`) with:
+The system includes a comprehensive default map (`maps/default.json`) with:
 
 - **15 enemies** of different types (stationary, moving, patrol)
 - **Multiple platforms** for varied gameplay
@@ -68,7 +68,7 @@ The system includes a comprehensive example map (`maps/example_map.json`) with:
 
 1. **In-game**: Press L key and select a JSON file
 2. **In editor**: Click "Load Map" and select a JSON file
-3. **Automatic**: The game loads `maps/example_map.json` by default
+3. **Automatic**: The game loads `maps/default.json` by default
 
 ### Map File Format
 
@@ -127,7 +127,7 @@ The map system is integrated into:
 
 ```
 maps/
-├── example_map.json          # Comprehensive example map
+├── default.json              # Default game map
 js/
 ├── MapSystem.js             # Core map management system
 ├── MapEditorScene.js        # Visual map editor

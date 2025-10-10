@@ -89,7 +89,8 @@ class MapEditorScene extends Phaser.Scene {
         
         // Create tilemap system
         this.tilemapSystem = new TilemapSystem(this);
-        this.tilemapSystem.generateLevel();
+        // Note: generateLevel() is deprecated - maps should be loaded from JSON files
+        // this.tilemapSystem.generateLevel();
         this.tilemapSystem.createCollisionBodies();
         
         // Create grid overlay for tile editing

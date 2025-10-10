@@ -35,13 +35,10 @@ class TilemapSystem {
         this.tileSpriteIndices = [];
     }
     
-    // Tile types - simplified to use single concept with different tile images
+    // Tile types - simplified to only EMPTY and SOLID for now
     static TILE_TYPES = {
         EMPTY: 0,
-        SOLID: 1,  // Single solid tile type that can use different tile images
-        SPIKE: 2,
-        LADDER: 3,
-        WATER: 4
+        SOLID: 1  // All non-zero values are treated as SOLID tiles
     };
     
     // Tile image mapping - maps tile types to specific tileset indices
@@ -155,10 +152,18 @@ class TilemapSystem {
             return;
         }
         
+        // Check if tileset textures are ready
+        if (!this.scene.textures.exists('tileset_sprites')) {
+            console.warn('Tileset textures not ready yet, skipping tile visual');
+            return;
+        }
+        
+        console.log(`Drawing tile at (${worldX}, ${worldY}), type: ${tileType}, image: ${tileImage}, spriteIndex: ${spriteIndex}`);
+        
         // Determine which tile image to use
         let tileIndex = 0; // Default to first tile
         
-        if (tileType === TilemapSystem.TILE_TYPES.SOLID) {
+        if (tileType === TilemapSystem.TILE_TYPES.SOLID || tileType > 0) {
             // Use stored sprite index if available, otherwise determine by context
             if (spriteIndex !== null) {
                 tileIndex = spriteIndex;
@@ -171,13 +176,9 @@ class TilemapSystem {
             } else {
                 tileIndex = TilemapSystem.TILE_IMAGES[TilemapSystem.TILE_TYPES.SOLID].GROUND; // Default
             }
-        } else if (tileType === TilemapSystem.TILE_TYPES.SPIKE) {
-            tileIndex = 3; // Use 4th tile for spikes
-        } else if (tileType === TilemapSystem.TILE_TYPES.LADDER) {
-            tileIndex = 4; // Use 5th tile for ladders
-        } else if (tileType === TilemapSystem.TILE_TYPES.WATER) {
-            tileIndex = 5; // Use 6th tile for water
         }
+        
+        console.log(`Using tileIndex: ${tileIndex} for tile at (${worldX}, ${worldY})`);
         
         // Create sprite for this tile using spritesheet frames
         const tileSprite = this.scene.add.image(worldX + this.tileSize/2, worldY + this.tileSize/2, 'tileset_sprites', tileIndex);
@@ -245,8 +246,25 @@ class TilemapSystem {
         console.log(`RedrawVisualLayer: Drew ${tilesDrawn} tiles`);
     }
     
+    // Method to redraw tiles after textures are ready
+    redrawTilesAfterTexturesReady() {
+        if (this.scene.textures.exists('tileset_sprites')) {
+            console.log('Tileset textures ready, redrawing tiles...');
+            this.redrawVisualLayer();
+        } else {
+            console.log('Tileset textures not ready yet, will retry...');
+            // Retry after a short delay
+            this.scene.time.delayedCall(100, () => {
+                this.redrawTilesAfterTexturesReady();
+            });
+        }
+    }
+    
     // Create collision bodies for solid tiles using a single static group
     createCollisionBodies() {
+        console.log('Creating collision bodies...');
+        console.log(`Map dimensions: ${this.mapWidth}x${this.mapHeight}`);
+        
         // Clear existing collision bodies
         this.collisionBodies = [];
         
@@ -272,6 +290,7 @@ class TilemapSystem {
         console.log(`Created single ground collision body: width=${groundWidth}, height=${groundHeight}, y=${groundWorldY + groundHeight/2}`);
         
         // Create individual collision bodies for solid tiles (excluding ground)
+        let solidTilesCount = 0;
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tileType = this.tiles[y][x];
@@ -282,9 +301,12 @@ class TilemapSystem {
                     const collisionBody = this.createTileCollisionBody(worldPos.x, worldPos.y, tileType);
                     this.collisionBodies.push(collisionBody);
                     this.collisionGroup.add(collisionBody);
+                    solidTilesCount++;
                 }
             }
         }
+        
+        console.log(`Created ${solidTilesCount} individual collision bodies for solid tiles`);
         
         console.log(`Created ${this.collisionBodies.length} collision bodies for tilemap`);
         console.log(`Collision group size: ${this.collisionGroup.children.size}`);
@@ -293,7 +315,7 @@ class TilemapSystem {
     
     // Check if a tile type is solid
     isSolidTile(tileType) {
-        return tileType === TilemapSystem.TILE_TYPES.SOLID;
+        return tileType !== TilemapSystem.TILE_TYPES.EMPTY; // All non-zero values are solid
     }
     
     // Create collision body for a tile
@@ -310,8 +332,9 @@ class TilemapSystem {
         return tileBody;
     }
     
-    // Level generation methods
+    // Level generation methods - DEPRECATED: Use loadTileDataFromMap instead
     generateGroundLevel() {
+        console.warn('generateGroundLevel() is deprecated. Maps should be loaded from JSON files.');
         const groundY = this.mapHeight - 3; // Ground at bottom 3 rows
         
         console.log(`Generating ground level at tile Y=${groundY} (world Y=${groundY * this.tileSize})`);
@@ -327,6 +350,7 @@ class TilemapSystem {
     }
     
     generatePlatforms() {
+        console.warn('generatePlatforms() is deprecated. Maps should be loaded from JSON files.');
         // Create some floating platforms
         const platforms = [
             { x: 10, y: 15, width: 4, height: 1 },
@@ -348,6 +372,7 @@ class TilemapSystem {
     }
     
     generateWalls() {
+        console.warn('generateWalls() is deprecated. Maps should be loaded from JSON files.');
         // Create some walls
         const walls = [
             { x: 15, y: 10, width: 1, height: 8 },
@@ -365,8 +390,9 @@ class TilemapSystem {
         });
     }
     
-    // Generate a complete level
+    // Generate a complete level - DEPRECATED: Use loadTileDataFromMap instead
     generateLevel() {
+        console.warn('generateLevel() is deprecated. Maps should be loaded from JSON files.');
         this.generateGroundLevel();
         this.generatePlatforms();
         this.generateWalls();
