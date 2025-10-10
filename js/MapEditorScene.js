@@ -111,13 +111,16 @@ class MapEditorScene extends Phaser.Scene {
     }
 
     loadDefaultMap() {
+        console.log('MapEditorScene: Starting default map load...');
         // Try to load default.json map file
         this.mapSystem.loadMapFromURL('maps/default.json')
             .then(mapData => {
-                console.log('Loaded default map in editor:', mapData.metadata.name);
+                console.log('MapEditorScene: Loaded default map:', mapData.metadata.name);
+                console.log('MapEditorScene: Map data size:', JSON.stringify(mapData).length, 'characters');
                 this.mapData = mapData;
                 this.loadTileDataFromMap();
                 this.updatePreviewObjects();
+                console.log('MapEditorScene: Map loading completed successfully');
             })
             .catch(error => {
                 console.log('default.json not found, creating new map:', error.message);

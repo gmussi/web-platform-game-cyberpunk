@@ -215,10 +215,12 @@ class GameScene extends Phaser.Scene {
     }
 
     loadMapData() {
+        console.log('Starting map data load...');
         // Load default.json map file
         this.mapSystem.loadMapFromURL('maps/default.json')
             .then(mapData => {
                 console.log('Loaded default map:', mapData.metadata.name);
+                console.log('Map data size:', JSON.stringify(mapData).length, 'characters');
                 this.mapData = mapData;
                 // Load tile data immediately after map data is loaded
                 this.loadTileDataFromMap();
@@ -232,6 +234,7 @@ class GameScene extends Phaser.Scene {
                 this.setupCollisions();
                 // Reposition objects based on map data
                 this.updateObjectsFromMapData();
+                console.log('Map loading completed successfully');
             })
             .catch(error => {
                 console.error('Failed to load default.json map file:', error.message);

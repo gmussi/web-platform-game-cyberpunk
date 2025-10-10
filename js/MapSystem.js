@@ -131,7 +131,21 @@ class MapSystem {
     // Load map from URL (for example maps)
     async loadMapFromURL(url) {
         try {
-            const response = await fetch(url);
+            // Add cache-busting parameter to prevent stale cache issues
+            const cacheBuster = `?t=${Date.now()}`;
+            const urlWithCacheBuster = url + cacheBuster;
+            
+            console.log('Loading map from URL:', urlWithCacheBuster);
+            
+            const response = await fetch(urlWithCacheBuster, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
