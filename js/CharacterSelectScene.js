@@ -4,6 +4,10 @@ class CharacterSelectScene extends Phaser.Scene {
     }
 
     preload() {
+        // Load home background and logo
+        this.load.image('homebg', 'img/homebg.png');
+        this.load.image('logo', 'img/logo.png');
+        
         // Load character sprites for selection screen
         this.loadCharacterSprites();
     }
@@ -28,10 +32,13 @@ class CharacterSelectScene extends Phaser.Scene {
         this.createCharacterAnimations();
         
         // Background
-        this.add.rectangle(600, 400, 1200, 800, 0x0a0a2e); // Dark cyberpunk background
+        this.add.image(600, 400, 'homebg').setDisplaySize(1200, 800);
         
-        // Title
-        this.add.text(600, 150, 'Choose Your Cyber Hero', {
+        // Logo positioned between top and title (40% of original size)
+        this.add.image(600, 200, 'logo').setScale(0.4);
+        
+        // Title (moved further down)
+        this.add.text(600, 400, 'Choose Your Cyber Hero', {
             fontSize: '32px',
             fill: '#00ffff',
             fontStyle: 'bold'
@@ -46,7 +53,7 @@ class CharacterSelectScene extends Phaser.Scene {
         const spacing = 200; // Increased spacing for larger screen
         const totalWidth = (characterKeys.length - 1) * spacing;
         const startX = (1200 - totalWidth) / 2; // Center the characters
-        const y = 400;
+        const y = 520; // Moved further down to make more space
 
         // Create character options
         this.characters = [];
@@ -55,12 +62,29 @@ class CharacterSelectScene extends Phaser.Scene {
             const x = startX + (index * spacing);
             const character = characters[key];
             
+            // Dark rounded square background with yellowish border
+            const borderSize = 126; // 10% smaller than 140 (140 * 0.9 = 126)
+            const cornerRadius = 15; // Rounded corners
+            
+            // Create rounded rectangle using graphics
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0x1a1a1a, 0.65); // Dark background with 65% transparency
+            graphics.lineStyle(3, 0xffdd44); // Yellowish border
+            graphics.fillRoundedRect(x - borderSize/2, y - borderSize/2, borderSize, borderSize, cornerRadius);
+            graphics.strokeRoundedRect(x - borderSize/2, y - borderSize/2, borderSize, borderSize, cornerRadius);
+            graphics.setDepth(0); // Behind character
+            
+            // Invisible interactive area covering the whole square
+            const interactiveArea = this.add.rectangle(x, y, borderSize, borderSize);
+            interactiveArea.setInteractive();
+            interactiveArea.setDepth(0.5); // Between background and character
+            
             // Character sprite (using breathing-idle animation)
             const charName = ['cyberWarrior', 'quantumMage', 'stealthRogue', 'plasmaPaladin'][index];
             const sprite = this.add.sprite(x, y, `${charName}_breathing_idle_000`);
             sprite.setDisplaySize(characterSize, characterSize);
             sprite.setScale(1.2); // Start at larger size
-            sprite.setInteractive();
+            sprite.setDepth(1); // Above background
             
             // Play breathing-idle animation
             sprite.play(`${charName}_breathing_idle`);
@@ -75,18 +99,28 @@ class CharacterSelectScene extends Phaser.Scene {
             }).setOrigin(0.5);
             
             
-            // Click handler
-            sprite.on('pointerdown', () => {
+            // Click handler on the interactive area
+            interactiveArea.on('pointerdown', () => {
                 this.selectCharacter(key);
             });
             
-            // Hover effects
-            sprite.on('pointerover', () => {
+            // Hover effects on the interactive area
+            interactiveArea.on('pointerover', () => {
                 sprite.setTint(0xffff00); // Yellow glow on hover
+                graphics.clear();
+                graphics.fillStyle(0x1a1a1a, 0.65); // Dark background with 65% transparency
+                graphics.lineStyle(5, 0xffff00); // Brighter border on hover
+                graphics.fillRoundedRect(x - borderSize/2, y - borderSize/2, borderSize, borderSize, cornerRadius);
+                graphics.strokeRoundedRect(x - borderSize/2, y - borderSize/2, borderSize, borderSize, cornerRadius);
             });
             
-            sprite.on('pointerout', () => {
+            interactiveArea.on('pointerout', () => {
                 sprite.clearTint();
+                graphics.clear();
+                graphics.fillStyle(0x1a1a1a, 0.65); // Dark background with 65% transparency
+                graphics.lineStyle(3, 0xffdd44); // Reset to normal border
+                graphics.fillRoundedRect(x - borderSize/2, y - borderSize/2, borderSize, borderSize, cornerRadius);
+                graphics.strokeRoundedRect(x - borderSize/2, y - borderSize/2, borderSize, borderSize, cornerRadius);
             });
             
             this.characters.push({
@@ -96,8 +130,8 @@ class CharacterSelectScene extends Phaser.Scene {
             });
         });
 
-        // Instructions
-        this.add.text(600, 650, 'Click on a hero to begin your cyberpunk adventure!', {
+        // Instructions (moved down)
+        this.add.text(600, 720, 'Click on a hero to begin your cyberpunk adventure!', {
             fontSize: '16px',
             fill: '#00ffff'
         }).setOrigin(0.5);
