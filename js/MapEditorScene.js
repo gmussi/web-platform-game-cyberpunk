@@ -89,15 +89,39 @@ class MapEditorScene extends Phaser.Scene {
         
         // Create tilemap system
         this.tilemapSystem = new TilemapSystem(this);
-        // Note: generateLevel() is deprecated - maps should be loaded from JSON files
-        // this.tilemapSystem.generateLevel();
         this.tilemapSystem.createCollisionBodies();
         
         // Create grid overlay for tile editing
         this.createGridOverlay();
         
-        // Initialize map data
-        this.mapData = MapSystem.createMapData();
+        // Initialize map data with basic structure
+        this.mapData = {
+            version: "1.0",
+            metadata: {
+                name: "New Map",
+                description: "A new map created in the editor",
+                created: new Date().toISOString(),
+                author: "Map Editor"
+            },
+            world: {
+                width: 4100,
+                height: 800,
+                tileSize: 32
+            },
+            player: {
+                startPosition: { x: 100, y: 688 },
+                character: "A"
+            },
+            portal: {
+                position: { x: 4000, y: 660 },
+                size: { width: 100, height: 100 }
+            },
+            enemies: [],
+            platforms: [],
+            collectibles: [],
+            checkpoints: [],
+            tiles: []
+        };
         
         // Create UI
         this.createEditorUI();

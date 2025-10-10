@@ -5,205 +5,14 @@ class MapSystem {
         this.mapFileName = 'default.json';
     }
 
-    // Map data structure - DEPRECATED: Use loadMapFromURL instead
-    static createMapData() {
-        console.warn('createMapData() is deprecated. Maps should be loaded from JSON files.');
-        return {
-            version: "1.0",
-            metadata: {
-                name: "Cyberpunk Adventure Map",
-                description: "A challenging platformer with enemies and portals",
-                created: new Date().toISOString(),
-                author: "Game Designer"
-            },
-            world: {
-                width: 4100,
-                height: 800,
-                tileSize: 32
-            },
-            player: {
-                startPosition: {
-                    x: 100,
-                    y: 688
-                },
-                character: "A" // Default character
-            },
-            portal: {
-                position: {
-                    x: 4000,
-                    y: 660
-                },
-                size: {
-                    width: 100,
-                    height: 100
-                }
-            },
-            enemies: [
-                // Stationary enemies
-                {
-                    id: "enemy_1",
-                    type: "stationary",
-                    enemyType: "enemy1",
-                    position: { x: 400, y: 688 },
-                    properties: {
-                        damage: 20,
-                        health: 50
-                    }
-                },
-                {
-                    id: "enemy_2", 
-                    type: "stationary",
-                    enemyType: "enemy2",
-                    position: { x: 800, y: 688 },
-                    properties: {
-                        damage: 20,
-                        health: 50
-                    }
-                },
-                {
-                    id: "enemy_3",
-                    type: "stationary", 
-                    enemyType: "enemy1",
-                    position: { x: 1200, y: 688 },
-                    properties: {
-                        damage: 20,
-                        health: 50
-                    }
-                },
-                {
-                    id: "enemy_4",
-                    type: "stationary",
-                    enemyType: "enemy2", 
-                    position: { x: 1600, y: 688 },
-                    properties: {
-                        damage: 20,
-                        health: 50
-                    }
-                },
-                // Moving enemies
-                {
-                    id: "enemy_5",
-                    type: "moving",
-                    enemyType: "enemy1",
-                    position: { x: 600, y: 500 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 100
-                    }
-                },
-                {
-                    id: "enemy_6",
-                    type: "moving",
-                    enemyType: "enemy2",
-                    position: { x: 1000, y: 450 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 120
-                    }
-                },
-                {
-                    id: "enemy_7",
-                    type: "moving",
-                    enemyType: "enemy1",
-                    position: { x: 1400, y: 520 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 80
-                    }
-                },
-                {
-                    id: "enemy_8",
-                    type: "moving",
-                    enemyType: "enemy2",
-                    position: { x: 1800, y: 480 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 150
-                    }
-                },
-                // Patrol enemies
-                {
-                    id: "enemy_9",
-                    type: "patrol",
-                    enemyType: "enemy1",
-                    position: { x: 900, y: 400 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 200
-                    }
-                },
-                {
-                    id: "enemy_10",
-                    type: "patrol",
-                    enemyType: "enemy2",
-                    position: { x: 1300, y: 350 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 180
-                    }
-                },
-                {
-                    id: "enemy_11",
-                    type: "patrol",
-                    enemyType: "enemy1",
-                    position: { x: 2000, y: 420 },
-                    properties: {
-                        damage: 20,
-                        health: 50,
-                        speed: 50,
-                        patrolRange: 160
-                    }
-                }
-            ],
-            platforms: [
-                // Ground platforms for enemies
-                { x: 400, y: 720, width: 64, height: 16 },
-                { x: 800, y: 720, width: 64, height: 16 },
-                { x: 1200, y: 720, width: 64, height: 16 },
-                { x: 1600, y: 720, width: 64, height: 16 },
-                // Floating platforms for moving enemies
-                { x: 600, y: 520, width: 96, height: 16 },
-                { x: 1000, y: 470, width: 96, height: 16 },
-                { x: 1400, y: 540, width: 96, height: 16 },
-                { x: 1800, y: 500, width: 96, height: 16 },
-                // Platforms for patrol enemies
-                { x: 900, y: 420, width: 128, height: 16 },
-                { x: 1300, y: 370, width: 128, height: 16 },
-                { x: 2000, y: 440, width: 128, height: 16 }
-            ],
-            collectibles: [
-                // Health packs
-                { id: "health_1", type: "health", position: { x: 300, y: 600 }, value: 25 },
-                { id: "health_2", type: "health", position: { x: 700, y: 500 }, value: 25 },
-                { id: "health_3", type: "health", position: { x: 1100, y: 400 }, value: 25 },
-                { id: "health_4", type: "health", position: { x: 1500, y: 450 }, value: 25 },
-                { id: "health_5", type: "health", position: { x: 1900, y: 350 }, value: 25 }
-            ],
-            checkpoints: [
-                { id: "checkpoint_1", position: { x: 500, y: 650 } },
-                { id: "checkpoint_2", position: { x: 1000, y: 600 } },
-                { id: "checkpoint_3", position: { x: 1500, y: 550 } },
-                { id: "checkpoint_4", position: { x: 2000, y: 500 } }
-            ],
-            tiles: [] // Will be populated by tilemap system
-        };
-    }
-
     // Save current map data to file with custom filename
     async saveMap(mapData = null) {
-        const dataToSave = mapData || this.mapData || MapSystem.createMapData();
+        const dataToSave = mapData || this.mapData;
+        
+        if (!dataToSave) {
+            console.error('No map data available to save');
+            return false;
+        }
         
         try {
             // Try to use File System Access API for better file handling
@@ -416,7 +225,34 @@ class MapSystem {
             return null;
         }
 
-        const mapData = MapSystem.createMapData();
+        // Create basic map structure
+        const mapData = {
+            version: "1.0",
+            metadata: {
+                name: "Generated Map",
+                description: "Map generated from current game state",
+                created: new Date().toISOString(),
+                author: "Game System"
+            },
+            world: {
+                width: 4100,
+                height: 800,
+                tileSize: 32
+            },
+            player: {
+                startPosition: { x: 0, y: 0 },
+                character: "A"
+            },
+            portal: {
+                position: { x: 0, y: 0 },
+                size: { width: 100, height: 100 }
+            },
+            enemies: [],
+            platforms: [],
+            collectibles: [],
+            checkpoints: [],
+            tiles: []
+        };
         
         // Update player position
         mapData.player.startPosition.x = this.scene.player.x;
@@ -449,7 +285,13 @@ class MapSystem {
 
     // Export map data as JSON string
     exportMapData(mapData = null) {
-        const dataToExport = mapData || this.mapData || MapSystem.createMapData();
+        const dataToExport = mapData || this.mapData;
+        
+        if (!dataToExport) {
+            console.error('No map data available to export');
+            return null;
+        }
+        
         return JSON.stringify(dataToExport, null, 2);
     }
 

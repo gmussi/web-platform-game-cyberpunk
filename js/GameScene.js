@@ -198,12 +198,6 @@ class GameScene extends Phaser.Scene {
         // Create player immediately (will be repositioned when map loads)
         this.createPlayer();
         
-        // Create enemies
-        this.createEnemies();
-        
-        // Create portal
-        this.createPortal();
-        
         // Set up camera
         this.setupCamera();
         
@@ -230,22 +224,34 @@ class GameScene extends Phaser.Scene {
                 this.loadTileDataFromMap();
                 // Create collision bodies AFTER tile data is loaded
                 this.tilemapSystem.createCollisionBodies();
+                // Create enemies AFTER map data is loaded
+                this.createEnemies();
+                // Create portal AFTER map data is loaded
+                this.createPortal();
                 // Setup collisions AFTER collision bodies are created
                 this.setupCollisions();
                 // Reposition objects based on map data
                 this.updateObjectsFromMapData();
             })
             .catch(error => {
-                console.log('default.json not found, using fallback map data:', error.message);
-                this.mapData = MapSystem.createMapData();
-                // Load tile data immediately after map data is loaded
-                this.loadTileDataFromMap();
-                // Create collision bodies AFTER tile data is loaded
-                this.tilemapSystem.createCollisionBodies();
-                // Setup collisions AFTER collision bodies are created
-                this.setupCollisions();
-                // Reposition objects based on map data
-                this.updateObjectsFromMapData();
+                console.error('Failed to load default.json map file:', error.message);
+                console.error('Game cannot start without a valid map file. Please ensure maps/default.json exists.');
+                // Show error message to user
+                this.add.text(600, 400, 'Map Loading Error', {
+                    fontSize: '32px',
+                    fill: '#ff4444',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5);
+                
+                this.add.text(600, 450, 'Failed to load maps/default.json', {
+                    fontSize: '18px',
+                    fill: '#ffffff'
+                }).setOrigin(0.5);
+                
+                this.add.text(600, 480, 'Please ensure the map file exists and is valid', {
+                    fontSize: '16px',
+                    fill: '#cccccc'
+                }).setOrigin(0.5);
             });
     }
 
@@ -480,15 +486,7 @@ class GameScene extends Phaser.Scene {
             console.log(`Portal repositioned to map position: (${portalX}, ${portalY})`);
         }
         
-        // Update enemy positions
-        if (this.mapData && this.mapData.enemies && this.enemies) {
-            this.mapData.enemies.forEach((enemyData, index) => {
-                if (this.enemies[index]) {
-                    this.enemies[index].setPosition(enemyData.position.x, enemyData.position.y);
-                    console.log(`Enemy ${index} repositioned to: (${enemyData.position.x}, ${enemyData.position.y})`);
-                }
-            });
-        }
+        // Note: Enemies are now created at correct positions, no need to reposition
     }
 
     // Helper function to find appropriate spawn position using tilemap
@@ -533,8 +531,7 @@ class GameScene extends Phaser.Scene {
             
             console.log(`Created ${this.enemies.length} enemies from map data`);
         } else {
-            // Fallback to default enemy creation
-            this.createDefaultEnemies();
+            console.warn('No enemy data found in map. No enemies will be created.');
         }
         
         // Add enemies to physics group
@@ -552,44 +549,6 @@ class GameScene extends Phaser.Scene {
             console.log(`Player physics body: x=${this.player.body.x}, y=${this.player.body.y}, width=${this.player.body.width}, height=${this.player.body.height}`);
             console.log(`Player sprite: x=${this.player.x}, y=${this.player.y}, width=${this.player.width}, height=${this.player.height}`);
         }
-    }
-
-    createDefaultEnemies() {
-        // Stationary enemies (blocking paths) - position them on ground platforms
-        const stationaryPositions = [
-            { x: 400, preferGround: true },
-            { x: 800, preferGround: true },
-            { x: 1200, preferGround: true },
-            { x: 1600, preferGround: true }
-        ];
-        
-        const stationaryEnemies = stationaryPositions.map((pos, index) => {
-            const spawnPos = this.findSpawnPosition(pos.x, pos.preferGround);
-            const enemyType = index % 2 === 0 ? 'enemy1' : 'enemy2';
-            return Enemy.createStationaryEnemy(this, spawnPos.x, spawnPos.y, enemyType);
-        });
-        
-        // Moving enemies (patrolling) - spawn on platforms
-        const movingEnemies = [];
-        
-        // Try to spawn moving enemies on different platforms
-        const targetMovingEnemies = 4;
-        for (let i = 0; i < targetMovingEnemies; i++) {
-            const spawnPos = this.findSpawnPosition(400 + i * 200, false);
-            const enemyType = i % 2 === 0 ? 'enemy1' : 'enemy2';
-            movingEnemies.push(Enemy.createMovingEnemy(this, spawnPos.x, spawnPos.y, enemyType));
-        }
-        
-        // Patrol enemies with different ranges
-        const patrolEnemies = [];
-        const targetPatrolEnemies = 3;
-        for (let i = 0; i < targetPatrolEnemies; i++) {
-            const spawnPos = this.findSpawnPosition(600 + i * 300, false);
-            const enemyType = i % 2 === 0 ? 'enemy1' : 'enemy2';
-            patrolEnemies.push(Enemy.createPatrolEnemy(this, spawnPos.x, spawnPos.y, 150, enemyType));
-        }
-        
-        this.enemies.push(...stationaryEnemies, ...movingEnemies, ...patrolEnemies);
     }
 
     createPortal() {
