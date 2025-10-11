@@ -20,20 +20,14 @@ class Enemy extends Phaser.Physics.Arcade.Sprite {
         
         // Set up physics body
         this.setCollideWorldBounds(false);
-        this.body.setGravityY(0); // Remove gravity for enemies
-        this.body.setAllowGravity(false); // Explicitly disable gravity
-        this.body.setVelocityY(0); // Stop any vertical movement
+        // Enemies now affected by gravity like the player
         
         // Set proper physics body size (smaller than sprite for better gameplay)
         this.body.setSize(32, 48); // Width: 32px, Height: 48px (smaller than 64x64 sprite)
         this.body.setOffset(16, 8); // Center horizontally, offset vertically to align with body
         
-        // For moving enemies, allow movement but prevent falling
-        if (type === 'moving') {
-            this.setImmovable(false); // Allow movement for patrol enemies
-        } else {
-            this.setImmovable(true); // Stationary enemies stay put
-        }
+        // All enemies need to be movable to collide with platforms properly
+        this.setImmovable(false); // Allow collision with platforms
         
         // Enemy properties
         this.damage = 20;

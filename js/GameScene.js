@@ -596,8 +596,17 @@ class GameScene extends Phaser.Scene {
             // Collision handling is done in Enemy class
         });
         
-        // Enemies vs Tilemap
-        this.physics.add.collider(this.enemies, this.tilemapSystem.collisionGroup);
+        // Enemies vs Tilemap - use individual collision bodies
+        console.log(`Setting up enemy collisions with ${this.tilemapSystem.collisionBodies.length} collision bodies`);
+        this.tilemapSystem.collisionBodies.forEach((body, index) => {
+            this.physics.add.collider(this.enemies, body);
+            console.log(`Added collision for enemies with body ${index}:`, {
+                x: body.x,
+                y: body.y,
+                width: body.width,
+                height: body.height
+            });
+        });
         
         // Player vs Portal - only the animated portal sprite
         this.physics.add.overlap(this.player, this.portalSprite, (player, portal) => {
@@ -834,14 +843,7 @@ class GameScene extends Phaser.Scene {
         // }
         this.frameCount++;
         
-        if (this.enemies && Array.isArray(this.enemies)) {
-            this.enemies.forEach(enemy => {
-                if (enemy && enemy.body && enemy.body.velocity.y !== 0) {
-                    enemy.body.setVelocityY(0);
-                    enemy.body.setAllowGravity(false);
-                }
-            });
-        }
+        // Enemies now fall with gravity like the player
         
         // Update health bar
         if (this.player) {

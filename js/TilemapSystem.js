@@ -272,31 +272,17 @@ class TilemapSystem {
         // Create a static group for all collision bodies
         this.collisionGroup = this.scene.physics.add.staticGroup();
         
-        // Create a single large ground collision body instead of individual tiles
-        const groundTileY = this.mapHeight - 3; // Ground starts at row 22
-        const groundWorldY = groundTileY * this.tileSize; // Convert to world coordinates
-        const groundWidth = this.mapWidth * this.tileSize; // Full width
-        const groundHeight = 3 * this.tileSize; // 3 rows high
-        
-        // Create single ground collision body
-        const groundBody = this.scene.add.rectangle(groundWidth/2, groundWorldY + groundHeight/2, groundWidth, groundHeight);
-        this.scene.physics.add.existing(groundBody);
-        groundBody.body.setImmovable(true);
-        groundBody.body.setAllowGravity(false);
-        groundBody.setVisible(false); // Invisible collision body
-        
-        this.collisionBodies.push(groundBody);
-        this.collisionGroup.add(groundBody);
+        // No separate ground collision body - ground is created using individual solid tiles
         
         
-        // Create individual collision bodies for solid tiles (excluding ground)
+        // Create individual collision bodies for ALL solid tiles (including ground)
         let solidTilesCount = 0;
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tileType = this.tiles[y][x];
                 
-                // Only create collision for solid tiles that are not part of the ground level
-                if (this.isSolidTile(tileType) && y < this.mapHeight - 3) {
+                // Create collision for ALL solid tiles (including ground level)
+                if (this.isSolidTile(tileType)) {
                     const worldPos = this.tileToWorld(x, y);
                     const collisionBody = this.createTileCollisionBody(worldPos.x, worldPos.y, tileType);
                     this.collisionBodies.push(collisionBody);
@@ -307,6 +293,7 @@ class TilemapSystem {
         }
         
         
+        console.log(`Total collision bodies created: ${this.collisionBodies.length} individual solid tiles`);
         return this.collisionGroup;
     }
     
