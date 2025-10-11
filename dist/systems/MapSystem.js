@@ -1,0 +1,286 @@
+/// <reference path="./phaser.d.ts" />
+export class MapSystem {
+    constructor(scene) {
+        this.scene = scene;
+        this.mapData = null;
+        this.mapFileName = "default.json";
+    }
+    // Save current map data to file with custom filename
+    async saveMap(mapData = null) {
+        const dataToSave = mapData || this.mapData;
+        if (!dataToSave) {
+            console.error("No map data available to save");
+            return false;
+        }
+        try {
+            // Try to use File System Access API for better file handling
+            if ("showSaveFilePicker" in window) {
+                return await this.saveMapWithFilePicker(dataToSave);
+            }
+            else {
+                // Fallback to custom filename prompt
+                return await this.saveMapWithPrompt(dataToSave);
+            }
+        }
+        catch (error) {
+            console.error("Error saving map:", error);
+            return false;
+        }
+    }
+    // Save map using File System Access API
+    async saveMapWithFilePicker(mapData) {
+        try {
+            const jsonString = JSON.stringify(mapData, null, 2);
+            // Show file picker
+            const fileHandle = await window.showSaveFilePicker({
+                suggestedName: this.mapFileName,
+                types: [
+                    {
+                        description: "JSON Map Files",
+                        accept: {
+                            "application/json": [".json"],
+                        },
+                    },
+                ],
+            });
+            // Write to file
+            const writable = await fileHandle.createWritable();
+            await writable.write(jsonString);
+            await writable.close();
+            return true;
+        }
+        catch (error) {
+            if (error.name === "AbortError") {
+                return false;
+            }
+            throw error;
+        }
+    }
+    // Save map with custom filename prompt (fallback)
+    async saveMapWithPrompt(mapData) {
+        const jsonString = JSON.stringify(mapData, null, 2);
+        // Prompt for filename
+        const filename = prompt("Enter filename for your map:", this.mapFileName);
+        if (!filename) {
+            return false;
+        }
+        // Ensure .json extension
+        const finalFilename = filename.endsWith(".json")
+            ? filename
+            : filename + ".json";
+        // Create a blob and download link
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        // Create download link
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = finalFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // Clean up
+        URL.revokeObjectURL(url);
+        return true;
+    }
+    // Load map data from file
+    async loadMap(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject(new Error("No file provided"));
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const mapData = JSON.parse(event.target?.result);
+                    // Validate map data structure
+                    if (this.validateMapData(mapData)) {
+                        this.mapData = mapData;
+                        resolve(mapData);
+                    }
+                    else {
+                        reject(new Error("Invalid map data format"));
+                    }
+                }
+                catch (error) {
+                    reject(new Error("Error parsing map file: " + error.message));
+                }
+            };
+            reader.onerror = () => {
+                reject(new Error("Error reading file"));
+            };
+            reader.readAsText(file);
+        });
+    }
+    // Load map from URL (for example maps)
+    async loadMapFromURL(url) {
+        try {
+            // Add cache-busting parameter to prevent stale cache issues
+            const cacheBuster = `?t=${Date.now()}`;
+            const urlWithCacheBuster = url + cacheBuster;
+            const response = await fetch(urlWithCacheBuster, {
+                cache: "no-cache",
+                headers: {
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    Pragma: "no-cache",
+                    Expires: "0",
+                },
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const mapData = await response.json();
+            if (this.validateMapData(mapData)) {
+                this.mapData = mapData;
+                return mapData;
+            }
+            else {
+                throw new Error("Invalid map data format");
+            }
+        }
+        catch (error) {
+            console.error("Error loading map from URL:", error);
+            throw error;
+        }
+    }
+    // Validate map data structure
+    validateMapData(mapData) {
+        const requiredFields = [
+            "version",
+            "metadata",
+            "world",
+            "player",
+            "portal",
+            "enemies",
+        ];
+        for (const field of requiredFields) {
+            if (!mapData[field]) {
+                console.error(`Missing required field: ${field}`);
+                return false;
+            }
+        }
+        // Validate player data
+        if (!mapData.player.startPosition ||
+            typeof mapData.player.startPosition.x !== "number" ||
+            typeof mapData.player.startPosition.y !== "number") {
+            console.error("Invalid player start position");
+            return false;
+        }
+        // Validate portal data
+        if (!mapData.portal.position ||
+            typeof mapData.portal.position.x !== "number" ||
+            typeof mapData.portal.position.y !== "number") {
+            console.error("Invalid portal position");
+            return false;
+        }
+        // Validate enemies array
+        if (!Array.isArray(mapData.enemies)) {
+            console.error("Enemies must be an array");
+            return false;
+        }
+        for (const enemy of mapData.enemies) {
+            if (!enemy.id || !enemy.type || !enemy.position || !enemy.enemyType) {
+                console.error("Invalid enemy data:", enemy);
+                return false;
+            }
+        }
+        return true;
+    }
+    // Get current map data
+    getMapData() {
+        return this.mapData;
+    }
+    // Set map data
+    setMapData(mapData) {
+        if (this.validateMapData(mapData)) {
+            this.mapData = mapData;
+            return true;
+        }
+        return false;
+    }
+    // Create a map from current game state
+    createMapFromGameState() {
+        const scene = this.scene; // Type assertion for scene with game objects
+        if (!scene.player || !scene.portalSprite || !scene.enemies) {
+            console.error("Cannot create map: missing game objects");
+            return null;
+        }
+        // Create basic map structure
+        const mapData = {
+            version: "1.0",
+            metadata: {
+                name: "Generated Map",
+                description: "Map generated from current game state",
+                created: new Date().toISOString(),
+                author: "Game System",
+            },
+            world: {
+                width: 4100,
+                height: 800,
+                tileSize: 32,
+            },
+            player: {
+                startPosition: { x: 0, y: 0 },
+                character: "A",
+            },
+            portal: {
+                position: { x: 0, y: 0 },
+                size: { width: 100, height: 100 },
+            },
+            enemies: [],
+            platforms: [],
+            collectibles: [],
+            checkpoints: [],
+            tiles: [],
+        };
+        // Update player position
+        mapData.player.startPosition.x = scene.player.x;
+        mapData.player.startPosition.y = scene.player.y;
+        mapData.player.character = scene.player.characterKey;
+        // Update portal position
+        mapData.portal.position.x = scene.portalSprite.x;
+        mapData.portal.position.y = scene.portalSprite.y;
+        // Update enemy positions
+        mapData.enemies = [];
+        scene.enemies.forEach((enemy, index) => {
+            mapData.enemies.push({
+                id: `enemy_${index + 1}`,
+                type: enemy.type,
+                enemyType: enemy.enemyType,
+                position: { x: enemy.x, y: enemy.y },
+                properties: {
+                    damage: enemy.damage,
+                    health: enemy.health,
+                    speed: enemy.speed,
+                    patrolRange: enemy.patrolRange || 150,
+                },
+            });
+        });
+        return mapData;
+    }
+    // Export map data as JSON string
+    exportMapData(mapData = null) {
+        const dataToExport = mapData || this.mapData;
+        if (!dataToExport) {
+            console.error("No map data available to export");
+            return null;
+        }
+        return JSON.stringify(dataToExport, null, 2);
+    }
+    // Import map data from JSON string
+    importMapData(jsonString) {
+        try {
+            const mapData = JSON.parse(jsonString);
+            if (this.validateMapData(mapData)) {
+                this.mapData = mapData;
+                return true;
+            }
+            return false;
+        }
+        catch (error) {
+            console.error("Error importing map data:", error);
+            return false;
+        }
+    }
+}
+//# sourceMappingURL=MapSystem.js.map
