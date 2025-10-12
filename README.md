@@ -1,6 +1,6 @@
 # 2D Side-Scrolling Platformer Game
 
-A complete 2D platformer game built with Phaser.js featuring character selection, physics-based gameplay, enemies, and a scrolling world.
+A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeScript** featuring character selection, physics-based gameplay, enemies, and a scrolling world.
 
 ## Features
 
@@ -75,112 +75,189 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 - **File System Integration**: Uses modern File System Access API with fallback
 - **Map Management**: Built-in save/load functionality with keyboard shortcuts (S/L keys)
 
+## Recent Improvements
+
+### File Structure Reorganization (Phase 1 & 2)
+
+The project has been recently reorganized for better maintainability and developer experience:
+
+- **Centralized Type System**: All TypeScript types consolidated in `src/types/` directory
+- **Organized Assets**: Game assets restructured under `public/assets/` with logical subdirectories
+- **Modular Architecture**: Source code reorganized into `core/`, `entities/`, `data/` directories
+- **Enhanced Configuration**: Centralized game configuration and data management
+- **Eliminated Duplication**: Removed duplicate files and consolidated imports
+
+### Key Benefits
+
+- ✅ Better maintainability with centralized types and configuration
+- ✅ Improved developer experience with logical file organization
+- ✅ Enhanced scalability with modular architecture
+- ✅ Performance optimizations through reduced duplication
+- ✅ **Successfully completed** - All asset paths updated and working correctly
+
 ## File Structure
 
 ```
-├── index.html                    # Main HTML file
-├── background_music.mp3          # Background music audio file
-├── wilhelmscream.mp3            # Wilhelm scream sound effect
-├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
-├── img/
-│   ├── background1.png          # Custom cyberpunk background image 1
-│   ├── background2.png          # Custom cyberpunk background image 2
-│   ├── background3.png          # Custom cyberpunk background image 3
-│   ├── homebg.png               # Home screen background image
-│   ├── logo.png                 # Game logo
-│   ├── char1/                   # Cyber Warrior character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
-│   │       ├── breathing-idle/ # Idle breathing animation
-│   │       ├── jumping-1/      # Jumping animation
-│   │       └── walk/           # Walking animation
-│   ├── char2/                   # Quantum Mage character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
-│   ├── char3/                   # Stealth Rogue character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
-│   ├── char4/                   # Plasma Paladin character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
-│   └── portal/                  # Portal animation sprites
-│       ├── portal_frame_01.png  # Portal animation frame 1
-│       ├── portal_frame_02.png  # Portal animation frame 2
-│       ├── portal_frame_03.png  # Portal animation frame 3
-│       ├── portal_frame_04.png  # Portal animation frame 4
-│       ├── portal_frame_05.png  # Portal animation frame 5
-│       ├── portal_frame_06.png  # Portal animation frame 6
-│       ├── portal_frame_07.png  # Portal animation frame 7
-│       ├── portal_frame_08.png  # Portal animation frame 8
-│       ├── portal_frame_09.png  # Portal animation frame 9
-│       ├── portal_frame_10.png  # Portal animation frame 10
-│       ├── portal_frame_11.png  # Portal animation frame 11
-│       └── portal_frame_12.png  # Portal animation frame 12
-├── js/
-│   ├── main.js                  # Game configuration and data
-│   ├── CharacterSelectScene.js  # Character selection screen
-│   ├── GameScene.js             # Main gameplay scene
-│   ├── GameOverScene.js         # Game over screen
-│   ├── VictoryScene.js          # Victory screen
-│   ├── MapEditorScene.js        # Map editor for creating custom levels
-│   ├── Player.js                # Player class with movement and physics
-│   ├── Enemy.js                 # Enemy class with different behaviors
-│   ├── Platform.js              # Platform class for level generation
-│   ├── MapSystem.js             # Map loading, saving, and validation system
-│   ├── TilemapSystem.js         # Tile-based level system with collision detection
-│   ├── HeroSpriteGenerator.js   # Procedural hero sprite generation (fallback)
-│   ├── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
-│   └── CyberpunkBackgroundGenerator.js # Procedural background generation
-├── maps/
-│   ├── default.json             # Default game map with platforms, enemies, and portal
-│   └── modified.json            # Modified map for testing custom level loading
-├── tests/
-│   ├── game-loading.spec.js     # Tests for game loading and initialization
-│   ├── game-controls.spec.js    # Tests for player controls and movement
-│   ├── map-editor.spec.js       # Tests for map editor functionality
-│   └── helpers/
-│       └── game-test-helper.js  # Utility functions for game testing
+├── src/                        # Source code directory
+│   ├── pages/                  # Next.js pages directory
+│   │   ├── index.tsx           # Main game page (hosts Phaser game)
+│   │   ├── _app.tsx            # Next.js app wrapper with global styles
+│   │   └── api/                # Next.js API routes
+│   │       ├── health.ts       # Health check endpoint
+│   │       └── game-info.ts    # Game information endpoint
+│   ├── components/             # React components
+│   │   └── GameComponent.tsx   # Phaser game wrapper component
+├── styles/                      # Global CSS styles
+│   └── globals.css            # Global CSS reset and game styling
+├── public/                      # Static assets (served by Next.js)
+│   └── assets/                  # Organized game assets
+│       ├── images/              # Game images and sprites
+│       │   ├── characters/       # Character sprites (char1-4)
+│       │   │   ├── char1/        # Cyber Warrior character sprites
+│       │   │   │   ├── metadata.json # Character metadata and animation definitions
+│       │   │   │   ├── rotations/    # 4-directional character sprites
+│       │   │   │   └── animations/   # Character animation sequences
+│       │   │   │       ├── breathing-idle/ # Idle breathing animation
+│       │   │   │       ├── jumping-1/      # Jumping animation
+│       │   │   │       └── walk/          # Walking animation
+│       │   │   ├── char2/        # Quantum Mage character sprites
+│       │   │   ├── char3/        # Stealth Rogue character sprites
+│       │   │   └── char4/        # Plasma Paladin character sprites
+│       │   ├── enemies/          # Enemy sprites
+│       │   │   ├── enemy1/       # Enemy type 1 sprites
+│       │   │   └── enemy2/       # Enemy type 2 sprites
+│       │   ├── backgrounds/      # Background images
+│       │   │   ├── background1.png # Custom cyberpunk background image 1
+│       │   │   ├── background2.png # Custom cyberpunk background image 2
+│       │   │   └── background3.png # Custom cyberpunk background image 3
+│       │   ├── ui/               # UI elements
+│       │   │   ├── homebg.png    # Home screen background image
+│       │   │   ├── logo.png      # Game logo
+│       │   │   └── portal/       # Portal animation sprites
+│       │   └── tiles/            # Tile sprites
+│       │       └── Tileset.png  # Tile sprites for map editor
+│       ├── audio/                # Audio files
+│       │   ├── music/            # Background music
+│       │   │   └── background_music.mp3 # Background music audio file
+│       │   └── sfx/              # Sound effects
+│       │       └── wilhelmscream.mp3    # Wilhelm scream sound effect
+│       └── maps/                 # Map data files
+│           ├── default.json       # Default game map with platforms, enemies, and portal
+│           └── default2.json      # Additional map file
+├── src/                         # TypeScript source files (Phaser game code)
+│   ├── components/              # React components
+│   │   └── GameComponent.tsx    # Phaser game wrapper component
+│   ├── core/                    # Core game systems
+│   │   └── Game.ts              # Main game configuration and initialization
+│   ├── entities/                # Game entities
+│   │   ├── Player.ts            # Player class with movement and physics
+│   │   ├── Enemy.ts             # Enemy class with different behaviors
+│   │   └── Platform.ts          # Platform class for level generation
+│   ├── scenes/                  # Game scene classes
+│   │   ├── LoadingScene.ts      # Asset loading screen
+│   │   ├── CharacterSelectScene.ts # Character selection screen
+│   │   ├── GameScene.ts         # Main gameplay scene
+│   │   ├── GameOverScene.ts    # Game over screen
+│   │   ├── VictoryScene.ts     # Victory screen
+│   │   └── MapEditorScene.ts   # Map editor for creating custom levels
+│   ├── systems/                 # Game system classes
+│   │   ├── MapSystem.ts        # Map loading, saving, and validation system
+│   │   └── TilemapSystem.ts    # Tile-based level system with collision detection
+│   ├── utils/                   # Utility classes
+│   │   └── UIUtils.ts          # UI utility functions
+│   ├── generators/              # Procedural generation classes
+│   │   ├── SpriteGenerator.ts  # Procedural sprite generation
+│   │   └── CyberpunkBackgroundGenerator.ts # Procedural background generation
+│   ├── data/                    # Game data and configuration
+│   │   ├── characters.ts        # Character definitions and game data
+│   │   ├── config.ts           # Game configuration constants
+│   │   ├── enemies.ts          # Enemy definitions and configurations
+│   │   └── levels.ts           # Level definitions and map data
+│   ├── types/                   # TypeScript type definitions
+│   │   ├── index.ts            # Central type exports
+│   │   ├── game.ts             # Game-specific types
+│   │   ├── character.ts        # Character-related types
+│   │   ├── enemy.ts            # Enemy-related types
+│   │   ├── map.ts              # Map system types
+│   │   └── phaser.ts           # Enhanced Phaser.js type declarations
+│   └── server.ts               # Express server for development
+├── docs/                        # Documentation files
+│   ├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
+│   ├── MAP_SYSTEM_README.md    # Map system documentation and usage guide
+│   └── TESTING.md              # Comprehensive testing documentation
+├── tests/                       # Playwright test directory
+│   └── game-loading.spec.ts    # Game loading tests
 ├── package.json                 # Node.js dependencies and npm scripts
 ├── package-lock.json            # Locked dependency versions
+├── tsconfig.json               # TypeScript configuration
+├── next.config.js              # Next.js configuration
+├── next-env.d.ts               # Next.js TypeScript environment types
 ├── playwright.config.js         # Playwright test configuration
-├── TESTING.md                   # Comprehensive testing documentation
-├── MAP_SYSTEM_README.md         # Map system documentation and usage guide
-└── test-setup-summary.sh        # Test setup verification script
+└── .gitignore                  # Git ignore file (includes Next.js build output)
 ```
 
 ## How to Run
 
-1. **Simple Setup**: Just open `index.html` in a web browser
-   - Game runs in a larger 1200x800 window
-2. **Local Server** (recommended for development):
+### Prerequisites
+
+- Node.js (for development and building)
+- Modern web browser with ES6 support
+
+### Development Setup
+
+1. **Install Dependencies**:
 
    ```bash
-   # Using Node.js (recommended)
-   npm start
-   # or
-   npx http-server -p 8000 -o
-
-   # Using Python
-   python -m http.server 8000
-
-   # Using PHP
-   php -S localhost:8000
+   npm install
    ```
 
-3. Navigate to `http://localhost:8000` in your browser
+2. **Start Development Server**:
+
+   ```bash
+   # Start Next.js development server with hot reload
+   npm run dev
+   ```
+
+3. Navigate to `http://localhost:3000` in your browser
+
+### Production Deployment
+
+1. **Build for Production**:
+
+   ```bash
+   npm run build
+   ```
+
+2. **Start Production Server**:
+
+   ```bash
+   npm start
+   ```
+
+3. **Deploy**: Next.js handles all static file serving and routing
+4. **Environment**: Set `PORT` environment variable to change the server port (default: 3000)
+
+### Available Scripts
+
+- `npm run dev` - Start Next.js development server with hot reload
+- `npm run build` - Build the application for production
+- `npm start` - Start the production server
+- `npm run lint` - Run ESLint for code quality
+- `npm run type-check` - Run TypeScript type checking
+- `npm run clean` - Clean build artifacts
+- `npm test` - Run Playwright tests
+- `npm run test:ui` - Run tests with UI
+- `npm run test:headed` - Run tests in headed mode
+- `npm run test:debug` - Run tests in debug mode
 
 ## Testing
 
-This project includes comprehensive automated testing using Playwright. For detailed testing information, see [TESTING.md](TESTING.md).
+This project includes Playwright testing framework setup. The test files have been removed to implement a new testing methodology. For detailed testing information, see [docs/TESTING.md](docs/TESTING.md).
 
 ### Quick Test Commands
 
 ```bash
-# Run all tests
+# Run all tests (when test files are added)
 npm test
 
 # Run tests with UI (interactive mode)
@@ -193,11 +270,11 @@ npm run test:headed
 npm run test:debug
 ```
 
-The test suite covers:
+The test framework is ready for:
 
-- Game loading and initialization
-- Player controls and movement
-- Map editor functionality
+- Game loading and initialization testing
+- Player controls and movement testing
+- Map editor functionality testing
 - Cross-browser compatibility (Chromium, Firefox, WebKit)
 - Mobile device testing
 
@@ -225,7 +302,7 @@ The test suite covers:
 ### Extensibility Features
 
 - **Modular Design**: Easy to add new characters, enemies, or levels
-- **Configuration**: Game data centralized in `main.js`
+- **Configuration**: Game data centralized in `src/main.ts`
 - **Event System**: Loose coupling between game components
 - **Procedural Generation**: Enemy sprites generated programmatically, custom background images
 - **Audio System**: Integrated sound management with volume control
@@ -266,20 +343,20 @@ Each character (`char1` through `char4`) includes:
 
 ### Adding New Characters
 
-1. Add character data to `characters` object in `main.js`
+1. Add character data to `characters` object in `src/main.ts`
 2. Create character sprite assets in `img/charX/` directory with:
    - `metadata.json` file defining animations and rotations
    - `rotations/` folder with 4-directional sprites (north, south, east, west)
    - `animations/` folder with animation sequences (walk, breathing-idle, jumping-1)
-3. Update character selection UI in `CharacterSelectScene.js`
-4. Add fallback sprite generation method in `HeroSpriteGenerator.js` if needed
+3. Update character selection UI in `src/scenes/CharacterSelectScene.ts`
+4. Add fallback sprite generation method in `src/generators/SpriteGenerator.ts` if needed
 
 ### Adding New Enemy Types
 
-1. Extend the `Enemy` class
-2. Add new enemy sprite generation method in `RobotSpriteGenerator.js`
+1. Extend the `Enemy` class in `src/Enemy.ts`
+2. Add new enemy sprite generation method in `src/generators/SpriteGenerator.ts`
 3. Add new enemy creation methods
-4. Place enemies in `GameScene.createEnemies()`
+4. Place enemies in `src/scenes/GameScene.ts` `createEnemies()` method
 
 ### Using the Map Editor
 
@@ -296,12 +373,44 @@ Each character (`char1` through `char4`) includes:
 ### Adding New Levels
 
 1. **Using Map Editor**: Create custom levels with the built-in editor
-2. **Manual Creation**: Modify platform generation in `GameScene.createPlatforms()`
+2. **Manual Creation**: Modify platform generation in `src/scenes/GameScene.ts` `createPlatforms()` method
 3. **Map Files**: Create JSON map files following the format in `maps/default.json`
 4. **Validation**: Use `MapSystem.validateMapData()` to ensure proper structure
 5. **Background**: Add custom background images to `img/` directory
 
 ## Technical Details
+
+### Next.js Architecture
+
+The project now uses **Next.js** as the web framework, providing:
+
+- **Server-Side Rendering**: Enhanced performance and SEO
+- **Static File Serving**: Automatic serving of assets from `public/` directory
+- **API Routes**: Built-in API endpoints (`/api/health`, `/api/game-info`)
+- **Hot Reload**: Fast development with automatic page refresh
+- **TypeScript Integration**: Full TypeScript support with type checking
+- **Production Optimization**: Automatic code splitting and optimization
+- **React Integration**: Seamless integration with React components for UI
+
+### Phaser.js Integration
+
+The game engine is integrated into Next.js through:
+
+- **GameComponent**: React wrapper component that initializes Phaser
+- **Dynamic Imports**: Phaser is loaded dynamically to avoid SSR issues
+- **Asset Management**: All game assets served from `public/` directory
+- **Canvas Rendering**: Full-screen canvas with responsive scaling
+
+### TypeScript Architecture
+
+- **Language**: TypeScript with Next.js integration for better maintainability
+- **Build System**: Next.js handles TypeScript compilation automatically
+- **Type Safety**: Custom Phaser.js type declarations for enhanced IDE support
+- **Module System**: ES6 modules with Next.js module resolution
+- **Source Maps**: Enabled for debugging TypeScript source code
+- **Build Output**: Next.js handles compilation and optimization automatically
+
+### Game Engine & Physics
 
 - **Physics Engine**: Phaser Arcade Physics with gravity and collision detection
 - **Rendering**: Canvas-based rendering with procedural sprite generation
@@ -309,17 +418,33 @@ Each character (`char1` through `char4`) includes:
 - **Camera**: Smooth following with deadzone and world bounds
 - **Parallax System**: Multi-layer scrolling with different speeds for depth effect
 - **Window Size**: Larger 1200x800 display with maximized 800px tall playable area
+
+### Audio & Performance
+
 - **Audio**: Web Audio API integration with background music and sound effects
 - **Performance**: Optimized for 60fps gameplay with efficient sprite generation
+- **Memory Management**: Proper cleanup of generated textures and audio resources
+
+### Graphics & Assets
+
 - **Character Sprites**: High-quality pixel art character sprites with multiple animation states
 - **Background System**: Custom high-quality background images with random selection and parallax scrolling
 - **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
 - **Animated Sprites**: Portal uses clean 12-frame sprite animation, characters have walking/idle/jump animations
-- **Memory Management**: Proper cleanup of generated textures and audio resources
+
+### Map System & File Management
+
 - **Map System**: JSON-based map format with validation and file system integration
 - **Tile System**: 32x32 pixel tile-based level system with collision detection
 - **File System**: Modern File System Access API with fallback for map saving/loading
-- **Testing**: Comprehensive Playwright test suite with cross-browser and mobile testing
+
+### Development & Testing
+
+- **Testing**: Playwright test framework ready for comprehensive testing
+- **Build Scripts**: Next.js scripts for development, building, and testing
+- **Git Integration**: Proper `.gitignore` for Next.js build artifacts
+- **Hot Reload**: Fast development with automatic page refresh
+- **Type Checking**: Built-in TypeScript type checking
 
 ## Browser Compatibility
 
