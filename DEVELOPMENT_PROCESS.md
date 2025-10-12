@@ -52,6 +52,7 @@ Current structure:
 src/
 ├── pages/         # Next.js pages directory
 ├── components/    # React components
+├── styles/        # Global CSS styles
 ├── core/          # Core game systems
 ├── entities/      # Game entities (Player, Enemy, Platform)
 ├── data/          # Game data and configuration

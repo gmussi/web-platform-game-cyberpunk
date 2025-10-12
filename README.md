@@ -107,8 +107,8 @@ The project has been recently reorganized for better maintainability and develop
 │   │       └── game-info.ts    # Game information endpoint
 │   ├── components/             # React components
 │   │   └── GameComponent.tsx   # Phaser game wrapper component
-├── styles/                      # Global CSS styles
-│   └── globals.css            # Global CSS reset and game styling
+│   ├── styles/                 # Global CSS styles
+│   │   └── globals.css         # Global CSS reset and game styling
 ├── public/                      # Static assets (served by Next.js)
 │   └── assets/                  # Organized game assets
 │       ├── images/              # Game images and sprites
