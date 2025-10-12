@@ -2,6 +2,10 @@
 
 A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeScript** featuring character selection, physics-based gameplay, enemies, and a scrolling world.
 
+## 🎮 Live Demo
+
+**Play the game online:** [https://web-platform-game-cyberpunk.vercel.app/](https://web-platform-game-cyberpunk.vercel.app/)
+
 ## Features
 
 ### Character Selection Screen
@@ -451,6 +455,25 @@ The game engine is integrated into Next.js through:
 - Modern browsers with Canvas support
 - Chrome, Firefox, Safari, Edge (latest versions)
 - Mobile browsers (touch controls not implemented)
+
+## Deployment
+
+This game is deployed on **Vercel** for optimal Next.js performance:
+
+- **Live URL**: [https://web-platform-game-cyberpunk.vercel.app/](https://web-platform-game-cyberpunk.vercel.app/)
+- **Platform**: Vercel (Next.js optimized)
+- **Features**: Full Next.js support, API routes, automatic deployments
+- **Performance**: CDN, edge functions, automatic optimizations
+
+### Deployment Commands
+
+```bash
+# Manual deployment
+npm run deploy
+
+# Or using Vercel CLI directly
+vercel --prod
+```
 
 ## Future Enhancements
 

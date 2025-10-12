@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A 2D side-scrolling platformer game built with Phaser.js and TypeScript",
   "main": "index.html",
-  "homepage": "https://gametest1.vercel.app",
+  "homepage": "https://web-platform-game-cyberpunk.vercel.app",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -23,14 +23,15 @@
     "platformer",
     "2d",
     "typescript",
-    "github-pages"
+    "nextjs",
+    "vercel",
+    "cyberpunk"
   ],
   "author": "Game Developer",
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.56.0",
     "concurrently": "^9.2.1",
-    "gh-pages": "^6.3.0",
     "nodemon": "^3.1.10",
     "typescript": "^5.0.0"
   },

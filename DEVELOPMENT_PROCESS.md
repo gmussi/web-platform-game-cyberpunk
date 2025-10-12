@@ -73,3 +73,19 @@ public/assets/
 - Within `src/`: `../folder/` or `./file`
 - From `src/pages/` to other `src/` folders: `../folder/`
 - Never use `../src/` from within `src/` directory
+
+## Deployment
+
+### Live Game
+- **URL**: https://web-platform-game-cyberpunk.vercel.app/
+- **Platform**: Vercel (Next.js optimized)
+- **Auto-deployment**: Push to GitHub = automatic deploy
+
+### Deployment Commands
+```bash
+# Manual deployment
+npm run deploy
+
+# Direct Vercel CLI
+vercel --prod
+```
