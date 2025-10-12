@@ -3,25 +3,19 @@
   "version": "1.0.0",
   "description": "A 2D side-scrolling platformer game built with Phaser.js and TypeScript",
   "main": "index.html",
-  "type": "module",
   "homepage": "https://guilhermemussi.github.io/gametest1",
   "scripts": {
-    "build": "npm run clean && npm run compile",
-    "build:watch": "tsc --watch",
-    "compile": "tsc",
-    "clean": "rm -rf dist",
-    "start": "npm run build && npm run server",
-    "dev": "npm run build && npm run build:watch & npm run server:dev",
-    "server": "node dist/server.js",
-    "server:dev": "nodemon --exec \"npm run compile && node dist/server.js\" --watch src --ext ts",
-    "stop": "pkill -f 'node.*server' && pkill -f 'tsc --watch' && pkill -f 'npm.*dev'",
-    "serve": "npm run server",
-    "preview": "npm run build && npm run server",
-    "deploy": "npm run build && gh-pages -d .",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next dist",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "deploy": "npm run build && gh-pages -d ."
   },
   "keywords": [
     "phaser",
@@ -42,6 +36,12 @@
   },
   "dependencies": {
     "@types/express": "^5.0.3",
-    "express": "^5.1.0"
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "express": "^5.1.0",
+    "next": "^15.5.4",
+    "phaser": "^3.90.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }

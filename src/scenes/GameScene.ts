@@ -1,9 +1,9 @@
 /// <reference path="./phaser.d.ts" />
 
-import { MapSystem } from "../systems/MapSystem.js";
-import { TilemapSystem } from "../systems/TilemapSystem.js";
-import { Player } from "../Player.js";
-import { Enemy } from "../Enemy.js";
+import { MapSystem } from "../systems/MapSystem";
+import { TilemapSystem } from "../systems/TilemapSystem";
+import { Player } from "../Player";
+import { Enemy } from "../Enemy";
 import { gameData, characters } from "../gameData";
 
 // GameScene interfaces

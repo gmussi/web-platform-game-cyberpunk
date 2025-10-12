@@ -51,6 +51,10 @@ dist/
 *.d.ts.map
 *.js.map
 
+# Next.js
+.next/
+out/
+
 # Build artifacts
 build/
 out/
