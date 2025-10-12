@@ -24,7 +24,14 @@
       "@/*": ["./src/*"],
       "@/components/*": ["./components/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/types/*": ["./src/types/*"]
+      "@/types/*": ["./src/types/*"],
+      "@/entities/*": ["./src/entities/*"],
+      "@/scenes/*": ["./src/scenes/*"],
+      "@/systems/*": ["./src/systems/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/generators/*": ["./src/generators/*"],
+      "@/data/*": ["./src/data/*"],
+      "@/core/*": ["./src/core/*"]
     }
   },
   "include": [

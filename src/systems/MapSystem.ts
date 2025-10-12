@@ -1,4 +1,5 @@
-/// <reference path="./phaser.d.ts" />
+import { MapData, MapValidationResult } from "../types/map";
+import { ASSET_PATHS } from "../data/config";
 
 // MapSystem interfaces
 interface MapData {

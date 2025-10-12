@@ -1,4 +1,4 @@
-/// <reference path="./phaser.d.ts" />
+import { GAME_CONSTANTS } from "../data/config";
 
 // UI Utilities and Constants
 // Centralized styling and utility functions for consistent UI across all scenes

@@ -1,4 +1,4 @@
-/// <reference path="./phaser.d.ts" />
+import { GAME_CONSTANTS } from "../data/config";
 
 // Unified Sprite Generator
 // Consolidates hero and robot sprite generation into a single utility class

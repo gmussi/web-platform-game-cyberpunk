@@ -1,4 +1,4 @@
-/// <reference path="./phaser.d.ts" />
+import { ASSET_PATHS } from "../data/config";
 
 export class LoadingScene extends Phaser.Scene {
   private loadingText!: Phaser.GameObjects.Text;
@@ -86,14 +86,14 @@ export class LoadingScene extends Phaser.Scene {
     });
 
     // Load tileset (needed for GameScene)
-    this.load.image("tileset", "img/Tileset.png");
+    this.load.image("tileset", `${ASSET_PATHS.tiles}/Tileset.png`);
 
     // Load background images
     this.loadBackgrounds();
 
     // Load UI images
-    this.load.image("homebg", "img/homebg.png");
-    this.load.image("logo", "img/logo.png");
+    this.load.image("homebg", `${ASSET_PATHS.ui}/homebg.png`);
+    this.load.image("logo", `${ASSET_PATHS.ui}/logo.png`);
 
     // Load character sprites
     this.loadCharacterSprites();
@@ -116,9 +116,18 @@ export class LoadingScene extends Phaser.Scene {
 
   private loadBackgrounds(): void {
     // Load background images (optimized smaller files ~800KB each, 1728x576px)
-    this.load.image("background1", "img/background1.png");
-    this.load.image("background2", "img/background2.png");
-    this.load.image("background3", "img/background3.png");
+    this.load.image(
+      "background1",
+      `${ASSET_PATHS.backgrounds}/background1.png`
+    );
+    this.load.image(
+      "background2",
+      `${ASSET_PATHS.backgrounds}/background2.png`
+    );
+    this.load.image(
+      "background3",
+      `${ASSET_PATHS.backgrounds}/background3.png`
+    );
   }
 
   private loadCharacterSprites(): void {
@@ -134,17 +143,29 @@ export class LoadingScene extends Phaser.Scene {
       const charName = characterNames[index];
 
       // Load rotation sprites
-      this.load.image(`${charName}_south`, `img/${char}/rotations/south.png`);
-      this.load.image(`${charName}_west`, `img/${char}/rotations/west.png`);
-      this.load.image(`${charName}_east`, `img/${char}/rotations/east.png`);
-      this.load.image(`${charName}_north`, `img/${char}/rotations/north.png`);
+      this.load.image(
+        `${charName}_south`,
+        `${ASSET_PATHS.characters}/${char}/rotations/south.png`
+      );
+      this.load.image(
+        `${charName}_west`,
+        `${ASSET_PATHS.characters}/${char}/rotations/west.png`
+      );
+      this.load.image(
+        `${charName}_east`,
+        `${ASSET_PATHS.characters}/${char}/rotations/east.png`
+      );
+      this.load.image(
+        `${charName}_north`,
+        `${ASSET_PATHS.characters}/${char}/rotations/north.png`
+      );
 
       // Load breathing-idle animation frames
       for (let i = 0; i < 4; i++) {
         const frameNumber = i.toString().padStart(3, "0");
         this.load.image(
           `${charName}_breathing_idle_${frameNumber}`,
-          `img/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`
+          `${ASSET_PATHS.characters}/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`
         );
       }
 
@@ -154,7 +175,7 @@ export class LoadingScene extends Phaser.Scene {
           const frameNumber = i.toString().padStart(3, "0");
           this.load.image(
             `${charName}_walk_${direction}_${frameNumber}`,
-            `img/${char}/animations/walk/${direction}/frame_${frameNumber}.png`
+            `${ASSET_PATHS.characters}/${char}/animations/walk/${direction}/frame_${frameNumber}.png`
           );
         }
       });
@@ -165,7 +186,7 @@ export class LoadingScene extends Phaser.Scene {
           const frameNumber = i.toString().padStart(3, "0");
           this.load.image(
             `${charName}_jumping_${direction}_${frameNumber}`,
-            `img/${char}/animations/jumping-1/${direction}/frame_${frameNumber}.png`
+            `${ASSET_PATHS.characters}/${char}/animations/jumping-1/${direction}/frame_${frameNumber}.png`
           );
         }
       });
@@ -181,7 +202,7 @@ export class LoadingScene extends Phaser.Scene {
       rotations.forEach((rotation) => {
         this.load.image(
           `${enemy}_${rotation}`,
-          `img/${enemy}/rotations/${rotation}.png`
+          `${ASSET_PATHS.enemies}/${enemy}/rotations/${rotation}.png`
         );
       });
     });
@@ -193,22 +214,28 @@ export class LoadingScene extends Phaser.Scene {
       const frameNumber = i.toString().padStart(2, "0");
       this.load.image(
         `portal_frame_${frameNumber}`,
-        `img/portal/portal_clean_frame_${frameNumber}.png`
+        `${ASSET_PATHS.ui}/portal/portal_clean_frame_${frameNumber}.png`
       );
     }
   }
 
   private loadAudio(): void {
     // Load background music
-    this.load.audio("backgroundMusic", "audio/background_music.mp3");
+    this.load.audio(
+      "backgroundMusic",
+      `${ASSET_PATHS.audio.music}/background_music.mp3`
+    );
 
     // Load sound effects
-    this.load.audio("wilhelmScream", "audio/wilhelmscream.mp3");
+    this.load.audio(
+      "wilhelmScream",
+      `${ASSET_PATHS.audio.sfx}/wilhelmscream.mp3`
+    );
   }
 
   private loadMapData(): void {
     // Load default map
-    this.load.json("defaultMap", "maps/default.json");
+    this.load.json("defaultMap", `${ASSET_PATHS.maps}/default.json`);
   }
 
   private updateProgress(progress: number): void {

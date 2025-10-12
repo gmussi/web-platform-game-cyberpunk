@@ -1,13 +1,6 @@
-/// <reference path="./phaser.d.ts" />
-
-import { characters, gameData } from "../gameData";
-
-// Character interface
-interface Character {
-  name: string;
-  color: number;
-  scrollDirection: string;
-}
+import { ASSET_PATHS } from "../data/config";
+import { characters, gameData } from "../data/characters";
+import { Character } from "../types/game";
 
 // Character selection interface
 interface CharacterSelection {

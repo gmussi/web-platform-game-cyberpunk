@@ -1,8 +1,8 @@
-/// <reference path="./phaser.d.ts" />
+import { ASSET_PATHS, GAME_CONSTANTS } from "../data/config";
 
 import { MapSystem } from "../systems/MapSystem";
 import { TilemapSystem } from "../systems/TilemapSystem";
-import { EnemyData } from "./GameScene";
+import { Enemy } from "../entities/Enemy";
 
 // MapEditorScene interfaces
 interface MapEditorData {
@@ -168,7 +168,7 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Try to load default.json map file
     this.mapSystem
-      .loadMapFromURL("maps/default.json")
+      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json`)
       .then((mapData: any) => {
         // Double-check flag in case it changed during async operation
         if (this.isLoadingCustomMap) {

@@ -1,10 +1,13 @@
-/// <reference path="./phaser.d.ts" />
+import { ASSET_PATHS, GAME_CONSTANTS } from "../data/config";
+import { characters } from "../data/characters";
+import { DEFAULT_MAP } from "../data/levels";
 
 import { MapSystem } from "../systems/MapSystem";
 import { TilemapSystem } from "../systems/TilemapSystem";
-import { Player } from "../Player";
-import { Enemy } from "../Enemy";
-import { gameData, characters } from "../gameData";
+import { Player } from "../entities/Player";
+import { Enemy } from "../entities/Enemy";
+import { Platform } from "../entities/Platform";
+import { gameData } from "../data/characters";
 
 // GameScene interfaces
 interface MapData {
@@ -225,7 +228,7 @@ export class GameScene extends Phaser.Scene {
   private loadMapData(): void {
     // Load default.json map file
     this.mapSystem
-      .loadMapFromURL("maps/default.json")
+      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json`)
       .then((mapData: any) => {
         this.mapData = mapData;
         // Load tile data immediately after map data is loaded
@@ -244,7 +247,7 @@ export class GameScene extends Phaser.Scene {
       .catch((error: Error) => {
         console.error("Failed to load default.json map file:", error.message);
         console.error(
-          "Game cannot start without a valid map file. Please ensure maps/default.json exists."
+          "Game cannot start without a valid map file. Please ensure default.json exists in the maps directory."
         );
         // Show error message to user
         this.add
@@ -256,7 +259,7 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5);
 
         this.add
-          .text(600, 450, "Failed to load maps/default.json", {
+          .text(600, 450, "Failed to load default map", {
             fontSize: "18px",
             fill: "#ffffff",
           })

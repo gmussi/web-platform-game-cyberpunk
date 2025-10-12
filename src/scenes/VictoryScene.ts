@@ -1,6 +1,5 @@
-/// <reference path="./phaser.d.ts" />
-
-import { characters, gameData } from "../gameData";
+import { ASSET_PATHS } from "../data/config";
+import { characters, gameData } from "../data/characters";
 
 export class VictoryScene extends Phaser.Scene {
   constructor() {

@@ -17,19 +17,16 @@ export default function GameComponent() {
       const { VictoryScene } = await import('../src/scenes/VictoryScene');
       const { MapEditorScene } = await import('../src/scenes/MapEditorScene');
 
+      // Import game configuration
+      const { GAME_CONFIG } = await import('../src/data/config');
+
       const config: Phaser.Types.Core.GameConfig = {
         type: Phaser.AUTO,
-        width: 1200,
-        height: 800,
+        width: GAME_CONFIG.width,
+        height: GAME_CONFIG.height,
         parent: gameRef.current,
-        backgroundColor: '#000000',
-        physics: {
-          default: 'arcade',
-          arcade: {
-            gravity: { y: 1000 },
-            debug: false,
-          },
-        },
+        backgroundColor: GAME_CONFIG.backgroundColor,
+        physics: GAME_CONFIG.physics,
         scene: [
           LoadingScene,
           CharacterSelectScene,
@@ -38,13 +35,8 @@ export default function GameComponent() {
           VictoryScene,
           MapEditorScene,
         ],
-        scale: {
-          mode: Phaser.Scale.FIT,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
-        },
-        render: {
-          antialias: true,
-        },
+        scale: GAME_CONFIG.scale,
+        render: GAME_CONFIG.render,
       };
 
       phaserGameRef.current = new Phaser.Game(config);

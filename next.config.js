@@ -7,16 +7,8 @@ const nextConfig = {
     return [
       // Serve game assets from public directory
       {
-        source: '/img/:path*',
-        destination: '/img/:path*',
-      },
-      {
-        source: '/audio/:path*',
-        destination: '/audio/:path*',
-      },
-      {
-        source: '/maps/:path*',
-        destination: '/maps/:path*',
+        source: '/assets/:path*',
+        destination: '/assets/:path*',
       },
     ];
   },
@@ -54,6 +46,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+
+  // Force cache invalidation
+  generateEtags: false,
+  poweredByHeader: false,
 };
 
 module.exports = nextConfig;

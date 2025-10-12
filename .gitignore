@@ -66,6 +66,11 @@ out/
 .env.test.local
 .env.production.local
 
+# Legacy directories (removed in Phase 1)
+img/
+audio/
+maps/
+
 # GitHub Pages
 # Note: We want to include dist/ for GitHub Pages deployment
 # but exclude it during development

@@ -75,6 +75,26 @@ A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeS
 - **File System Integration**: Uses modern File System Access API with fallback
 - **Map Management**: Built-in save/load functionality with keyboard shortcuts (S/L keys)
 
+## Recent Improvements
+
+### File Structure Reorganization (Phase 1 & 2)
+
+The project has been recently reorganized for better maintainability and developer experience:
+
+- **Centralized Type System**: All TypeScript types consolidated in `src/types/` directory
+- **Organized Assets**: Game assets restructured under `public/assets/` with logical subdirectories
+- **Modular Architecture**: Source code reorganized into `core/`, `entities/`, `data/` directories
+- **Enhanced Configuration**: Centralized game configuration and data management
+- **Eliminated Duplication**: Removed duplicate files and consolidated imports
+
+### Key Benefits
+
+- ✅ Better maintainability with centralized types and configuration
+- ✅ Improved developer experience with logical file organization
+- ✅ Enhanced scalability with modular architecture
+- ✅ Performance optimizations through reduced duplication
+- ✅ **Successfully completed** - All asset paths updated and working correctly
+
 ## File Structure
 
 ```
@@ -89,63 +109,81 @@ A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeS
 ├── styles/                      # Global CSS styles
 │   └── globals.css            # Global CSS reset and game styling
 ├── public/                      # Static assets (served by Next.js)
-│   ├── img/                    # Game images and sprites
-│   │   ├── background1.png     # Custom cyberpunk background image 1
-│   │   ├── background2.png     # Custom cyberpunk background image 2
-│   │   ├── background3.png     # Custom cyberpunk background image 3
-│   │   ├── homebg.png          # Home screen background image
-│   │   ├── logo.png            # Game logo
-│   │   ├── Tileset.png         # Tile sprites for map editor
-│   │   ├── char1/              # Cyber Warrior character sprites
-│   │   │   ├── metadata.json   # Character metadata and animation definitions
-│   │   │   ├── rotations/      # 4-directional character sprites
-│   │   │   └── animations/     # Character animation sequences
-│   │   │       ├── breathing-idle/ # Idle breathing animation
-│   │   │       ├── jumping-1/   # Jumping animation
-│   │   │       └── walk/       # Walking animation
-│   │   ├── char2/              # Quantum Mage character sprites
-│   │   ├── char3/              # Stealth Rogue character sprites
-│   │   ├── char4/              # Plasma Paladin character sprites
-│   │   ├── enemy1/             # Enemy type 1 sprites
-│   │   ├── enemy2/             # Enemy type 2 sprites
-│   │   └── portal/             # Portal animation sprites
-│   ├── audio/                   # Audio files
-│   │   ├── background_music.mp3 # Background music audio file
-│   │   └── wilhelmscream.mp3    # Wilhelm scream sound effect
-│   └── maps/
-│       └── default.json         # Default game map with platforms, enemies, and portal
+│   └── assets/                  # Organized game assets
+│       ├── images/              # Game images and sprites
+│       │   ├── characters/       # Character sprites (char1-4)
+│       │   │   ├── char1/        # Cyber Warrior character sprites
+│       │   │   │   ├── metadata.json # Character metadata and animation definitions
+│       │   │   │   ├── rotations/    # 4-directional character sprites
+│       │   │   │   └── animations/   # Character animation sequences
+│       │   │   │       ├── breathing-idle/ # Idle breathing animation
+│       │   │   │       ├── jumping-1/      # Jumping animation
+│       │   │   │       └── walk/          # Walking animation
+│       │   │   ├── char2/        # Quantum Mage character sprites
+│       │   │   ├── char3/        # Stealth Rogue character sprites
+│       │   │   └── char4/        # Plasma Paladin character sprites
+│       │   ├── enemies/          # Enemy sprites
+│       │   │   ├── enemy1/       # Enemy type 1 sprites
+│       │   │   └── enemy2/       # Enemy type 2 sprites
+│       │   ├── backgrounds/      # Background images
+│       │   │   ├── background1.png # Custom cyberpunk background image 1
+│       │   │   ├── background2.png # Custom cyberpunk background image 2
+│       │   │   └── background3.png # Custom cyberpunk background image 3
+│       │   ├── ui/               # UI elements
+│       │   │   ├── homebg.png    # Home screen background image
+│       │   │   ├── logo.png      # Game logo
+│       │   │   └── portal/       # Portal animation sprites
+│       │   └── tiles/            # Tile sprites
+│       │       └── Tileset.png  # Tile sprites for map editor
+│       ├── audio/                # Audio files
+│       │   ├── music/            # Background music
+│       │   │   └── background_music.mp3 # Background music audio file
+│       │   └── sfx/              # Sound effects
+│       │       └── wilhelmscream.mp3    # Wilhelm scream sound effect
+│       └── maps/                 # Map data files
+│           ├── default.json       # Default game map with platforms, enemies, and portal
+│           └── default2.json      # Additional map file
 ├── src/                         # TypeScript source files (Phaser game code)
-│   ├── phaser.d.ts             # Custom Phaser.js type declarations
-│   ├── main.ts                 # Game configuration and data
-│   ├── Player.ts               # Player class with movement and physics
-│   ├── Enemy.ts                # Enemy class with different behaviors
-│   ├── Platform.ts             # Platform class for level generation
-│   ├── gameData.ts             # Game data and character definitions
-│   ├── scenes/                 # Game scene classes
-│   │   ├── phaser.d.ts         # Phaser types for scenes
-│   │   ├── LoadingScene.ts     # Asset loading screen
+│   ├── core/                    # Core game systems
+│   │   └── Game.ts              # Main game configuration and initialization
+│   ├── entities/                # Game entities
+│   │   ├── Player.ts            # Player class with movement and physics
+│   │   ├── Enemy.ts             # Enemy class with different behaviors
+│   │   └── Platform.ts          # Platform class for level generation
+│   ├── scenes/                  # Game scene classes
+│   │   ├── LoadingScene.ts      # Asset loading screen
 │   │   ├── CharacterSelectScene.ts # Character selection screen
 │   │   ├── GameScene.ts         # Main gameplay scene
 │   │   ├── GameOverScene.ts    # Game over screen
 │   │   ├── VictoryScene.ts     # Victory screen
 │   │   └── MapEditorScene.ts   # Map editor for creating custom levels
-│   ├── systems/                # Game system classes
-│   │   ├── phaser.d.ts         # Phaser types for systems
+│   ├── systems/                 # Game system classes
 │   │   ├── MapSystem.ts        # Map loading, saving, and validation system
 │   │   └── TilemapSystem.ts    # Tile-based level system with collision detection
-│   ├── utils/                  # Utility classes
-│   │   ├── phaser.d.ts         # Phaser types for utils
+│   ├── utils/                   # Utility classes
 │   │   └── UIUtils.ts          # UI utility functions
-│   └── generators/              # Procedural generation classes
-│       ├── phaser.d.ts         # Phaser types for generators
-│       ├── SpriteGenerator.ts  # Procedural sprite generation
-│       └── CyberpunkBackgroundGenerator.ts # Procedural background generation
+│   ├── generators/              # Procedural generation classes
+│   │   ├── SpriteGenerator.ts  # Procedural sprite generation
+│   │   └── CyberpunkBackgroundGenerator.ts # Procedural background generation
+│   ├── data/                    # Game data and configuration
+│   │   ├── characters.ts        # Character definitions and game data
+│   │   ├── config.ts           # Game configuration constants
+│   │   ├── enemies.ts          # Enemy definitions and configurations
+│   │   └── levels.ts           # Level definitions and map data
+│   ├── types/                   # TypeScript type definitions
+│   │   ├── index.ts            # Central type exports
+│   │   ├── game.ts             # Game-specific types
+│   │   ├── character.ts        # Character-related types
+│   │   ├── enemy.ts            # Enemy-related types
+│   │   ├── map.ts              # Map system types
+│   │   └── phaser.ts           # Enhanced Phaser.js type declarations
+│   └── server.ts               # Express server for development
 ├── docs/                        # Documentation files
 │   ├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
 │   ├── MAP_SYSTEM_README.md    # Map system documentation and usage guide
 │   └── TESTING.md              # Comprehensive testing documentation
-├── tests/                       # Playwright test directory (currently empty)
-├── dist/                        # Compiled JavaScript output (legacy, not used in Next.js)
+├── tests/                       # Playwright test directory
+│   └── game-loading.spec.ts    # Game loading tests
 ├── package.json                 # Node.js dependencies and npm scripts
 ├── package-lock.json            # Locked dependency versions
 ├── tsconfig.json               # TypeScript configuration
@@ -230,6 +268,7 @@ npm run test:debug
 ```
 
 The test framework is ready for:
+
 - Game loading and initialization testing
 - Player controls and movement testing
 - Map editor functionality testing

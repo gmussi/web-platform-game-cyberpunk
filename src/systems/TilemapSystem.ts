@@ -1,4 +1,5 @@
-/// <reference path="./phaser.d.ts" />
+import { GAME_CONSTANTS } from "../data/config";
+import { MapTile } from "../types/map";
 
 export class TilemapSystem {
   public scene: Phaser.Scene;

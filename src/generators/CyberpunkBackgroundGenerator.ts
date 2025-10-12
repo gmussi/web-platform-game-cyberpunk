@@ -1,4 +1,4 @@
-/// <reference path="./phaser.d.ts" />
+import { GAME_CONSTANTS } from "../data/config";
 
 // Cyberpunk City Background Generator
 // Creates a futuristic pixelated cityscape background
