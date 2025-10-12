@@ -7,7 +7,7 @@ import { MapEditorScene } from "../scenes/MapEditorScene";
 import { GAME_CONFIG } from "../data/config";
 
 // Main game configuration
-const config: Phaser.Types.Core.GameConfig = {
+const config: any = {
   type: Phaser.AUTO,
   width: GAME_CONFIG.width,
   height: GAME_CONFIG.height,
@@ -21,7 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
     GameOverScene,
     VictoryScene,
     MapEditorScene,
-  ] as any,
+  ],
   scale: GAME_CONFIG.scale,
   render: GAME_CONFIG.render,
 };

@@ -50,7 +50,8 @@ Current structure:
 
 ```
 src/
-├── components/     # React components
+├── pages/         # Next.js pages directory
+├── components/    # React components
 ├── core/          # Core game systems
 ├── entities/      # Game entities (Player, Enemy, Platform)
 ├── data/          # Game data and configuration
@@ -68,7 +69,6 @@ public/assets/
 
 ## Import Path Guidelines
 
-- From `pages/` to `src/`: `../src/...`
 - Within `src/`: `../folder/` or `./file`
-- From `src/components/` to other `src/` folders: `../folder/`
+- From `src/pages/` to other `src/` folders: `../folder/`
 - Never use `../src/` from within `src/` directory

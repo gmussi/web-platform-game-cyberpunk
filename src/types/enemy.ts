@@ -1,5 +1,6 @@
 // Enemy-related types
 export type EnemyType = "stationary" | "moving" | "patrol";
+export type EnemySpriteType = "enemy1" | "enemy2";
 
 export interface EnemyConfig {
   type: EnemyType;

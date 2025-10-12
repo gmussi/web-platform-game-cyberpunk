@@ -6,6 +6,31 @@ export interface MapTile {
   sprite?: string;
 }
 
+export interface MapData {
+  width: number;
+  height: number;
+  platforms: Array<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>;
+  enemies: Array<{
+    type: "stationary" | "moving" | "patrol";
+    x: number;
+    y: number;
+    range?: number;
+  }>;
+  playerSpawn: {
+    x: number;
+    y: number;
+  };
+  portal: {
+    x: number;
+    y: number;
+  };
+}
+
 export interface MapConfig {
   width: number;
   height: number;

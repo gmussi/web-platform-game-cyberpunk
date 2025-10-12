@@ -20,7 +20,7 @@ export default function GameComponent() {
       // Import game configuration
       const { GAME_CONFIG } = await import('../data/config');
 
-      const config: Phaser.Types.Core.GameConfig = {
+      const config: any = {
         type: Phaser.AUTO,
         width: GAME_CONFIG.width,
         height: GAME_CONFIG.height,

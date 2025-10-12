@@ -1,5 +1,5 @@
 import { GAME_CONSTANTS } from "../data/config";
-import { EnemyType } from "../types/enemy";
+import { EnemyType, EnemySpriteType } from "../types/enemy";
 type FacingDirection = "south" | "east" | "west";
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {

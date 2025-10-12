@@ -98,13 +98,13 @@ The project has been recently reorganized for better maintainability and develop
 ## File Structure
 
 ```
-├── pages/                       # Next.js pages directory
-│   ├── index.tsx               # Main game page (hosts Phaser game)
-│   ├── _app.tsx                # Next.js app wrapper with global styles
-│   └── api/                    # Next.js API routes
-│       ├── health.ts           # Health check endpoint
-│       └── game-info.ts        # Game information endpoint
 ├── src/                        # Source code directory
+│   ├── pages/                  # Next.js pages directory
+│   │   ├── index.tsx           # Main game page (hosts Phaser game)
+│   │   ├── _app.tsx            # Next.js app wrapper with global styles
+│   │   └── api/                # Next.js API routes
+│   │       ├── health.ts       # Health check endpoint
+│   │       └── game-info.ts    # Game information endpoint
 │   ├── components/             # React components
 │   │   └── GameComponent.tsx   # Phaser game wrapper component
 ├── styles/                      # Global CSS styles

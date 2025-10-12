@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import the game component to avoid SSR issues
-const GameComponent = dynamic(() => import('../src/components/GameComponent'), {
+const GameComponent = dynamic(() => import('../components/GameComponent'), {
   ssr: false,
   loading: () => (
     <div style={{
