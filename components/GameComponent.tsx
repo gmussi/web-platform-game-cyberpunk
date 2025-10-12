@@ -3,8 +3,14 @@ import { useEffect, useRef } from 'react';
 export default function GameComponent() {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<any>(null);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization in React Strict Mode
+    if (isInitialized.current) {
+      return;
+    }
+    
     // Dynamically import Phaser to avoid SSR issues
     const initGame = async () => {
       const Phaser = (await import('phaser')).default;
@@ -45,6 +51,7 @@ export default function GameComponent() {
       };
 
       phaserGameRef.current = new Phaser.Game(config);
+      isInitialized.current = true;
     };
 
     initGame();
@@ -53,6 +60,8 @@ export default function GameComponent() {
     return () => {
       if (phaserGameRef.current) {
         phaserGameRef.current.destroy(true);
+        phaserGameRef.current = null;
+        isInitialized.current = false;
       }
     };
   }, []);
