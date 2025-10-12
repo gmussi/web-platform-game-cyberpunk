@@ -34,11 +34,11 @@ playwright-report/
 playwright/.cache/
 
 # Test Artifacts (screenshots, videos, traces)
-*.png
-*.webm
-*.mp4
-*.jpg
-*.jpeg
+test-results/*.png
+test-results/*.webm
+test-results/*.mp4
+test-results/*.jpg
+test-results/*.jpeg
 trace.zip
 *.trace
 
