@@ -51,7 +51,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const charName = characterNames[characterKey];
 
     // Start with the breathing-idle animation first frame
-    super(scene, x, y, `${charName}_breathing_idle_000`);
+    const initialTexture = `${charName}_breathing_idle_000`;
+    
+    // Check if the texture exists, fallback to rotation sprite if not
+    const textureKey = scene.textures.exists(initialTexture) 
+      ? initialTexture 
+      : `${charName}_south`;
+    
+    super(scene, x, y, textureKey);
 
     this.scene = scene;
     this.characterKey = characterKey;
@@ -263,8 +270,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.currentAnimation !== "jumping_start" ||
           this.texture.key !== startFrameKey
         ) {
-          this.setTexture(startFrameKey);
-          this.currentAnimation = "jumping_start";
+          try {
+            this.setTexture(startFrameKey);
+            this.currentAnimation = "jumping_start";
+          } catch (error) {
+            console.warn(`Failed to set texture ${startFrameKey}:`, error);
+          }
         }
         break;
 
@@ -275,8 +286,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.currentAnimation !== "jumping_ascending" ||
           this.texture.key !== ascendingFrameKey
         ) {
-          this.setTexture(ascendingFrameKey);
-          this.currentAnimation = "jumping_ascending";
+          try {
+            this.setTexture(ascendingFrameKey);
+            this.currentAnimation = "jumping_ascending";
+          } catch (error) {
+            console.warn(`Failed to set texture ${ascendingFrameKey}:`, error);
+          }
         }
         break;
 
@@ -287,8 +302,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.currentAnimation !== "jumping_falling" ||
           this.texture.key !== fallingFrameKey
         ) {
-          this.setTexture(fallingFrameKey);
-          this.currentAnimation = "jumping_falling";
+          try {
+            this.setTexture(fallingFrameKey);
+            this.currentAnimation = "jumping_falling";
+          } catch (error) {
+            console.warn(`Failed to set texture ${fallingFrameKey}:`, error);
+          }
         }
         break;
 
@@ -304,8 +323,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
           this.currentAnimation !== "jumping_landing" ||
           this.texture.key !== landingFrameKey
         ) {
-          this.setTexture(landingFrameKey);
-          this.currentAnimation = "jumping_landing";
+          try {
+            this.setTexture(landingFrameKey);
+            this.currentAnimation = "jumping_landing";
+          } catch (error) {
+            console.warn(`Failed to set texture ${landingFrameKey}:`, error);
+          }
         }
 
         // Finish landing animation after 150ms

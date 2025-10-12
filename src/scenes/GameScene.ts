@@ -131,54 +131,83 @@ export class GameScene extends Phaser.Scene {
     ];
 
     characterNames.forEach((charName) => {
-      // Create breathing-idle animation
-      this.anims.create({
-        key: `${charName}_breathing_idle`,
-        frames: [
-          { key: `${charName}_breathing_idle_000` },
-          { key: `${charName}_breathing_idle_001` },
-          { key: `${charName}_breathing_idle_002` },
-          { key: `${charName}_breathing_idle_003` },
-        ],
-        frameRate: 8, // Slow breathing animation
-        repeat: -1, // Loop infinitely
-      });
+      // Check if all required textures exist before creating animations
+      const requiredTextures = [
+        `${charName}_breathing_idle_000`,
+        `${charName}_breathing_idle_001`,
+        `${charName}_breathing_idle_002`,
+        `${charName}_breathing_idle_003`,
+        `${charName}_walk_east_000`,
+        `${charName}_walk_west_000`,
+        `${charName}_jumping_east_000`,
+        `${charName}_jumping_west_000`,
+      ];
+
+      const missingTextures = requiredTextures.filter(textureKey => !this.textures.exists(textureKey));
+      if (missingTextures.length > 0) {
+        console.warn(`Missing textures for ${charName}:`, missingTextures);
+        return; // Skip animation creation for this character
+      }
+      // Create breathing-idle animation with error handling
+      try {
+        this.anims.create({
+          key: `${charName}_breathing_idle`,
+          frames: [
+            { key: `${charName}_breathing_idle_000` },
+            { key: `${charName}_breathing_idle_001` },
+            { key: `${charName}_breathing_idle_002` },
+            { key: `${charName}_breathing_idle_003` },
+          ],
+          frameRate: 8, // Slow breathing animation
+          repeat: -1, // Loop infinitely
+        });
+      } catch (error) {
+        console.warn(`Failed to create breathing animation for ${charName}:`, error);
+      }
 
       // Create walk animations for east and west
       ["east", "west"].forEach((direction) => {
-        this.anims.create({
-          key: `${charName}_walk_${direction}`,
-          frames: [
-            { key: `${charName}_walk_${direction}_000` },
-            { key: `${charName}_walk_${direction}_001` },
-            { key: `${charName}_walk_${direction}_002` },
-            { key: `${charName}_walk_${direction}_003` },
-            { key: `${charName}_walk_${direction}_004` },
-            { key: `${charName}_walk_${direction}_005` },
-          ],
-          frameRate: 12, // Smooth walking animation
-          repeat: -1, // Loop infinitely
-        });
+        try {
+          this.anims.create({
+            key: `${charName}_walk_${direction}`,
+            frames: [
+              { key: `${charName}_walk_${direction}_000` },
+              { key: `${charName}_walk_${direction}_001` },
+              { key: `${charName}_walk_${direction}_002` },
+              { key: `${charName}_walk_${direction}_003` },
+              { key: `${charName}_walk_${direction}_004` },
+              { key: `${charName}_walk_${direction}_005` },
+            ],
+            frameRate: 12, // Smooth walking animation
+            repeat: -1, // Loop infinitely
+          });
+        } catch (error) {
+          console.warn(`Failed to create walk animation for ${charName} ${direction}:`, error);
+        }
       });
 
       // Create jumping animations for east and west
       ["east", "west"].forEach((direction) => {
-        this.anims.create({
-          key: `${charName}_jumping_${direction}`,
-          frames: [
-            { key: `${charName}_jumping_${direction}_000` },
-            { key: `${charName}_jumping_${direction}_001` },
-            { key: `${charName}_jumping_${direction}_002` },
-            { key: `${charName}_jumping_${direction}_003` },
-            { key: `${charName}_jumping_${direction}_004` },
-            { key: `${charName}_jumping_${direction}_005` },
-            { key: `${charName}_jumping_${direction}_006` },
-            { key: `${charName}_jumping_${direction}_007` },
-            { key: `${charName}_jumping_${direction}_008` },
-          ],
-          frameRate: 15, // Quick jumping animation
-          repeat: 0, // Play once
-        });
+        try {
+          this.anims.create({
+            key: `${charName}_jumping_${direction}`,
+            frames: [
+              { key: `${charName}_jumping_${direction}_000` },
+              { key: `${charName}_jumping_${direction}_001` },
+              { key: `${charName}_jumping_${direction}_002` },
+              { key: `${charName}_jumping_${direction}_003` },
+              { key: `${charName}_jumping_${direction}_004` },
+              { key: `${charName}_jumping_${direction}_005` },
+              { key: `${charName}_jumping_${direction}_006` },
+              { key: `${charName}_jumping_${direction}_007` },
+              { key: `${charName}_jumping_${direction}_008` },
+            ],
+            frameRate: 15, // Quick jumping animation
+            repeat: 0, // Play once
+          });
+        } catch (error) {
+          console.warn(`Failed to create jumping animation for ${charName} ${direction}:`, error);
+        }
       });
     });
   }

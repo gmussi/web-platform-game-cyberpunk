@@ -40,6 +40,16 @@ export default function GameComponent() {
       };
 
       phaserGameRef.current = new Phaser.Game(config);
+      
+      // Add global error handling for Phaser
+      phaserGameRef.current.events.on('error', (error: any) => {
+        console.error('Phaser Game Error:', error);
+      });
+      
+      // Add texture error handling
+      phaserGameRef.current.textures.on('error', (error: any) => {
+        console.error('Phaser Texture Error:', error);
+      });
     };
 
     initGame();
