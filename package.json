@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A 2D side-scrolling platformer game built with Phaser.js and TypeScript",
   "main": "index.html",
-  "homepage": "https://guilhermemussi.github.io/gametest1",
+  "homepage": "https://gametest1.vercel.app",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +15,7 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "vercel --prod"
   },
   "keywords": [
     "phaser",

@@ -44,14 +44,7 @@ const nextConfig = {
     esmExternals: true,
   },
 
-  // GitHub Pages configuration
-  basePath: process.env.NODE_ENV === 'production' ? '/gametest1' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/gametest1' : '',
-  
-  // Output configuration for GitHub Pages
-  output: 'export',
-  trailingSlash: true,
-  distDir: 'dist',
+  // Vercel configuration (no special config needed - works out of the box!)
   
   // Disable image optimization for game assets
   images: {
