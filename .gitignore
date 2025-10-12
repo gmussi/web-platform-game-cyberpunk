@@ -68,8 +68,7 @@ out/
 
 # Legacy directories (removed in Phase 1)
 img/
-audio/
-maps/
+# Note: audio/ and maps/ are now in public/assets/ and should be included
 
 # GitHub Pages
 # Note: We want to include dist/ for GitHub Pages deployment
