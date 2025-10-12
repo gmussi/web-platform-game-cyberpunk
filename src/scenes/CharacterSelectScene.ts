@@ -198,6 +198,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       .setInteractive();
 
     this.mapEditorButton.on("pointerdown", () => {
+      console.log("🧠 Clicking map editor button");
       this.scene.start("MapEditorScene");
     });
 
@@ -286,15 +287,18 @@ export class CharacterSelectScene extends Phaser.Scene {
   public update(): void {
     // Handle keyboard input
     if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
+      console.log("🧠 Pressing E key to open map editor");
       this.scene.start("MapEditorScene");
     }
   }
 
   private selectCharacter(characterKey: string): void {
+    console.log("🧠 Selecting character:", characterKey);
     // Store selected character data
     gameData.selectedCharacter = characterKey;
     gameData.playerHealth = gameData.maxHealth; // Reset health
 
+    console.log("🧠 Transitioning to GameScene");
     // Start the game scene
     this.scene.start("GameScene");
   }

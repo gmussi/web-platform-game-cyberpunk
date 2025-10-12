@@ -679,7 +679,7 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.portalSprite,
       (player: Player, portal: Phaser.GameObjects.Sprite) => {
-        console.log("Portal collision detected! Starting victory scene...");
+        console.log("🧠 Portal collision detected! Starting victory scene...");
         this.stopBackgroundMusic();
         this.scene.start("VictoryScene");
       }
@@ -690,12 +690,16 @@ export class GameScene extends Phaser.Scene {
     // Character name display with error handling
     const selectedCharacterKey = gameData.selectedCharacter ?? "A";
     const selectedCharacter = characters[selectedCharacterKey];
-    
+
     // Fallback to first character if selected character doesn't exist
-    const characterName = selectedCharacter?.name ?? characters["A"]?.name ?? "Unknown Character";
-    
+    const characterName =
+      selectedCharacter?.name ?? characters["A"]?.name ?? "Unknown Character";
+
     // Ensure gameData.selectedCharacter is valid
-    if (!gameData.selectedCharacter || !characters[gameData.selectedCharacter]) {
+    if (
+      !gameData.selectedCharacter ||
+      !characters[gameData.selectedCharacter]
+    ) {
       gameData.selectedCharacter = "A";
     }
     this.characterNameText = this.add
@@ -957,7 +961,7 @@ export class GameScene extends Phaser.Scene {
         this.portalSprite.y
       );
       if (distance < 60) {
-        console.log("Manual portal collision detected! Distance:", distance);
+        console.log("🧠 Manual portal collision detected! Distance:", distance);
         this.stopBackgroundMusic();
         this.scene.start("VictoryScene");
       }

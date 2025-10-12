@@ -153,6 +153,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isMoving = false;
 
     if (this.cursors.left!.isDown && canMoveLeft) {
+      console.log("🧠 Player moving left");
       this.setVelocityX(-this.speed);
       // Only set isMoving to true if not jumping
       if (this.jumpPhase === "none") {
@@ -160,6 +161,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
       this.facingRight = false;
     } else if (this.cursors.right!.isDown && canMoveRight) {
+      console.log("🧠 Player moving right");
       this.setVelocityX(this.speed);
       // Only set isMoving to true if not jumping
       if (this.jumpPhase === "none") {
@@ -191,6 +193,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     if (this.isGrounded && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+      console.log("🧠 Player jumping");
       // Player jumped
       this.setVelocityY(-this.jumpPower);
       this.scene.events.emit("playerJumped");
