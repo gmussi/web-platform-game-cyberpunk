@@ -21,16 +21,16 @@ export const GAME_CONFIG = {
 
 // Asset paths
 export const ASSET_PATHS = {
-  characters: "/images/characters",
-  enemies: "/images/enemies",
-  backgrounds: "/images/backgrounds",
-  ui: "/images/ui",
-  tiles: "/images/tiles",
+  characters: "/assets/images/characters",
+  enemies: "/assets/images/enemies",
+  backgrounds: "/assets/images/backgrounds",
+  ui: "/assets/images/ui",
+  tiles: "/assets/images/tiles",
   audio: {
-    music: "/audio/music",
-    sfx: "/audio/sfx",
+    music: "/assets/audio/music",
+    sfx: "/assets/audio/sfx",
   },
-  maps: "/maps",
+  maps: "/assets/maps",
 } as const;
 
 // Game constants
