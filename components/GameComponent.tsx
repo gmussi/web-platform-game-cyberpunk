@@ -3,14 +3,8 @@ import { useEffect, useRef } from 'react';
 export default function GameComponent() {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<any>(null);
-  const isInitialized = useRef(false);
 
   useEffect(() => {
-    // Prevent double initialization in React Strict Mode
-    if (isInitialized.current) {
-      return;
-    }
-    
     // Dynamically import Phaser to avoid SSR issues
     const initGame = async () => {
       const Phaser = (await import('phaser')).default;
@@ -48,10 +42,12 @@ export default function GameComponent() {
           mode: Phaser.Scale.FIT,
           autoCenter: Phaser.Scale.CENTER_BOTH,
         },
+        render: {
+          antialias: true,
+        },
       };
 
       phaserGameRef.current = new Phaser.Game(config);
-      isInitialized.current = true;
     };
 
     initGame();
@@ -60,8 +56,6 @@ export default function GameComponent() {
     return () => {
       if (phaserGameRef.current) {
         phaserGameRef.current.destroy(true);
-        phaserGameRef.current = null;
-        isInitialized.current = false;
       }
     };
   }, []);
@@ -73,8 +67,12 @@ export default function GameComponent() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh',
+        width: '100%',
+        height: '100%',
         backgroundColor: '#000',
+        margin: 0,
+        padding: 0,
+        position: 'relative',
       }}
     />
   );

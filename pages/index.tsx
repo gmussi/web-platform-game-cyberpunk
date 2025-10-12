@@ -10,7 +10,8 @@ const GameComponent = dynamic(() => import('../components/GameComponent'), {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      minHeight: '100vh',
+      width: '100%',
+      height: '100%',
       backgroundColor: '#000',
       color: '#fff',
       fontSize: '24px'
@@ -30,7 +31,17 @@ export default function Game() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <main>
+      <main style={{
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#000',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        top: 0,
+        left: 0
+      }}>
         <GameComponent />
       </main>
     </>

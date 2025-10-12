@@ -624,9 +624,9 @@ export class MapEditorScene extends Phaser.Scene {
       this.clearAll();
     });
 
-    // Back to game button
+    // Back to home button
     this.backButton = this.add
-      .text(350, 180, "Back to Game", {
+      .text(350, 180, "Back to Home", {
         fontSize: "14px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -639,7 +639,7 @@ export class MapEditorScene extends Phaser.Scene {
       .setInteractive();
 
     this.backButton.on("pointerdown", () => {
-      this.scene.start("GameScene");
+      this.scene.start("CharacterSelectScene");
     });
 
     // Register map buttons with HUD system

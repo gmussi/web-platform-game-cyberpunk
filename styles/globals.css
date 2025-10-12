@@ -1,0 +1,46 @@
+/* Global CSS Reset for Game */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: #000 !important;
+  overflow: hidden !important;
+}
+
+#__next {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  background-color: #000 !important;
+  min-height: 100vh !important;
+}
+
+main {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure canvas is centered */
+canvas {
+  display: block !important;
+  margin: 0 auto !important;
+  position: relative !important;
+}
+
+/* Ensure no scrollbars */
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

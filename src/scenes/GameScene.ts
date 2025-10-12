@@ -474,7 +474,7 @@ export class GameScene extends Phaser.Scene {
       this as any,
       startX,
       startY,
-      gameData.selectedCharacter!
+      gameData.selectedCharacter ?? 0
     );
 
     // Add player to physics groups for collision detection
@@ -687,8 +687,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createUI(): void {
-    // Character name display
-    const characterName = characters[gameData.selectedCharacter!].name;
+    // Character name display with error handling
+    const selectedCharacterKey = gameData.selectedCharacter ?? "A";
+    const selectedCharacter = characters[selectedCharacterKey];
+    
+    // Fallback to first character if selected character doesn't exist
+    const characterName = selectedCharacter?.name ?? characters["A"]?.name ?? "Unknown Character";
+    
+    // Ensure gameData.selectedCharacter is valid
+    if (!gameData.selectedCharacter || !characters[gameData.selectedCharacter]) {
+      gameData.selectedCharacter = "A";
+    }
     this.characterNameText = this.add
       .text(50, 5, characterName, {
         fontSize: "20px",
