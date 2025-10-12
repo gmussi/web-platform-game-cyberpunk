@@ -15,7 +15,7 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "deploy": "npm run build && gh-pages -d ."
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "keywords": [
     "phaser",
