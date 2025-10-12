@@ -10,15 +10,15 @@ export default function GameComponent() {
       const Phaser = (await import('phaser')).default;
       
       // Import game scenes
-      const { LoadingScene } = await import('../src/scenes/LoadingScene');
-      const { CharacterSelectScene } = await import('../src/scenes/CharacterSelectScene');
-      const { GameScene } = await import('../src/scenes/GameScene');
-      const { GameOverScene } = await import('../src/scenes/GameOverScene');
-      const { VictoryScene } = await import('../src/scenes/VictoryScene');
-      const { MapEditorScene } = await import('../src/scenes/MapEditorScene');
+      const { LoadingScene } = await import('../scenes/LoadingScene');
+      const { CharacterSelectScene } = await import('../scenes/CharacterSelectScene');
+      const { GameScene } = await import('../scenes/GameScene');
+      const { GameOverScene } = await import('../scenes/GameOverScene');
+      const { VictoryScene } = await import('../scenes/VictoryScene');
+      const { MapEditorScene } = await import('../scenes/MapEditorScene');
 
       // Import game configuration
-      const { GAME_CONFIG } = await import('../src/data/config');
+      const { GAME_CONFIG } = await import('../data/config');
 
       const config: Phaser.Types.Core.GameConfig = {
         type: Phaser.AUTO,
