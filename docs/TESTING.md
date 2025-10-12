@@ -1,6 +1,6 @@
 # Playwright Testing Setup for Phaser Game
 
-This project now includes Playwright testing capabilities for automated testing of the Phaser game.
+This project includes Playwright testing framework setup for automated testing of the Phaser game. The test files have been removed to implement a new testing methodology.
 
 ## Setup
 
@@ -30,10 +30,12 @@ npm run test:debug
 
 ### Test Files
 
-- `tests/game-loading.spec.js` - Tests for game loading and basic functionality
-- `tests/game-controls.spec.js` - Tests for player controls and movement
-- `tests/map-editor.spec.js` - Tests for map editor functionality
-- `tests/helpers/game-test-helper.js` - Utility functions for game testing
+The test files have been removed to implement a new testing methodology. The framework is ready for:
+
+- `tests/game-loading.spec.js` - Tests for game loading and basic functionality (to be created)
+- `tests/game-controls.spec.js` - Tests for player controls and movement (to be created)
+- `tests/map-editor.spec.js` - Tests for map editor functionality (to be created)
+- `tests/helpers/game-test-helper.js` - Utility functions for game testing (to be created)
 
 ## Test Configuration
 
@@ -41,7 +43,7 @@ The `playwright.config.js` file includes:
 
 - **Multi-browser testing**: Chromium, Firefox, WebKit
 - **Mobile testing**: Mobile Chrome and Safari
-- **Automatic server startup**: Runs `npm run serve` before tests
+- **Automatic server startup**: Runs `npm run dev` before tests
 - **Screenshots and videos**: Captured on test failures
 - **Trace collection**: For debugging failed tests
 
@@ -157,7 +159,7 @@ Edit `playwright.config.js` to:
 
 ### Common Issues
 
-1. **Game not loading**: Check that the server is running on port 8000
+1. **Game not loading**: Check that the Next.js server is running on port 3000
 2. **Canvas not found**: Ensure Phaser is properly initialized
 3. **Timing issues**: Increase wait times or use proper wait conditions
 4. **Browser issues**: Try running with `--headed` to see what's happening
