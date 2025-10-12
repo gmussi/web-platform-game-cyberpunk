@@ -104,8 +104,9 @@ The project has been recently reorganized for better maintainability and develop
 │   └── api/                    # Next.js API routes
 │       ├── health.ts           # Health check endpoint
 │       └── game-info.ts        # Game information endpoint
-├── components/                  # React components
-│   └── GameComponent.tsx       # Phaser game wrapper component
+├── src/                        # Source code directory
+│   ├── components/             # React components
+│   │   └── GameComponent.tsx   # Phaser game wrapper component
 ├── styles/                      # Global CSS styles
 │   └── globals.css            # Global CSS reset and game styling
 ├── public/                      # Static assets (served by Next.js)
@@ -144,6 +145,8 @@ The project has been recently reorganized for better maintainability and develop
 │           ├── default.json       # Default game map with platforms, enemies, and portal
 │           └── default2.json      # Additional map file
 ├── src/                         # TypeScript source files (Phaser game code)
+│   ├── components/              # React components
+│   │   └── GameComponent.tsx    # Phaser game wrapper component
 │   ├── core/                    # Core game systems
 │   │   └── Game.ts              # Main game configuration and initialization
 │   ├── entities/                # Game entities
