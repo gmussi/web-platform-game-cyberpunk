@@ -1,12 +1,23 @@
 {
   "name": "2d-platformer-game",
   "version": "1.0.0",
-  "description": "A 2D side-scrolling platformer game built with Phaser.js",
+  "description": "A 2D side-scrolling platformer game built with Phaser.js and TypeScript",
   "main": "index.html",
+  "type": "module",
+  "homepage": "https://guilhermemussi.github.io/gametest1",
   "scripts": {
-    "start": "npx http-server -p 8000 -o",
-    "dev": "npx http-server -p 8000 -o",
-    "serve": "npx http-server -p 8000",
+    "build": "npm run clean && npm run compile",
+    "build:watch": "tsc --watch",
+    "compile": "tsc",
+    "clean": "rm -rf dist",
+    "start": "npm run build && npm run server",
+    "dev": "npm run build && npm run build:watch & npm run server:dev",
+    "server": "node dist/server.js",
+    "server:dev": "nodemon --exec \"npm run compile && node dist/server.js\" --watch src --ext ts",
+    "stop": "pkill -f 'node.*server' && pkill -f 'tsc --watch' && pkill -f 'npm.*dev'",
+    "serve": "npm run server",
+    "preview": "npm run build && npm run server",
+    "deploy": "npm run build && gh-pages -d .",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
@@ -17,11 +28,20 @@
     "game",
     "platformer",
     "2d",
-    "javascript"
+    "typescript",
+    "github-pages"
   ],
   "author": "Game Developer",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.56.0"
+    "@playwright/test": "^1.56.0",
+    "concurrently": "^9.2.1",
+    "gh-pages": "^6.3.0",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "express": "^5.1.0"
   }
 }

@@ -1,6 +1,6 @@
 # 2D Side-Scrolling Platformer Game
 
-A complete 2D platformer game built with Phaser.js featuring character selection, physics-based gameplay, enemies, and a scrolling world.
+A complete 2D platformer game built with **Phaser.js** and **TypeScript** featuring character selection, physics-based gameplay, enemies, and a scrolling world.
 
 ## Features
 
@@ -79,15 +79,52 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 
 ```
 ├── index.html                    # Main HTML file
-├── background_music.mp3          # Background music audio file
-├── wilhelmscream.mp3            # Wilhelm scream sound effect
-├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
-├── img/
+├── audio/                        # Audio files
+│   ├── background_music.mp3      # Background music audio file
+│   └── wilhelmscream.mp3         # Wilhelm scream sound effect
+├── docs/                        # Documentation files
+│   ├── CHARACTER_SPRITE_BRIEFING.md # Character sprite specifications and requirements
+│   ├── MAP_SYSTEM_README.md     # Map system documentation and usage guide
+│   ├── TESTING.md               # Comprehensive testing documentation
+│   └── EXPRESS_SERVER.md        # Express.js server configuration and usage
+├── tsconfig.json                # TypeScript configuration
+├── src/                         # TypeScript source files
+│   ├── phaser.d.ts              # Custom Phaser.js type declarations
+│   ├── main.ts                  # Game configuration and data
+│   ├── server.ts                # Express.js server configuration
+│   ├── Player.ts                # Player class with movement and physics
+│   ├── Enemy.ts                 # Enemy class with different behaviors
+│   ├── Platform.ts              # Platform class for level generation
+│   ├── scenes/                  # Game scene classes
+│   │   ├── phaser.d.ts          # Phaser types for scenes
+│   │   ├── LoadingScene.ts      # Asset loading screen
+│   │   ├── CharacterSelectScene.ts # Character selection screen
+│   │   ├── GameScene.ts          # Main gameplay scene
+│   │   ├── GameOverScene.ts     # Game over screen
+│   │   ├── VictoryScene.ts      # Victory screen
+│   │   └── MapEditorScene.ts    # Map editor for creating custom levels
+│   ├── systems/                 # Game system classes
+│   │   ├── phaser.d.ts          # Phaser types for systems
+│   │   ├── MapSystem.ts         # Map loading, saving, and validation system
+│   │   └── TilemapSystem.ts     # Tile-based level system with collision detection
+│   ├── utils/                   # Utility classes
+│   │   ├── phaser.d.ts          # Phaser types for utils
+│   │   └── UIUtils.ts           # UI utility functions
+│   └── generators/              # Procedural generation classes
+│       ├── phaser.d.ts          # Phaser types for generators
+│       ├── SpriteGenerator.ts   # Procedural sprite generation
+│       └── CyberpunkBackgroundGenerator.ts # Procedural background generation
+├── dist/                        # Compiled JavaScript output (auto-generated)
+│   ├── bundle.js                # Bundled game classes
+│   ├── main-bundle.js           # Bundled main game file
+│   └── [other compiled files]   # Individual compiled TypeScript files
+├── img/                         # Game assets
 │   ├── background1.png          # Custom cyberpunk background image 1
 │   ├── background2.png          # Custom cyberpunk background image 2
 │   ├── background3.png          # Custom cyberpunk background image 3
 │   ├── homebg.png               # Home screen background image
 │   ├── logo.png                 # Game logo
+│   ├── Tileset.png              # Tile sprites for map editor
 │   ├── char1/                   # Cyber Warrior character sprites
 │   │   ├── metadata.json       # Character metadata and animation definitions
 │   │   ├── rotations/          # 4-directional character sprites
@@ -96,48 +133,13 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 │   │       ├── jumping-1/      # Jumping animation
 │   │       └── walk/           # Walking animation
 │   ├── char2/                   # Quantum Mage character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
 │   ├── char3/                   # Stealth Rogue character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
 │   ├── char4/                   # Plasma Paladin character sprites
-│   │   ├── metadata.json       # Character metadata and animation definitions
-│   │   ├── rotations/          # 4-directional character sprites
-│   │   └── animations/         # Character animation sequences
+│   ├── enemy1/                  # Enemy type 1 sprites
+│   ├── enemy2/                  # Enemy type 2 sprites
 │   └── portal/                  # Portal animation sprites
-│       ├── portal_frame_01.png  # Portal animation frame 1
-│       ├── portal_frame_02.png  # Portal animation frame 2
-│       ├── portal_frame_03.png  # Portal animation frame 3
-│       ├── portal_frame_04.png  # Portal animation frame 4
-│       ├── portal_frame_05.png  # Portal animation frame 5
-│       ├── portal_frame_06.png  # Portal animation frame 6
-│       ├── portal_frame_07.png  # Portal animation frame 7
-│       ├── portal_frame_08.png  # Portal animation frame 8
-│       ├── portal_frame_09.png  # Portal animation frame 9
-│       ├── portal_frame_10.png  # Portal animation frame 10
-│       ├── portal_frame_11.png  # Portal animation frame 11
-│       └── portal_frame_12.png  # Portal animation frame 12
-├── js/
-│   ├── main.js                  # Game configuration and data
-│   ├── CharacterSelectScene.js  # Character selection screen
-│   ├── GameScene.js             # Main gameplay scene
-│   ├── GameOverScene.js         # Game over screen
-│   ├── VictoryScene.js          # Victory screen
-│   ├── MapEditorScene.js        # Map editor for creating custom levels
-│   ├── Player.js                # Player class with movement and physics
-│   ├── Enemy.js                 # Enemy class with different behaviors
-│   ├── Platform.js              # Platform class for level generation
-│   ├── MapSystem.js             # Map loading, saving, and validation system
-│   ├── TilemapSystem.js         # Tile-based level system with collision detection
-│   ├── HeroSpriteGenerator.js   # Procedural hero sprite generation (fallback)
-│   ├── RobotSpriteGenerator.js  # Procedural robot enemy sprite generation
-│   └── CyberpunkBackgroundGenerator.js # Procedural background generation
 ├── maps/
-│   ├── default.json             # Default game map with platforms, enemies, and portal
-│   └── modified.json            # Modified map for testing custom level loading
+│   └── default.json             # Default game map with platforms, enemies, and portal
 ├── tests/
 │   ├── game-loading.spec.js     # Tests for game loading and initialization
 │   ├── game-controls.spec.js    # Tests for player controls and movement
@@ -147,35 +149,79 @@ A complete 2D platformer game built with Phaser.js featuring character selection
 ├── package.json                 # Node.js dependencies and npm scripts
 ├── package-lock.json            # Locked dependency versions
 ├── playwright.config.js         # Playwright test configuration
-├── TESTING.md                   # Comprehensive testing documentation
-├── MAP_SYSTEM_README.md         # Map system documentation and usage guide
-└── test-setup-summary.sh        # Test setup verification script
+└── .gitignore                  # Git ignore file (includes TypeScript build output)
 ```
 
 ## How to Run
 
-1. **Simple Setup**: Just open `index.html` in a web browser
-   - Game runs in a larger 1200x800 window
-2. **Local Server** (recommended for development):
+### Prerequisites
+
+- Node.js (for development and building)
+- Modern web browser with ES6 support
+
+### Development Setup
+
+1. **Install Dependencies**:
 
    ```bash
-   # Using Node.js (recommended)
-   npm start
-   # or
-   npx http-server -p 8000 -o
-
-   # Using Python
-   python -m http.server 8000
-
-   # Using PHP
-   php -S localhost:8000
+   npm install
    ```
 
-3. Navigate to `http://localhost:8000` in your browser
+2. **Build TypeScript**:
+
+   ```bash
+   # One-time build
+   npm run build
+
+   # Watch mode for development
+   npm run build:watch
+   ```
+
+3. **Start Development Server**:
+
+   ```bash
+   # Build and start Express server
+   npm start
+
+   # Start Express server only (requires build first)
+   npm run server
+
+   # Development mode (build + watch + Express server with hot reload)
+   npm run dev
+
+   # Development server with nodemon (auto-restart on changes)
+   npm run server:dev
+   ```
+
+4. Navigate to `http://localhost:8000` in your browser
+
+### Production Deployment
+
+1. **Build for Production**:
+
+   ```bash
+   npm run build
+   ```
+
+2. **Start Production Server**:
+
+   ```bash
+   npm run server
+   ```
+
+3. **Deploy**: The Express server serves all static files and handles routing
+4. **Environment**: Set `PORT` environment variable to change the server port (default: 8000)
+
+### Quick Start (No Build Required)
+
+If you just want to run the game without TypeScript compilation:
+
+1. Open `index.html` in a web browser
+2. The game will load using the pre-compiled bundled files
 
 ## Testing
 
-This project includes comprehensive automated testing using Playwright. For detailed testing information, see [TESTING.md](TESTING.md).
+This project includes comprehensive automated testing using Playwright. For detailed testing information, see [docs/TESTING.md](docs/TESTING.md).
 
 ### Quick Test Commands
 
@@ -225,7 +271,7 @@ The test suite covers:
 ### Extensibility Features
 
 - **Modular Design**: Easy to add new characters, enemies, or levels
-- **Configuration**: Game data centralized in `main.js`
+- **Configuration**: Game data centralized in `src/main.ts`
 - **Event System**: Loose coupling between game components
 - **Procedural Generation**: Enemy sprites generated programmatically, custom background images
 - **Audio System**: Integrated sound management with volume control
@@ -266,20 +312,20 @@ Each character (`char1` through `char4`) includes:
 
 ### Adding New Characters
 
-1. Add character data to `characters` object in `main.js`
+1. Add character data to `characters` object in `src/main.ts`
 2. Create character sprite assets in `img/charX/` directory with:
    - `metadata.json` file defining animations and rotations
    - `rotations/` folder with 4-directional sprites (north, south, east, west)
    - `animations/` folder with animation sequences (walk, breathing-idle, jumping-1)
-3. Update character selection UI in `CharacterSelectScene.js`
-4. Add fallback sprite generation method in `HeroSpriteGenerator.js` if needed
+3. Update character selection UI in `src/scenes/CharacterSelectScene.ts`
+4. Add fallback sprite generation method in `src/generators/SpriteGenerator.ts` if needed
 
 ### Adding New Enemy Types
 
-1. Extend the `Enemy` class
-2. Add new enemy sprite generation method in `RobotSpriteGenerator.js`
+1. Extend the `Enemy` class in `src/Enemy.ts`
+2. Add new enemy sprite generation method in `src/generators/SpriteGenerator.ts`
 3. Add new enemy creation methods
-4. Place enemies in `GameScene.createEnemies()`
+4. Place enemies in `src/scenes/GameScene.ts` `createEnemies()` method
 
 ### Using the Map Editor
 
@@ -296,12 +342,36 @@ Each character (`char1` through `char4`) includes:
 ### Adding New Levels
 
 1. **Using Map Editor**: Create custom levels with the built-in editor
-2. **Manual Creation**: Modify platform generation in `GameScene.createPlatforms()`
+2. **Manual Creation**: Modify platform generation in `src/scenes/GameScene.ts` `createPlatforms()` method
 3. **Map Files**: Create JSON map files following the format in `maps/default.json`
 4. **Validation**: Use `MapSystem.validateMapData()` to ensure proper structure
 5. **Background**: Add custom background images to `img/` directory
 
 ## Technical Details
+
+### Express.js Server Architecture
+
+The project now uses **Express.js** instead of a simple HTTP server for better control over routing, middleware, and API endpoints:
+
+- **Static File Serving**: Serves all game assets (HTML, JS, images, audio, maps)
+- **API Endpoints**: 
+  - `GET /api/health` - Server health check
+  - `GET /api/game-info` - Game information
+- **ES Module Support**: Handles ES module imports with and without `.js` extensions
+- **SPA Support**: Catch-all route serves `index.html` for client-side routing
+- **Error Handling**: Proper error handling middleware
+- **Development**: Hot reload with nodemon for development workflow
+
+### TypeScript Architecture
+
+- **Language**: TypeScript with strict type checking for better maintainability
+- **Build System**: TypeScript compiler with ES2020 target and ES modules
+- **Type Safety**: Custom Phaser.js type declarations for enhanced IDE support
+- **Module System**: ES6 modules with bundled fallback for browser compatibility
+- **Source Maps**: Enabled for debugging TypeScript source code
+- **Build Output**: Compiled JavaScript in `dist/` directory with source maps
+
+### Game Engine & Physics
 
 - **Physics Engine**: Phaser Arcade Physics with gravity and collision detection
 - **Rendering**: Canvas-based rendering with procedural sprite generation
@@ -309,17 +379,31 @@ Each character (`char1` through `char4`) includes:
 - **Camera**: Smooth following with deadzone and world bounds
 - **Parallax System**: Multi-layer scrolling with different speeds for depth effect
 - **Window Size**: Larger 1200x800 display with maximized 800px tall playable area
+
+### Audio & Performance
+
 - **Audio**: Web Audio API integration with background music and sound effects
 - **Performance**: Optimized for 60fps gameplay with efficient sprite generation
+- **Memory Management**: Proper cleanup of generated textures and audio resources
+
+### Graphics & Assets
+
 - **Character Sprites**: High-quality pixel art character sprites with multiple animation states
 - **Background System**: Custom high-quality background images with random selection and parallax scrolling
 - **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
 - **Animated Sprites**: Portal uses clean 12-frame sprite animation, characters have walking/idle/jump animations
-- **Memory Management**: Proper cleanup of generated textures and audio resources
+
+### Map System & File Management
+
 - **Map System**: JSON-based map format with validation and file system integration
 - **Tile System**: 32x32 pixel tile-based level system with collision detection
 - **File System**: Modern File System Access API with fallback for map saving/loading
+
+### Development & Testing
+
 - **Testing**: Comprehensive Playwright test suite with cross-browser and mobile testing
+- **Build Scripts**: npm scripts for development, building, and testing
+- **Git Integration**: Proper `.gitignore` for TypeScript build artifacts
 
 ## Browser Compatibility
 

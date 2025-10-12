@@ -13543,7 +13543,7 @@
     }
   ],
   "music": {
-    "background": "background_music.mp3",
+    "background": "audio/background_music.mp3",
     "volume": 0.3,
     "loop": true
   },
