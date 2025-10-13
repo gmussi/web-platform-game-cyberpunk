@@ -174,9 +174,17 @@ export class MapSystem {
 
           // Validate map data structure
           if (this.validateMapData(mapData)) {
+            console.log(
+              "📁 MapSystem: File loaded successfully:",
+              mapData.metadata?.name,
+              mapData.world?.width,
+              "x",
+              mapData.world?.height
+            );
             this.mapData = mapData;
             resolve(mapData);
           } else {
+            console.error("❌ MapSystem: Invalid map data format");
             reject(new Error("Invalid map data format"));
           }
         } catch (error: any) {
@@ -199,6 +207,8 @@ export class MapSystem {
       const cacheBuster = `?t=${Date.now()}`;
       const urlWithCacheBuster = url + cacheBuster;
 
+      console.log(`🔄 Loading map from URL: ${urlWithCacheBuster}`);
+
       const response = await fetch(urlWithCacheBuster, {
         cache: "no-cache",
         headers: {
@@ -213,6 +223,11 @@ export class MapSystem {
       }
 
       const mapData = await response.json();
+      console.log(
+        `✅ Map loaded successfully: ${mapData.metadata?.name || "Unknown"} (${
+          mapData.world?.width
+        }x${mapData.world?.height})`
+      );
 
       if (this.validateMapData(mapData)) {
         this.mapData = mapData;

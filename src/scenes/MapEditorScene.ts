@@ -5,6 +5,19 @@ import { TilemapSystem } from "../systems/TilemapSystem";
 import { Enemy } from "../entities/Enemy";
 
 // MapEditorScene interfaces
+interface EnemyData {
+  id: string;
+  type: string;
+  enemyType: string;
+  position: { x: number; y: number };
+  properties: {
+    damage: number;
+    health: number;
+    speed?: number;
+    patrolRange?: number;
+  };
+}
+
 interface MapEditorData {
   version: string;
   metadata: {
@@ -134,9 +147,8 @@ export class MapEditorScene extends Phaser.Scene {
     // Create background
     this.createBackground();
 
-    // Create tilemap system
-    this.tilemapSystem = new TilemapSystem(this);
-    this.tilemapSystem.createCollisionBodies();
+    // Create tilemap system with correct initial dimensions for default map
+    this.tilemapSystem = new TilemapSystem(this, 128, 31);
 
     // Create grid overlay for tile editing
     this.createGridOverlay();
@@ -163,12 +175,9 @@ export class MapEditorScene extends Phaser.Scene {
       return;
     }
 
-    // TEMPORARY: Always skip default map loading to test if this is the issue
-    return;
-
     // Try to load default.json map file
     this.mapSystem
-      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json`)
+      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json?v=${Date.now()}`)
       .then((mapData: any) => {
         // Double-check flag in case it changed during async operation
         if (this.isLoadingCustomMap) {
@@ -337,6 +346,9 @@ export class MapEditorScene extends Phaser.Scene {
         strokeThickness: 1,
       })
       .setScrollFactor(0);
+
+    // Create map resize controls
+    this.createMapResizeControls();
 
     // Register hints with HUD system
     this.hudElements.push(shortcutHint, hudHint);
@@ -702,6 +714,137 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Register grid toggle with HUD system
     this.hudElements.push(this.gridToggleButton);
+  }
+
+  private createMapResizeControls(): void {
+    // Map size display
+    const mapSizeText = this.add
+      .text(
+        50,
+        320,
+        `Map Size: ${this.tilemapSystem.mapWidth} × ${this.tilemapSystem.mapHeight}`,
+        {
+          fontSize: "12px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          stroke: "#000000",
+          strokeThickness: 1,
+        }
+      )
+      .setScrollFactor(0);
+
+    // Add row button
+    const addRowButton = this.add
+      .text(50, 340, "+ Row", {
+        fontSize: "12px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#00aa00",
+        padding: { x: 8, y: 4 },
+      })
+      .setScrollFactor(0)
+      .setInteractive();
+
+    addRowButton.on("pointerdown", () => {
+      this.tilemapSystem.resizeMap(
+        this.tilemapSystem.mapWidth,
+        this.tilemapSystem.mapHeight + 1
+      );
+      this.updateMapAfterResize();
+      mapSizeText.setText(
+        `Map Size: ${this.tilemapSystem.mapWidth} × ${this.tilemapSystem.mapHeight}`
+      );
+    });
+
+    // Remove row button
+    const removeRowButton = this.add
+      .text(100, 340, "- Row", {
+        fontSize: "12px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#aa0000",
+        padding: { x: 8, y: 4 },
+      })
+      .setScrollFactor(0)
+      .setInteractive();
+
+    removeRowButton.on("pointerdown", () => {
+      if (this.tilemapSystem.mapHeight > 1) {
+        this.tilemapSystem.resizeMap(
+          this.tilemapSystem.mapWidth,
+          this.tilemapSystem.mapHeight - 1
+        );
+        this.updateMapAfterResize();
+        mapSizeText.setText(
+          `Map Size: ${this.tilemapSystem.mapWidth} × ${this.tilemapSystem.mapHeight}`
+        );
+      }
+    });
+
+    // Add column button
+    const addColumnButton = this.add
+      .text(150, 340, "+ Col", {
+        fontSize: "12px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#00aa00",
+        padding: { x: 8, y: 4 },
+      })
+      .setScrollFactor(0)
+      .setInteractive();
+
+    addColumnButton.on("pointerdown", () => {
+      this.tilemapSystem.resizeMap(
+        this.tilemapSystem.mapWidth + 1,
+        this.tilemapSystem.mapHeight
+      );
+      this.updateMapAfterResize();
+      mapSizeText.setText(
+        `Map Size: ${this.tilemapSystem.mapWidth} × ${this.tilemapSystem.mapHeight}`
+      );
+    });
+
+    // Remove column button
+    const removeColumnButton = this.add
+      .text(200, 340, "- Col", {
+        fontSize: "12px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#aa0000",
+        padding: { x: 8, y: 4 },
+      })
+      .setScrollFactor(0)
+      .setInteractive();
+
+    removeColumnButton.on("pointerdown", () => {
+      if (this.tilemapSystem.mapWidth > 1) {
+        this.tilemapSystem.resizeMap(
+          this.tilemapSystem.mapWidth - 1,
+          this.tilemapSystem.mapHeight
+        );
+        this.updateMapAfterResize();
+        mapSizeText.setText(
+          `Map Size: ${this.tilemapSystem.mapWidth} × ${this.tilemapSystem.mapHeight}`
+        );
+      }
+    });
+
+    // Register all resize controls with HUD system
+    this.hudElements.push(
+      mapSizeText,
+      addRowButton,
+      removeRowButton,
+      addColumnButton,
+      removeColumnButton
+    );
   }
 
   private setupCamera(): void {
@@ -1099,6 +1242,27 @@ export class MapEditorScene extends Phaser.Scene {
       }`
     );
 
+    // If map has world dimensions, resize tilemap to match
+    if (this.mapData.world) {
+      const mapWidthInTiles = Math.floor(
+        this.mapData.world.width / this.tilemapSystem.tileSize
+      );
+      const mapHeightInTiles = Math.floor(
+        this.mapData.world.height / this.tilemapSystem.tileSize
+      );
+
+      if (
+        mapWidthInTiles !== this.tilemapSystem.mapWidth ||
+        mapHeightInTiles !== this.tilemapSystem.mapHeight
+      ) {
+        console.log(
+          `🔄 Resizing tilemap from ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight} to ${mapWidthInTiles}×${mapHeightInTiles}`
+        );
+        this.tilemapSystem.resizeMap(mapWidthInTiles, mapHeightInTiles);
+        this.updateMapAfterResize();
+      }
+    }
+
     // Load tile data from map
     if (this.mapData.tiles && Array.isArray(this.mapData.tiles)) {
       // Clear existing tiles
@@ -1124,10 +1288,7 @@ export class MapEditorScene extends Phaser.Scene {
             const tileData = this.mapData.tiles[y][x];
 
             // Handle tile data format
-            if (typeof tileData === "number") {
-              // Number format: just tile type
-              this.tilemapSystem.setTile(x, y, tileData);
-            } else if (tileData && typeof tileData === "object") {
+            if (tileData && typeof tileData === "object") {
               // Object format: type and spriteIndex
               this.tilemapSystem.setTile(
                 x,
@@ -1135,6 +1296,9 @@ export class MapEditorScene extends Phaser.Scene {
                 tileData.type,
                 tileData.spriteIndex
               );
+            } else if (typeof tileData === "number") {
+              // Number format: just tile type
+              this.tilemapSystem.setTile(x, y, tileData);
 
               // Log tile changes for first column, last row
               if (x === 0 && y === this.tilemapSystem.mapHeight - 1) {
@@ -1152,6 +1316,9 @@ export class MapEditorScene extends Phaser.Scene {
           this.mapData.tiles.length
         } rows x ${this.mapData.tiles[0]?.length || 0} columns`
       );
+
+      // Create collision bodies AFTER tile data is loaded (same as GameScene)
+      this.tilemapSystem.createCollisionBodies();
     }
   }
 
@@ -1166,6 +1333,39 @@ export class MapEditorScene extends Phaser.Scene {
     }
 
     this.updatePreviewObjects();
+  }
+
+  private updateMapAfterResize(): void {
+    // Update world bounds
+    this.physics.world.setBounds(
+      0,
+      0,
+      this.tilemapSystem.getWorldWidth(),
+      this.tilemapSystem.getWorldHeight()
+    );
+
+    // Update camera bounds
+    this.cameras.main.setBounds(
+      0,
+      0,
+      this.tilemapSystem.getWorldWidth(),
+      this.tilemapSystem.getWorldHeight()
+    );
+
+    // Update background
+    this.backgroundImage.destroy();
+    this.darkOverlay.destroy();
+    this.createBackground();
+
+    // Update grid
+    this.gridGraphics.destroy();
+    this.createGridOverlay();
+
+    // Update map data world dimensions
+    if (this.mapData) {
+      this.mapData.world.width = this.tilemapSystem.getWorldWidth();
+      this.mapData.world.height = this.tilemapSystem.getWorldHeight();
+    }
   }
 
   public update(): void {
