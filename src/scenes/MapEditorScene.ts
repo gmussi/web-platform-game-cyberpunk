@@ -5,6 +5,19 @@ import { TilemapSystem } from "../systems/TilemapSystem";
 import { Enemy } from "../entities/Enemy";
 
 // MapEditorScene interfaces
+interface EnemyData {
+  id: string;
+  type: string;
+  enemyType: string;
+  position: { x: number; y: number };
+  properties: {
+    damage: number;
+    health: number;
+    speed?: number;
+    patrolRange?: number;
+  };
+}
+
 interface MapEditorData {
   version: string;
   metadata: {
@@ -43,13 +56,6 @@ interface SpriteButton {
   border: Phaser.GameObjects.Rectangle;
 }
 
-interface UIBounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export class MapEditorScene extends Phaser.Scene {
   public mapSystem!: MapSystem;
   public tilemapSystem!: TilemapSystem;
@@ -58,13 +64,10 @@ export class MapEditorScene extends Phaser.Scene {
   public darkOverlay!: Phaser.GameObjects.Rectangle;
   public gridGraphics!: Phaser.GameObjects.Graphics;
   public gridVisible: boolean = true;
-  public hudVisible: boolean = true;
-  public hudElements: Phaser.GameObjects.GameObject[] = [];
   public isLoadingCustomMap: boolean = false;
   public selectedTool: string | null = null;
   public selectedSpriteIndex: number | null = null;
   public toolButtons: ToolButton[] = [];
-  public solidButtonSprite!: Phaser.GameObjects.Image;
   public spritePicker: Phaser.GameObjects.Rectangle | null = null;
   public spriteButtons: SpriteButton[] = [];
   public saveButton!: Phaser.GameObjects.Text;
@@ -82,12 +85,15 @@ export class MapEditorScene extends Phaser.Scene {
   public cameraSpeed: number = 10;
   public isDragging: boolean = false;
 
+  // Viewport properties for 80% width layout
+  public viewportWidth!: number;
+  public viewportHeight!: number;
+  public rightPanelWidth!: number;
+  public uiCamera!: Phaser.Cameras.Scene2D.Camera;
+  public rightPanelGraphics!: Phaser.GameObjects.Graphics;
+
   constructor() {
     super({ key: "MapEditorScene" });
-
-    // Initialize HUD visibility
-    this.hudVisible = true;
-    this.hudElements = [];
 
     // Flag to prevent default map override during custom map loading
     this.isLoadingCustomMap = false;
@@ -125,18 +131,31 @@ export class MapEditorScene extends Phaser.Scene {
   public create(): void {
     console.log(`🗺️ MapEditorScene started!`);
 
+    // Calculate viewport dimensions (80% of screen width)
+    const gameWidth = (this as any).sys.game.scale.width;
+    const gameHeight = (this as any).sys.game.scale.height;
+    this.viewportWidth = Math.floor(gameWidth * 0.8);
+    this.viewportHeight = gameHeight;
+    this.rightPanelWidth = gameWidth - this.viewportWidth;
+
+    console.log(
+      `📐 Viewport: ${this.viewportWidth}x${this.viewportHeight}, Right panel: ${this.rightPanelWidth}px`
+    );
+
+    // Create black background for the right panel
+    this.createRightPanelBackground();
+
     // Initialize map system
     this.mapSystem = new MapSystem(this);
 
-    // Set world bounds
+    // Set world bounds (adjusted for viewport)
     this.physics.world.setBounds(0, 0, 4128, 800);
 
-    // Create background
+    // Create background (only in the left viewport)
     this.createBackground();
 
-    // Create tilemap system
-    this.tilemapSystem = new TilemapSystem(this);
-    this.tilemapSystem.createCollisionBodies();
+    // Create tilemap system with correct initial dimensions for default map
+    this.tilemapSystem = new TilemapSystem(this, 128, 31);
 
     // Create grid overlay for tile editing
     this.createGridOverlay();
@@ -155,6 +174,9 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Create preview objects
     this.createPreviewObjects();
+
+    // Set up camera ignore lists (must be done after all objects are created)
+    this.setupCameraIgnoreLists();
   }
 
   private loadDefaultMap(): void {
@@ -163,12 +185,9 @@ export class MapEditorScene extends Phaser.Scene {
       return;
     }
 
-    // TEMPORARY: Always skip default map loading to test if this is the issue
-    return;
-
     // Try to load default.json map file
     this.mapSystem
-      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json`)
+      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json?v=${Date.now()}`)
       .then((mapData: any) => {
         // Double-check flag in case it changed during async operation
         if (this.isLoadingCustomMap) {
@@ -178,6 +197,11 @@ export class MapEditorScene extends Phaser.Scene {
         this.mapData = mapData;
         this.loadTileDataFromMap();
         this.updatePreviewObjects();
+
+        // Make sure UI camera ignores all tile sprites after loading
+        if (this.uiCamera) {
+          this.setupCameraIgnoreLists();
+        }
       })
       .catch((error: Error) => {
         // Create a new empty map if default.json doesn't exist
@@ -210,6 +234,108 @@ export class MapEditorScene extends Phaser.Scene {
         };
         this.updatePreviewObjects();
       });
+  }
+
+  private createRightPanelBackground(): void {
+    // Create a second camera for the right panel UI (20% on the right)
+    this.uiCamera = (this.cameras as any).add(
+      this.viewportWidth, // x position (starts at 80% of screen width)
+      0, // y position
+      this.rightPanelWidth, // width (20% of screen)
+      this.viewportHeight // height (full screen height)
+    );
+
+    // Make the UI camera not scroll
+    this.uiCamera.scrollX = 0;
+    this.uiCamera.scrollY = 0;
+
+    // Create graphics object for the right panel background
+    this.rightPanelGraphics = this.add.graphics();
+    this.rightPanelGraphics.fillStyle(0x2a2a2a, 1.0);
+
+    // Draw the dark grey background at coordinates (0, 0) relative to the UI camera
+    // Since the UI camera's viewport starts at viewportWidth, we draw at (0,0) within that camera
+    this.rightPanelGraphics.fillRect(
+      0,
+      0,
+      this.rightPanelWidth,
+      this.viewportHeight
+    );
+
+    // Make it stay fixed on screen (doesn't scroll with camera)
+    this.rightPanelGraphics.setScrollFactor(0);
+
+    // Make the main camera ignore the right panel graphics
+    // So it's only rendered by the UI camera
+    (this.cameras.main as any).ignore(this.rightPanelGraphics);
+
+    // Make the UI camera ignore all objects EXCEPT the right panel graphics
+    // This needs to be done after ALL objects are created, so we'll set up a method
+    // to be called at the end of create()
+  }
+
+  private setupCameraIgnoreLists(): void {
+    // Get all children in the scene
+    const allChildren = (this.children as any).list || [];
+
+    // Collect UI elements (those we want rendered by UI camera only)
+    const uiElements = [
+      this.rightPanelGraphics,
+      ...this.toolButtons.map((tb) => tb.button),
+      this.saveButton,
+      this.loadButton,
+      this.clearButton,
+      this.backButton,
+      this.objectInfoText,
+      this.coordinateText,
+      this.gridToggleButton,
+    ].filter((el) => el !== undefined);
+
+    // Also include all text elements in the right panel (titles, instructions, hints, etc.)
+    const allTextElements = allChildren.filter(
+      (child: any) => child.type === "Text"
+    );
+    uiElements.push(...allTextElements);
+
+    // Make main camera ignore all UI elements
+    if (uiElements.length > 0) {
+      (this.cameras.main as any).ignore(uiElements);
+    }
+
+    // Make UI camera ignore everything EXCEPT UI elements and right panel graphics
+    const mapElements = allChildren.filter(
+      (child: any) => !uiElements.includes(child)
+    );
+
+    if (mapElements.length > 0) {
+      (this.uiCamera as any).ignore(mapElements);
+    }
+
+    // Ignore tilemap sprites from UI camera
+    this.ignoreTilemapSprites();
+
+    console.log(
+      `🎥 Camera setup: Main camera ignoring ${uiElements.length} UI elements, UI camera ignoring ${mapElements.length} map elements`
+    );
+  }
+
+  private ignoreTilemapSprites(): void {
+    if (!this.uiCamera || !this.tilemapSystem) {
+      return;
+    }
+
+    // Ignore all tilemap sprites (these are created dynamically)
+    if (
+      this.tilemapSystem.tileSprites &&
+      this.tilemapSystem.tileSprites.length > 0
+    ) {
+      (this.uiCamera as any).ignore(this.tilemapSystem.tileSprites);
+    }
+
+    // Also ignore the tilemap visual layer
+    if (this.tilemapSystem.visualLayer) {
+      (this.uiCamera as any).ignore(this.tilemapSystem.visualLayer);
+    }
   }
 
   private createBackground(): void {
@@ -277,72 +403,73 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private createEditorUI(): void {
+    // All UI elements are positioned relative to the right panel (UI camera)
+    // The UI camera viewport starts at viewportWidth, but we position at 0 within that camera
+    const panelPadding = 10;
+    const panelWidth = this.rightPanelWidth;
+    let yOffset = 20;
+
     // Title
-    this.add
-      .text(50, 30, "Map Editor", {
-        fontSize: "24px",
+    this.add.text(panelPadding, yOffset, "Map Editor", {
+      fontSize: "20px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 2,
+    });
+    yOffset += 30;
+
+    // Instructions (wrapped for narrow panel)
+    this.add.text(
+      panelPadding,
+      yOffset,
+      "Click to place\nRight-click to remove\nDrag to paint tiles",
+      {
+        fontSize: "10px",
         fill: "#ffffff",
         fontStyle: "bold",
         stroke: "#000000",
-        strokeThickness: 2,
-      })
-      .setScrollFactor(0);
-
-    // Instructions
-    this.add
-      .text(
-        50,
-        60,
-        "Select a tool first, then click to place objects | Right-click to remove | Drag to paint tiles",
-        {
-          fontSize: "12px",
-          fill: "#ffffff",
-          fontStyle: "bold",
-          stroke: "#000000",
-          strokeThickness: 1,
-        }
-      )
-      .setScrollFactor(0);
+        strokeThickness: 1,
+      }
+    );
+    yOffset += 45;
 
     // Tool selection
-    this.createToolSelection();
+    yOffset = this.createToolSelection(panelPadding, yOffset, panelWidth);
 
     // Map management buttons
-    this.createMapButtons();
+    yOffset = this.createMapButtons(panelPadding, yOffset, panelWidth);
 
     // Object info display
-    this.createObjectInfo();
+    yOffset = this.createObjectInfo(panelPadding, yOffset, panelWidth);
 
     // Grid toggle
-    this.createGridToggle();
+    yOffset = this.createGridToggle(panelPadding, yOffset, panelWidth);
 
-    // Add keyboard shortcut hint
-    const shortcutHint = this.add
-      .text(50, 280, "Press T to open tile selector", {
-        fontSize: "12px",
+    // Keyboard shortcut hint
+    this.add.text(
+      panelPadding,
+      yOffset,
+      "Press T for tile selector\nPress G for grid toggle",
+      {
+        fontSize: "10px",
         fill: "#ffff00",
         fontStyle: "bold",
         stroke: "#000000",
         strokeThickness: 1,
-      })
-      .setScrollFactor(0);
+      }
+    );
+    yOffset += 35;
 
-    // Add H key hint
-    const hudHint = this.add
-      .text(50, 300, "Press H to hide/show HUD", {
-        fontSize: "12px",
-        fill: "#ffff00",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 1,
-      })
-      .setScrollFactor(0);
-
-    // Register hints with HUD system
-    this.hudElements.push(shortcutHint, hudHint);
+    // Create map resize controls
+    this.createMapResizeControls(panelPadding, yOffset, panelWidth);
   }
 
-  private createToolSelection(): void {
+  private createToolSelection(
+    x: number,
+    y: number,
+    panelWidth: number
+  ): number {
     const tools = [
       { name: "Player", key: "player", color: "#00ff00" },
       { name: "Portal", key: "portal", color: "#ff00ff" },
@@ -356,24 +483,31 @@ export class MapEditorScene extends Phaser.Scene {
     this.selectedSpriteIndex = null; // Track selected sprite for solid tiles
     this.toolButtons = [];
 
+    // Grid layout: 2 rows x 3 columns
+    const cols = 3;
+    const rows = 2;
+    const buttonWidth = 60;
+    const buttonHeight = 25;
+    const spacingX = 5;
+    const spacingY = 5;
+
     tools.forEach((tool, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const buttonX = x + col * (buttonWidth + spacingX);
+      const buttonY = y + row * (buttonHeight + spacingY);
+
       const button = this.add
-        .text(
-          50 + (index % 4) * 120,
-          100 + Math.floor(index / 4) * 30,
-          tool.name,
-          {
-            fontSize: "12px",
-            fill: "#ffffff", // Always white text
-            fontStyle: "bold",
-            stroke: "#000000",
-            strokeThickness: 2,
-            backgroundColor:
-              this.selectedTool === tool.key ? tool.color : "#444444",
-            padding: { x: 8, y: 4 },
-          }
-        )
-        .setScrollFactor(0)
+        .text(buttonX, buttonY, tool.name, {
+          fontSize: "10px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          stroke: "#000000",
+          strokeThickness: 2,
+          backgroundColor:
+            this.selectedTool === tool.key ? tool.color : "#444444",
+          padding: { x: 5, y: 3 },
+        })
         .setInteractive();
 
       button.on("pointerdown", () => {
@@ -386,31 +520,11 @@ export class MapEditorScene extends Phaser.Scene {
         }
       });
 
-      // Add sprite preview for solid button
-      if (tool.key === "solid") {
-        this.solidButtonSprite = this.add.image(
-          button.x + 50,
-          button.y,
-          "tileset_sprites",
-          0
-        );
-        this.solidButtonSprite.setScrollFactor(0);
-        this.solidButtonSprite.setDisplaySize(24, 24);
-        this.solidButtonSprite.setDepth(button.depth + 1);
-      }
-
       this.toolButtons.push({ button, tool });
     });
 
-    // Register tool buttons with HUD system
-    this.toolButtons.forEach(({ button }) => {
-      this.hudElements.push(button);
-    });
-
-    // Register solid button sprite with HUD system
-    if (this.solidButtonSprite) {
-      this.hudElements.push(this.solidButtonSprite);
-    }
+    // Return the Y position after the grid
+    return y + rows * (buttonHeight + spacingY) + 10;
   }
 
   private updateToolSelection(): void {
@@ -429,14 +543,25 @@ export class MapEditorScene extends Phaser.Scene {
       return;
     }
 
+    // Center the sprite picker in the left viewport (80% of screen)
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
     // Create sprite picker background
-    this.spritePicker = this.add.rectangle(600, 300, 400, 500, 0x000000, 0.8);
+    this.spritePicker = this.add.rectangle(
+      centerX,
+      centerY,
+      400,
+      500,
+      0x000000,
+      0.8
+    );
     this.spritePicker.setScrollFactor(0);
     this.spritePicker.setDepth(1000);
 
     // Create title
     this.add
-      .text(600, 100, "Select Sprite", {
+      .text(centerX, centerY - 200, "Select Sprite", {
         fontSize: "18px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -449,8 +574,8 @@ export class MapEditorScene extends Phaser.Scene {
     this.spriteButtons = [];
     const spriteSize = 32;
     const spacing = 40;
-    const startX = 600 - 4 * spacing;
-    const startY = 150;
+    const startX = centerX - 4 * spacing;
+    const startY = centerY - 150;
 
     for (let i = 0; i < 64; i++) {
       const x = startX + (i % 8) * spacing;
@@ -480,11 +605,6 @@ export class MapEditorScene extends Phaser.Scene {
         this.selectedTool = "solid";
         this.updateToolSelection();
 
-        // Update solid button sprite preview
-        if (this.solidButtonSprite) {
-          this.solidButtonSprite.setFrame(i);
-        }
-
         this.closeSpritePicker();
       });
 
@@ -501,7 +621,7 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Add close button
     const closeButton = this.add
-      .text(600, 450, "Close", {
+      .text(centerX, centerY + 220, "Close", {
         fontSize: "14px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -549,17 +669,6 @@ export class MapEditorScene extends Phaser.Scene {
     }
   }
 
-  public toggleHUD(): void {
-    this.hudVisible = !this.hudVisible;
-
-    // Toggle visibility of all HUD elements
-    this.hudElements.forEach((element) => {
-      if (element) {
-        element.setVisible(this.hudVisible);
-      }
-    });
-  }
-
   public toggleGrid(): void {
     this.gridVisible = !this.gridVisible;
     this.gridGraphics.setVisible(this.gridVisible);
@@ -569,118 +678,86 @@ export class MapEditorScene extends Phaser.Scene {
     );
   }
 
-  private createMapButtons(): void {
-    // Save button
-    this.saveButton = this.add
-      .text(50, 180, "Save Map", {
-        fontSize: "14px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#00aa00",
-        padding: { x: 10, y: 6 },
-      })
-      .setScrollFactor(0)
-      .setInteractive();
+  private createMapButtons(x: number, y: number, panelWidth: number): number {
+    // Grid layout: 2 rows x 2 columns
+    const cols = 2;
+    const rows = 2;
+    const buttonWidth = 85;
+    const buttonHeight = 25;
+    const spacingX = 5;
+    const spacingY = 5;
 
-    this.saveButton.on("pointerdown", () => {
-      this.saveMap();
+    const buttons = [
+      { name: "Save Map", color: "#00aa00", action: () => this.saveMap() },
+      { name: "Load Map", color: "#0066aa", action: () => this.loadMap() },
+      { name: "Clear All", color: "#aa0000", action: () => this.clearAll() },
+      {
+        name: "Back",
+        color: "#0066cc",
+        action: () => this.scene.start("CharacterSelectScene"),
+      },
+    ];
+
+    buttons.forEach((buttonData, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const buttonX = x + col * (buttonWidth + spacingX);
+      const buttonY = y + row * (buttonHeight + spacingY);
+
+      const button = this.add
+        .text(buttonX, buttonY, buttonData.name, {
+          fontSize: "10px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          stroke: "#000000",
+          strokeThickness: 2,
+          backgroundColor: buttonData.color,
+          padding: { x: 6, y: 4 },
+        })
+        .setInteractive();
+
+      button.on("pointerdown", buttonData.action);
+
+      // Store button references
+      if (index === 0) this.saveButton = button;
+      else if (index === 1) this.loadButton = button;
+      else if (index === 2) this.clearButton = button;
+      else if (index === 3) this.backButton = button;
     });
 
-    // Load button
-    this.loadButton = this.add
-      .text(150, 180, "Load Map", {
-        fontSize: "14px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#0066aa",
-        padding: { x: 10, y: 6 },
-      })
-      .setScrollFactor(0)
-      .setInteractive();
-
-    this.loadButton.on("pointerdown", () => {
-      this.loadMap();
-    });
-
-    // Clear button
-    this.clearButton = this.add
-      .text(250, 180, "Clear All", {
-        fontSize: "14px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#aa0000",
-        padding: { x: 10, y: 6 },
-      })
-      .setScrollFactor(0)
-      .setInteractive();
-
-    this.clearButton.on("pointerdown", () => {
-      this.clearAll();
-    });
-
-    // Back to home button
-    this.backButton = this.add
-      .text(350, 180, "Back to Home", {
-        fontSize: "14px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#0066cc",
-        padding: { x: 10, y: 6 },
-      })
-      .setScrollFactor(0)
-      .setInteractive();
-
-    this.backButton.on("pointerdown", () => {
-      this.scene.start("CharacterSelectScene");
-    });
-
-    // Register map buttons with HUD system
-    this.hudElements.push(
-      this.saveButton,
-      this.loadButton,
-      this.clearButton,
-      this.backButton
-    );
+    // Return the Y position after the grid
+    return y + rows * (buttonHeight + spacingY) + 10;
   }
 
-  private createObjectInfo(): void {
-    this.objectInfoText = this.add
-      .text(50, 220, "Selected: None - Select a tool", {
-        fontSize: "12px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 1,
-      })
-      .setScrollFactor(0);
+  private createObjectInfo(x: number, y: number, panelWidth: number): number {
+    let currentY = y;
 
-    this.coordinateText = this.add
-      .text(50, 240, "Position: (0, 0)", {
-        fontSize: "12px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 1,
-      })
-      .setScrollFactor(0);
+    this.objectInfoText = this.add.text(x, currentY, "Selected: None", {
+      fontSize: "9px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 1,
+    });
+    currentY += 12;
 
-    // Register object info with HUD system
-    this.hudElements.push(this.objectInfoText, this.coordinateText);
+    this.coordinateText = this.add.text(x, currentY, "W:(0, 0) T:(0,0) Empty", {
+      fontSize: "9px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 1,
+    });
+    currentY += 12;
+
+    return currentY + 10;
   }
 
-  private createGridToggle(): void {
+  private createGridToggle(x: number, y: number, panelWidth: number): number {
     this.gridVisible = true;
     this.gridToggleButton = this.add
-      .text(50, 250, "Grid: ON", {
-        fontSize: "12px",
+      .text(x, y, "Grid: ON", {
+        fontSize: "11px",
         fill: "#ffffff",
         fontStyle: "bold",
         stroke: "#000000",
@@ -688,7 +765,6 @@ export class MapEditorScene extends Phaser.Scene {
         backgroundColor: "#00aa00",
         padding: { x: 8, y: 4 },
       })
-      .setScrollFactor(0)
       .setInteractive();
 
     this.gridToggleButton.on("pointerdown", () => {
@@ -700,19 +776,156 @@ export class MapEditorScene extends Phaser.Scene {
       );
     });
 
-    // Register grid toggle with HUD system
-    this.hudElements.push(this.gridToggleButton);
+    return y + 25 + 10;
+  }
+
+  private createMapResizeControls(
+    x: number,
+    y: number,
+    panelWidth: number
+  ): number {
+    let currentY = y;
+
+    // Map size display
+    const mapSizeText = this.add.text(
+      x,
+      currentY,
+      `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`,
+      {
+        fontSize: "10px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 1,
+      }
+    );
+    currentY += 20;
+
+    // Add row button
+    const addRowButton = this.add
+      .text(x, currentY, "+ Row", {
+        fontSize: "10px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#00aa00",
+        padding: { x: 6, y: 3 },
+      })
+      .setInteractive();
+
+    addRowButton.on("pointerdown", () => {
+      this.tilemapSystem.resizeMap(
+        this.tilemapSystem.mapWidth,
+        this.tilemapSystem.mapHeight + 1
+      );
+      this.updateMapAfterResize();
+      mapSizeText.setText(
+        `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
+      );
+    });
+
+    // Remove row button
+    const removeRowButton = this.add
+      .text(x + 50, currentY, "- Row", {
+        fontSize: "10px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#aa0000",
+        padding: { x: 6, y: 3 },
+      })
+      .setInteractive();
+
+    removeRowButton.on("pointerdown", () => {
+      if (this.tilemapSystem.mapHeight > 1) {
+        this.tilemapSystem.resizeMap(
+          this.tilemapSystem.mapWidth,
+          this.tilemapSystem.mapHeight - 1
+        );
+        this.updateMapAfterResize();
+        mapSizeText.setText(
+          `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
+        );
+      }
+    });
+    currentY += 22;
+
+    // Add column button
+    const addColumnButton = this.add
+      .text(x, currentY, "+ Col", {
+        fontSize: "10px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#00aa00",
+        padding: { x: 6, y: 3 },
+      })
+      .setInteractive();
+
+    addColumnButton.on("pointerdown", () => {
+      this.tilemapSystem.resizeMap(
+        this.tilemapSystem.mapWidth + 1,
+        this.tilemapSystem.mapHeight
+      );
+      this.updateMapAfterResize();
+      mapSizeText.setText(
+        `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
+      );
+    });
+
+    // Remove column button
+    const removeColumnButton = this.add
+      .text(x + 50, currentY, "- Col", {
+        fontSize: "10px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#aa0000",
+        padding: { x: 6, y: 3 },
+      })
+      .setInteractive();
+
+    removeColumnButton.on("pointerdown", () => {
+      if (this.tilemapSystem.mapWidth > 1) {
+        this.tilemapSystem.resizeMap(
+          this.tilemapSystem.mapWidth - 1,
+          this.tilemapSystem.mapHeight
+        );
+        this.updateMapAfterResize();
+        mapSizeText.setText(
+          `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
+        );
+      }
+    });
+    currentY += 22;
+
+    return currentY + 10;
   }
 
   private setupCamera(): void {
     this.cameras.main.setBounds(0, 0, 4100, 800);
-    this.cameras.main.setZoom(0.8);
+
+    // Set camera viewport to only use the left 80% of the screen
+    (this.cameras.main as any).setViewport(
+      0,
+      0,
+      this.viewportWidth,
+      this.viewportHeight
+    );
+
+    // Calculate zoom to fit the viewport properly
+    const zoomX = this.viewportWidth / 1200; // Original width was 1200
+    const zoomY = this.viewportHeight / 800; // Original height was 800
+    const zoom = Math.min(zoomX, zoomY) * 0.8; // Keep the original 0.8 factor
+
+    this.cameras.main.setZoom(zoom);
 
     // Center the camera initially
     this.cameras.main.centerOn(2050, 400);
-
-    // Enable camera controls
-    this.cameras.main.setZoom(0.8);
   }
 
   private setupInput(): void {
@@ -768,11 +981,6 @@ export class MapEditorScene extends Phaser.Scene {
       this.openSpritePicker();
     });
 
-    // Add H key handler for HUD toggle
-    this.input.keyboard.on("keydown-H", () => {
-      this.toggleHUD();
-    });
-
     // Add G key handler for grid toggle
     this.input.keyboard.on("keydown-G", () => {
       this.toggleGrid();
@@ -783,35 +991,9 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private isClickOnUI(pointer: Phaser.Input.Pointer): boolean {
-    // If HUD is hidden, don't block any clicks
-    if (!this.hudVisible) {
-      return false;
-    }
-
-    // Check if click is within UI button areas - using generous bounds
-    const uiBounds: UIBounds[] = [
-      // Tool buttons area - expanded
-      { x: 40, y: 90, width: 500, height: 80 },
-      // Map management buttons area - expanded
-      { x: 40, y: 170, width: 420, height: 30 },
-      // Object info area - expanded
-      { x: 40, y: 210, width: 300, height: 50 },
-      // Grid toggle area - much more generous bounds
-      { x: 40, y: 240, width: 300, height: 80 },
-    ];
-
-    for (const bounds of uiBounds) {
-      if (
-        pointer.x >= bounds.x &&
-        pointer.x <= bounds.x + bounds.width &&
-        pointer.y >= bounds.y &&
-        pointer.y <= bounds.y + bounds.height
-      ) {
-        return true;
-      }
-    }
-
-    return false;
+    // Check if click is on the right panel (where all UI is located)
+    // Right panel starts at viewportWidth (80% of screen width)
+    return pointer.x >= this.viewportWidth;
   }
 
   private createPreviewObjects(): void {
@@ -988,12 +1170,15 @@ export class MapEditorScene extends Phaser.Scene {
       enemyPreview.setDepth(50);
       this.previewObjects.push(enemyPreview);
     });
+
+    // Make sure UI camera ignores all preview objects
+    if (this.uiCamera && this.previewObjects.length > 0) {
+      (this.uiCamera as any).ignore(this.previewObjects);
+    }
   }
 
   private updateObjectInfo(): void {
-    this.objectInfoText.setText(
-      `Selected: ${this.selectedTool || "None - Select a tool"}`
-    );
+    this.objectInfoText.setText(`Selected: ${this.selectedTool || "None"}`);
   }
 
   public async saveMap(): Promise<void> {
@@ -1013,6 +1198,12 @@ export class MapEditorScene extends Phaser.Scene {
     if (!this.mapData.tiles) {
       this.mapData.tiles = [];
     }
+
+    // Update world dimensions to match tilemap dimensions
+    this.mapData.world.width =
+      this.tilemapSystem.mapWidth * this.tilemapSystem.tileSize;
+    this.mapData.world.height =
+      this.tilemapSystem.mapHeight * this.tilemapSystem.tileSize;
 
     // Clear existing tile data
     this.mapData.tiles = [];
@@ -1093,6 +1284,27 @@ export class MapEditorScene extends Phaser.Scene {
       }`
     );
 
+    // If map has world dimensions, resize tilemap to match
+    if (this.mapData.world) {
+      const mapWidthInTiles = Math.floor(
+        this.mapData.world.width / this.tilemapSystem.tileSize
+      );
+      const mapHeightInTiles = Math.floor(
+        this.mapData.world.height / this.tilemapSystem.tileSize
+      );
+
+      if (
+        mapWidthInTiles !== this.tilemapSystem.mapWidth ||
+        mapHeightInTiles !== this.tilemapSystem.mapHeight
+      ) {
+        console.log(
+          `🔄 Resizing tilemap from ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight} to ${mapWidthInTiles}×${mapHeightInTiles}`
+        );
+        this.tilemapSystem.resizeMap(mapWidthInTiles, mapHeightInTiles);
+        this.updateMapAfterResize();
+      }
+    }
+
     // Load tile data from map
     if (this.mapData.tiles && Array.isArray(this.mapData.tiles)) {
       // Clear existing tiles
@@ -1118,10 +1330,7 @@ export class MapEditorScene extends Phaser.Scene {
             const tileData = this.mapData.tiles[y][x];
 
             // Handle tile data format
-            if (typeof tileData === "number") {
-              // Number format: just tile type
-              this.tilemapSystem.setTile(x, y, tileData);
-            } else if (tileData && typeof tileData === "object") {
+            if (tileData && typeof tileData === "object") {
               // Object format: type and spriteIndex
               this.tilemapSystem.setTile(
                 x,
@@ -1129,13 +1338,9 @@ export class MapEditorScene extends Phaser.Scene {
                 tileData.type,
                 tileData.spriteIndex
               );
-
-              // Log tile changes for first column, last row
-              if (x === 0 && y === this.tilemapSystem.mapHeight - 1) {
-                console.log(
-                  `🔧 Tile changed at first column, last row (${x}, ${y}): type=${tileData.type}, spriteIndex=${tileData.spriteIndex}`
-                );
-              }
+            } else if (typeof tileData === "number") {
+              // Number format: just tile type
+              this.tilemapSystem.setTile(x, y, tileData);
             }
           }
         }
@@ -1146,6 +1351,9 @@ export class MapEditorScene extends Phaser.Scene {
           this.mapData.tiles.length
         } rows x ${this.mapData.tiles[0]?.length || 0} columns`
       );
+
+      // Create collision bodies AFTER tile data is loaded (same as GameScene)
+      this.tilemapSystem.createCollisionBodies();
     }
   }
 
@@ -1160,6 +1368,39 @@ export class MapEditorScene extends Phaser.Scene {
     }
 
     this.updatePreviewObjects();
+  }
+
+  private updateMapAfterResize(): void {
+    // Update world bounds
+    this.physics.world.setBounds(
+      0,
+      0,
+      this.tilemapSystem.getWorldWidth(),
+      this.tilemapSystem.getWorldHeight()
+    );
+
+    // Update camera bounds
+    this.cameras.main.setBounds(
+      0,
+      0,
+      this.tilemapSystem.getWorldWidth(),
+      this.tilemapSystem.getWorldHeight()
+    );
+
+    // Update background
+    this.backgroundImage.destroy();
+    this.darkOverlay.destroy();
+    this.createBackground();
+
+    // Update grid
+    this.gridGraphics.destroy();
+    this.createGridOverlay();
+
+    // Update map data world dimensions
+    if (this.mapData) {
+      this.mapData.world.width = this.tilemapSystem.getWorldWidth();
+      this.mapData.world.height = this.tilemapSystem.getWorldHeight();
+    }
   }
 
   public update(): void {
@@ -1192,9 +1433,9 @@ export class MapEditorScene extends Phaser.Scene {
     const tileTypeName = this.getTileTypeName(tileType);
 
     this.coordinateText.setText(
-      `Position: (${Math.round(worldX)}, ${Math.round(
+      `W:(${Math.round(worldX)}, ${Math.round(
         worldY
-      )}) | Tile: (${tileX}, ${tileY}) [${tileTypeName}]`
+      )}) T:(${tileX},${tileY}) ${tileTypeName}`
     );
 
     // Update mouse indicator
@@ -1202,6 +1443,10 @@ export class MapEditorScene extends Phaser.Scene {
       this.mouseIndicator.setPosition(worldX, worldY);
       this.mouseIndicator.setVisible(true);
     }
+
+    // Continuously ensure UI camera ignores all tilemap sprites
+    // (needed because tiles are created dynamically during editing)
+    this.ignoreTilemapSprites();
   }
 
   private getTileTypeName(tileType: number): string {

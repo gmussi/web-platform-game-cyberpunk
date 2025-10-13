@@ -376,14 +376,15 @@ Each character (`char1` through `char4`) includes:
 ### Using the Map Editor
 
 1. **Access**: Press 'M' key in-game or click "Map Editor" button
-2. **Tools**: Select from Player, Portal, Enemy1, Enemy2, Solid tiles, or Erase
-3. **Tile Placement**: Click to place tiles, right-click to remove
-4. **Sprite Selection**: Press 'T' to open sprite picker for solid tiles
-5. **Navigation**: Use arrow keys or WASD to move around the map
-6. **Saving**: Press 'S' or click "Save Map" to download your custom map
-7. **Loading**: Press 'L' or click "Load Map" to load a custom map file
-8. **Grid**: Press 'G' to toggle grid overlay
-9. **HUD**: Press 'H' to hide/show the editor interface
+2. **UI Layout**: Clean interface with editing area (80% left) and control panel (20% right)
+3. **Tools**: Select from Player, Portal, Enemy1, Enemy2, Solid tiles, or Erase
+4. **Tile Placement**: Click to place tiles, right-click to remove
+5. **Sprite Selection**: Press 'T' to open sprite picker for solid tiles
+6. **Navigation**: Use arrow keys or WASD to move around the map
+7. **Saving**: Click "Save Map" to download your custom map
+8. **Loading**: Click "Load Map" to load a custom map file
+9. **Grid**: Press 'G' or click "Grid" button to toggle grid overlay
+10. **Map Resizing**: Use +/- Row/Col buttons to adjust map dimensions
 
 ### Adding New Levels
 

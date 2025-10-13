@@ -14,11 +14,15 @@ export class TilemapSystem {
   public tileSpriteIndices: (number | null)[][];
   public tileSprites: Phaser.GameObjects.Image[];
 
-  constructor(scene: Phaser.Scene) {
+  constructor(
+    scene: Phaser.Scene,
+    initialWidth: number = 129,
+    initialHeight: number = 25
+  ) {
     this.scene = scene;
     this.tileSize = 32; // 32x32 pixel tiles
-    this.mapWidth = 129; // 129 tiles wide (4128 pixels)
-    this.mapHeight = 25; // 25 tiles tall (800 pixels)
+    this.mapWidth = initialWidth; // Use provided width or default to 129 tiles
+    this.mapHeight = initialHeight; // Use provided height or default to 25 tiles
     this.tiles = [];
     this.collisionLayer = null;
     this.visualLayer = null as any;
@@ -85,6 +89,10 @@ export class TilemapSystem {
       }
 
       this.updateTileVisual(x, y);
+    } else {
+      console.warn(
+        `⚠️ setTile: Coordinates (${x}, ${y}) out of bounds (${this.mapWidth}, ${this.mapHeight})`
+      );
     }
   }
 
@@ -421,5 +429,81 @@ export class TilemapSystem {
 
     // Fallback to ground spawn
     return this.findEnemySpawnPosition(true);
+  }
+
+  // Resize the tilemap to new dimensions
+  public resizeMap(newWidth: number, newHeight: number): void {
+    const oldWidth = this.mapWidth;
+    const oldHeight = this.mapHeight;
+
+    // Create new tile arrays
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < newHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      for (let x = 0; x < newWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+      }
+    }
+
+    // Copy existing tile data
+    for (let y = 0; y < Math.min(oldHeight, newHeight); y++) {
+      for (let x = 0; x < Math.min(oldWidth, newWidth); x++) {
+        newTiles[y][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
+        }
+      }
+    }
+
+    // Update dimensions
+    this.mapWidth = newWidth;
+    this.mapHeight = newHeight;
+    this.tiles = newTiles;
+    this.tileSpriteIndices = newTileSpriteIndices;
+
+    // Clear existing visuals and collision bodies
+    this.clearAllVisuals();
+    this.clearCollisionBodies();
+
+    // Redraw everything
+    this.redrawVisualLayer();
+    this.createCollisionBodies();
+  }
+
+  // Clear all visual elements
+  private clearAllVisuals(): void {
+    if (this.tileSprites) {
+      this.tileSprites.forEach((sprite) => sprite.destroy());
+      this.tileSprites = [];
+    }
+    if (this.visualLayer) {
+      this.visualLayer.clear();
+    }
+  }
+
+  // Clear collision bodies
+  private clearCollisionBodies(): void {
+    if (this.collisionGroup) {
+      this.collisionGroup.clear(false, true);
+    }
+    this.collisionBodies = [];
+  }
+
+  // Get world dimensions in pixels
+  public getWorldWidth(): number {
+    return this.mapWidth * this.tileSize;
+  }
+
+  // Get world height in pixels
+  public getWorldHeight(): number {
+    return this.mapHeight * this.tileSize;
   }
 }

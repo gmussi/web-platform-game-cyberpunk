@@ -143,7 +143,9 @@ export class GameScene extends Phaser.Scene {
         `${charName}_jumping_west_000`,
       ];
 
-      const missingTextures = requiredTextures.filter(textureKey => !this.textures.exists(textureKey));
+      const missingTextures = requiredTextures.filter(
+        (textureKey) => !this.textures.exists(textureKey)
+      );
       if (missingTextures.length > 0) {
         console.warn(`Missing textures for ${charName}:`, missingTextures);
         return; // Skip animation creation for this character
@@ -162,7 +164,10 @@ export class GameScene extends Phaser.Scene {
           repeat: -1, // Loop infinitely
         });
       } catch (error) {
-        console.warn(`Failed to create breathing animation for ${charName}:`, error);
+        console.warn(
+          `Failed to create breathing animation for ${charName}:`,
+          error
+        );
       }
 
       // Create walk animations for east and west
@@ -182,7 +187,10 @@ export class GameScene extends Phaser.Scene {
             repeat: -1, // Loop infinitely
           });
         } catch (error) {
-          console.warn(`Failed to create walk animation for ${charName} ${direction}:`, error);
+          console.warn(
+            `Failed to create walk animation for ${charName} ${direction}:`,
+            error
+          );
         }
       });
 
@@ -206,7 +214,10 @@ export class GameScene extends Phaser.Scene {
             repeat: 0, // Play once
           });
         } catch (error) {
-          console.warn(`Failed to create jumping animation for ${charName} ${direction}:`, error);
+          console.warn(
+            `Failed to create jumping animation for ${charName} ${direction}:`,
+            error
+          );
         }
       });
     });
@@ -216,18 +227,18 @@ export class GameScene extends Phaser.Scene {
     // Initialize map system
     this.mapSystem = new MapSystem(this as any);
 
-    // Set world bounds based on scroll direction
-    this.setupWorldBounds();
-
     // Create character animations
     this.createCharacterAnimations();
+
+    // Create tilemap system with correct initial dimensions for default map
+    this.tilemapSystem = new TilemapSystem(this as any, 128, 31);
+
+    // Set world bounds based on scroll direction (after tilemap system is created)
+    this.setupWorldBounds();
 
     // Create background immediately
     this.createBackground();
     this.createDarkOverlay();
-
-    // Create tilemap system
-    this.tilemapSystem = new TilemapSystem(this as any);
 
     // Load map data if available, otherwise use default
     this.loadMapData();
@@ -257,8 +268,15 @@ export class GameScene extends Phaser.Scene {
   private loadMapData(): void {
     // Load default.json map file
     this.mapSystem
-      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json`)
+      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json?v=${Date.now()}`)
       .then((mapData: any) => {
+        console.log(
+          "🎯 GameScene: Map data loaded:",
+          mapData.metadata?.name,
+          mapData.world?.width,
+          "x",
+          mapData.world?.height
+        );
         this.mapData = mapData;
         // Load tile data immediately after map data is loaded
         this.loadTileDataFromMap();
@@ -310,6 +328,40 @@ export class GameScene extends Phaser.Scene {
       this.mapData.tiles &&
       Array.isArray(this.mapData.tiles)
     ) {
+      console.log(
+        `🗺️ Tile data found: ${this.mapData.tiles.length} rows, first row has ${
+          this.mapData.tiles[0]?.length || 0
+        } columns`
+      );
+      // Check if we need to resize the tilemap system to match the loaded map dimensions
+      if (this.mapData.world) {
+        const mapWidthInTiles = Math.floor(
+          this.mapData.world.width / this.tilemapSystem.tileSize
+        );
+        const mapHeightInTiles = Math.floor(
+          this.mapData.world.height / this.tilemapSystem.tileSize
+        );
+
+        console.log(
+          `🔍 Map dimensions check: loaded map is ${mapWidthInTiles}×${mapHeightInTiles} tiles, tilemap is ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight} tiles`
+        );
+
+        if (
+          mapWidthInTiles !== this.tilemapSystem.mapWidth ||
+          mapHeightInTiles !== this.tilemapSystem.mapHeight
+        ) {
+          console.log(
+            `🔄 Resizing tilemap from ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight} to ${mapWidthInTiles}×${mapHeightInTiles}`
+          );
+          this.tilemapSystem.resizeMap(mapWidthInTiles, mapHeightInTiles);
+          this.setupWorldBounds();
+          this.createBackground();
+          this.setupCamera();
+        } else {
+          console.log("✅ No resizing needed - dimensions match");
+        }
+      }
+
       // Clear existing tiles first
       for (let y = 0; y < this.tilemapSystem.mapHeight; y++) {
         for (let x = 0; x < this.tilemapSystem.mapWidth; x++) {
@@ -318,6 +370,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       // Load tile data
+      let tilesLoaded = 0;
       for (
         let y = 0;
         y < Math.min(this.mapData.tiles.length, this.tilemapSystem.mapHeight);
@@ -341,21 +394,37 @@ export class GameScene extends Phaser.Scene {
                 (tileData as any).type,
                 (tileData as any).spriteIndex
               );
+              tilesLoaded++;
             } else if (typeof tileData === "number") {
               // Number format: just tile type
               this.tilemapSystem.setTile(x, y, tileData);
+              tilesLoaded++;
             }
           }
         }
       }
+      console.log(`🧱 Loaded ${tilesLoaded} tiles from map data`);
     } else {
       // No tile data found in map, using default tilemap
     }
   }
 
   private setupWorldBounds(): void {
-    const worldWidth = 4128; // Extended world to match tilemap width (129 tiles * 32 pixels)
-    const worldHeight = 800; // Match tilemap height (25 tiles * 32 pixels)
+    if (!this.tilemapSystem) {
+      console.warn(
+        "setupWorldBounds called before tilemapSystem was created, using default bounds"
+      );
+      this.physics.world.setBounds(
+        0,
+        0,
+        GAME_CONSTANTS.WORLD_WIDTH,
+        GAME_CONSTANTS.WORLD_HEIGHT
+      );
+      return;
+    }
+
+    const worldWidth = this.tilemapSystem.getWorldWidth();
+    const worldHeight = this.tilemapSystem.getWorldHeight();
 
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
   }
@@ -369,8 +438,12 @@ export class GameScene extends Phaser.Scene {
     // Create the background image
     if (this.textures.exists(selectedBackground)) {
       // Create a single background image that covers the entire world
-      const worldWidth = 4100;
-      const worldHeight = 800;
+      const worldWidth = this.tilemapSystem
+        ? this.tilemapSystem.getWorldWidth()
+        : GAME_CONSTANTS.WORLD_WIDTH;
+      const worldHeight = this.tilemapSystem
+        ? this.tilemapSystem.getWorldHeight()
+        : GAME_CONSTANTS.WORLD_HEIGHT;
       const imageWidth = this.textures.get(selectedBackground).source[0].width;
       const imageHeight =
         this.textures.get(selectedBackground).source[0].height;
@@ -830,7 +903,13 @@ export class GameScene extends Phaser.Scene {
         this.mapSystem
           .loadMap(file)
           .then((mapData: any) => {
-            console.log("Map loaded from file:", mapData.metadata?.name);
+            console.log(
+              "🎯 Manual map loaded from file:",
+              mapData.metadata?.name,
+              mapData.world?.width,
+              "x",
+              mapData.world?.height
+            );
             this.mapData = mapData;
             // Reload the map data without restarting the scene
             this.reloadMapData();
@@ -844,7 +923,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private reloadMapData(): void {
-    console.log("Reloading map data without scene restart...");
+    console.log("🔄 Reloading map data without scene restart...");
+    console.log(
+      "📊 Current mapData:",
+      this.mapData?.metadata?.name,
+      this.mapData?.world?.width,
+      "x",
+      this.mapData?.world?.height
+    );
 
     // Clear existing enemies
     if (this.enemies) {
@@ -858,19 +944,20 @@ export class GameScene extends Phaser.Scene {
       this.portalSprite = null as any;
     }
 
-    // Reload tile data
+    // Follow the exact same sequence as loadMapData()
+    // Load tile data immediately after map data is loaded
     this.loadTileDataFromMap();
-
-    // Recreate collision bodies
+    // Create collision bodies AFTER tile data is loaded
     this.tilemapSystem.createCollisionBodies();
-
-    // Recreate enemies
+    // Create enemies AFTER map data is loaded
     this.createEnemies();
-
-    // Recreate portal
+    // Create portal AFTER map data is loaded
     this.createPortal();
-
-    // Update player position
+    // Setup collisions AFTER collision bodies are created
+    this.setupCollisions();
+    // Setup camera bounds and follow player
+    this.setupCamera();
+    // Reposition objects based on map data
     this.updateObjectsFromMapData();
 
     console.log("Map data reloaded successfully");
@@ -896,7 +983,14 @@ export class GameScene extends Phaser.Scene {
 
   private setupCamera(): void {
     // Set camera bounds for extended world with maximized playable area
-    this.cameras.main.setBounds(0, 0, 4128, 800);
+    const worldWidth = this.tilemapSystem
+      ? this.tilemapSystem.getWorldWidth()
+      : 4128;
+    const worldHeight = this.tilemapSystem
+      ? this.tilemapSystem.getWorldHeight()
+      : 800;
+
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
     // Start camera following player
     this.cameras.main.startFollow(this.player);

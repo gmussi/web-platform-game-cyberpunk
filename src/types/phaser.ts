@@ -282,6 +282,7 @@ declare namespace Phaser {
         height: number,
         radius: number
       ): this;
+      setScrollFactor(value: number): this;
     }
 
     class Circle extends GameObject {
@@ -320,6 +321,7 @@ declare namespace Phaser {
     events: Phaser.Events.EventEmitter;
     load: Phaser.Loader.LoaderPlugin;
     children: Phaser.GameObjects.GameObject[];
+    sys: Phaser.Scenes.Systems;
 
     constructor(config?: Phaser.Types.Scenes.SettingsConfig);
     preload(): void;
@@ -327,6 +329,12 @@ declare namespace Phaser {
     update(time: number, delta: number): void;
     shutdown(): void;
     start(key: string, data?: any): void;
+  }
+
+  namespace Scenes {
+    interface Systems {
+      game: Phaser.Game;
+    }
   }
 
   namespace GameObjects {
@@ -384,12 +392,19 @@ declare namespace Phaser {
         setZoom(value: number): void;
         centerOn(x: number, y: number): void;
         getWorldPoint(x: number, y: number): { x: number; y: number };
+        setViewport(x: number, y: number, width: number, height: number): this;
+        ignore(
+          gameObjects:
+            | Phaser.GameObjects.GameObject
+            | Phaser.GameObjects.GameObject[]
+        ): this;
         scrollX: number;
         scrollY: number;
       }
 
       class CameraManager {
         main: Camera;
+        add(x?: number, y?: number, width?: number, height?: number): Camera;
       }
     }
   }
@@ -583,7 +598,17 @@ declare namespace Phaser {
   }
 
   class Game {
+    scale: Phaser.Scale.ScaleManager;
+    canvas: HTMLCanvasElement;
+
     constructor(config: Phaser.Types.Core.GameConfig);
+  }
+
+  namespace Scale {
+    class ScaleManager {
+      width: number;
+      height: number;
+    }
   }
 
   namespace Types {
