@@ -99,6 +99,8 @@ export class MapEditorScene extends Phaser.Scene {
   public viewportWidth!: number;
   public viewportHeight!: number;
   public rightPanelWidth!: number;
+  public uiCamera!: Phaser.Cameras.Scene2D.Camera;
+  public rightPanelGraphics!: Phaser.GameObjects.Graphics;
 
   constructor() {
     super({ key: "MapEditorScene" });
@@ -144,9 +146,11 @@ export class MapEditorScene extends Phaser.Scene {
     console.log(`🗺️ MapEditorScene started!`);
 
     // Calculate viewport dimensions (80% of screen width)
-    this.viewportWidth = Math.floor(this.scale.width * 0.8);
-    this.viewportHeight = this.scale.height;
-    this.rightPanelWidth = this.scale.width - this.viewportWidth;
+    const gameWidth = (this as any).sys.game.scale.width;
+    const gameHeight = (this as any).sys.game.scale.height;
+    this.viewportWidth = Math.floor(gameWidth * 0.8);
+    this.viewportHeight = gameHeight;
+    this.rightPanelWidth = gameWidth - this.viewportWidth;
 
     console.log(
       `📐 Viewport: ${this.viewportWidth}x${this.viewportHeight}, Right panel: ${this.rightPanelWidth}px`
@@ -184,6 +188,9 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Create preview objects
     this.createPreviewObjects();
+
+    // Set up camera ignore lists (must be done after all objects are created)
+    this.setupCameraIgnoreLists();
   }
 
   private loadDefaultMap(): void {
@@ -204,6 +211,11 @@ export class MapEditorScene extends Phaser.Scene {
         this.mapData = mapData;
         this.loadTileDataFromMap();
         this.updatePreviewObjects();
+
+        // Make sure UI camera ignores all tile sprites after loading
+        if (this.uiCamera) {
+          this.setupCameraIgnoreLists();
+        }
       })
       .catch((error: Error) => {
         // Create a new empty map if default.json doesn't exist
@@ -239,17 +251,83 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private createRightPanelBackground(): void {
-    // Create black background for the right panel
-    const rightPanelBackground = this.add.rectangle(
-      this.viewportWidth + this.rightPanelWidth / 2,
-      this.viewportHeight / 2,
-      this.rightPanelWidth,
-      this.viewportHeight,
-      0x000000,
-      1.0
+    // Create a second camera for the right panel UI (20% on the right)
+    this.uiCamera = (this.cameras as any).add(
+      this.viewportWidth, // x position (starts at 80% of screen width)
+      0, // y position
+      this.rightPanelWidth, // width (20% of screen)
+      this.viewportHeight // height (full screen height)
     );
-    rightPanelBackground.setScrollFactor(0);
-    rightPanelBackground.setDepth(-20);
+
+    // Make the UI camera not scroll
+    this.uiCamera.scrollX = 0;
+    this.uiCamera.scrollY = 0;
+
+    // Create graphics object for the right panel background
+    this.rightPanelGraphics = this.add.graphics();
+    this.rightPanelGraphics.fillStyle(0x000000, 1.0);
+
+    // Draw the black rectangle at coordinates (0, 0) relative to the UI camera
+    // Since the UI camera's viewport starts at viewportWidth, we draw at (0,0) within that camera
+    this.rightPanelGraphics.fillRect(
+      0,
+      0,
+      this.rightPanelWidth,
+      this.viewportHeight
+    );
+
+    // Make it stay fixed on screen (doesn't scroll with camera)
+    this.rightPanelGraphics.setScrollFactor(0);
+
+    // Make the main camera ignore the right panel graphics
+    // So it's only rendered by the UI camera
+    (this.cameras.main as any).ignore(this.rightPanelGraphics);
+
+    // Make the UI camera ignore all objects EXCEPT the right panel graphics
+    // This needs to be done after ALL objects are created, so we'll set up a method
+    // to be called at the end of create()
+  }
+
+  private setupCameraIgnoreLists(): void {
+    // Get all children in the scene
+    const allChildren = (this.children as any).list || [];
+
+    // Make UI camera ignore everything except the right panel graphics
+    const objectsToIgnore = allChildren.filter(
+      (child: any) => child !== this.rightPanelGraphics
+    );
+
+    if (objectsToIgnore.length > 0) {
+      (this.uiCamera as any).ignore(objectsToIgnore);
+    }
+
+    // Ignore tilemap sprites
+    this.ignoreTilemapSprites();
+
+    console.log(
+      `🎥 UI camera ignoring ${objectsToIgnore.length} objects + ${
+        this.tilemapSystem?.tileSprites?.length || 0
+      } tile sprites, rendering only right panel`
+    );
+  }
+
+  private ignoreTilemapSprites(): void {
+    if (!this.uiCamera || !this.tilemapSystem) {
+      return;
+    }
+
+    // Ignore all tilemap sprites (these are created dynamically)
+    if (
+      this.tilemapSystem.tileSprites &&
+      this.tilemapSystem.tileSprites.length > 0
+    ) {
+      (this.uiCamera as any).ignore(this.tilemapSystem.tileSprites);
+    }
+
+    // Also ignore the tilemap visual layer
+    if (this.tilemapSystem.visualLayer) {
+      (this.uiCamera as any).ignore(this.tilemapSystem.visualLayer);
+    }
   }
 
   private createBackground(): void {
@@ -882,7 +960,7 @@ export class MapEditorScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, 4100, 800);
 
     // Set camera viewport to only use the left 80% of the screen
-    this.cameras.main.setViewport(
+    (this.cameras.main as any).setViewport(
       0,
       0,
       this.viewportWidth,
@@ -1173,6 +1251,11 @@ export class MapEditorScene extends Phaser.Scene {
       enemyPreview.setDepth(50);
       this.previewObjects.push(enemyPreview);
     });
+
+    // Make sure UI camera ignores all preview objects
+    if (this.uiCamera && this.previewObjects.length > 0) {
+      (this.uiCamera as any).ignore(this.previewObjects);
+    }
   }
 
   private updateObjectInfo(): void {
@@ -1341,13 +1424,6 @@ export class MapEditorScene extends Phaser.Scene {
             } else if (typeof tileData === "number") {
               // Number format: just tile type
               this.tilemapSystem.setTile(x, y, tileData);
-
-              // Log tile changes for first column, last row
-              if (x === 0 && y === this.tilemapSystem.mapHeight - 1) {
-                console.log(
-                  `🔧 Tile changed at first column, last row (${x}, ${y}): type=${tileData.type}, spriteIndex=${tileData.spriteIndex}`
-                );
-              }
             }
           }
         }
@@ -1450,6 +1526,10 @@ export class MapEditorScene extends Phaser.Scene {
       this.mouseIndicator.setPosition(worldX, worldY);
       this.mouseIndicator.setVisible(true);
     }
+
+    // Continuously ensure UI camera ignores all tilemap sprites
+    // (needed because tiles are created dynamically during editing)
+    this.ignoreTilemapSprites();
   }
 
   private getTileTypeName(tileType: number): string {
