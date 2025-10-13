@@ -1014,6 +1014,12 @@ export class MapEditorScene extends Phaser.Scene {
       this.mapData.tiles = [];
     }
 
+    // Update world dimensions to match tilemap dimensions
+    this.mapData.world.width =
+      this.tilemapSystem.mapWidth * this.tilemapSystem.tileSize;
+    this.mapData.world.height =
+      this.tilemapSystem.mapHeight * this.tilemapSystem.tileSize;
+
     // Clear existing tile data
     this.mapData.tiles = [];
 

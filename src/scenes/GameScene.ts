@@ -143,7 +143,9 @@ export class GameScene extends Phaser.Scene {
         `${charName}_jumping_west_000`,
       ];
 
-      const missingTextures = requiredTextures.filter(textureKey => !this.textures.exists(textureKey));
+      const missingTextures = requiredTextures.filter(
+        (textureKey) => !this.textures.exists(textureKey)
+      );
       if (missingTextures.length > 0) {
         console.warn(`Missing textures for ${charName}:`, missingTextures);
         return; // Skip animation creation for this character
@@ -162,7 +164,10 @@ export class GameScene extends Phaser.Scene {
           repeat: -1, // Loop infinitely
         });
       } catch (error) {
-        console.warn(`Failed to create breathing animation for ${charName}:`, error);
+        console.warn(
+          `Failed to create breathing animation for ${charName}:`,
+          error
+        );
       }
 
       // Create walk animations for east and west
@@ -182,7 +187,10 @@ export class GameScene extends Phaser.Scene {
             repeat: -1, // Loop infinitely
           });
         } catch (error) {
-          console.warn(`Failed to create walk animation for ${charName} ${direction}:`, error);
+          console.warn(
+            `Failed to create walk animation for ${charName} ${direction}:`,
+            error
+          );
         }
       });
 
@@ -206,7 +214,10 @@ export class GameScene extends Phaser.Scene {
             repeat: 0, // Play once
           });
         } catch (error) {
-          console.warn(`Failed to create jumping animation for ${charName} ${direction}:`, error);
+          console.warn(
+            `Failed to create jumping animation for ${charName} ${direction}:`,
+            error
+          );
         }
       });
     });
@@ -858,19 +869,18 @@ export class GameScene extends Phaser.Scene {
       this.portalSprite = null as any;
     }
 
-    // Reload tile data
+    // Follow the exact same sequence as loadMapData()
+    // Load tile data immediately after map data is loaded
     this.loadTileDataFromMap();
-
-    // Recreate collision bodies
+    // Create collision bodies AFTER tile data is loaded
     this.tilemapSystem.createCollisionBodies();
-
-    // Recreate enemies
+    // Create enemies AFTER map data is loaded
     this.createEnemies();
-
-    // Recreate portal
+    // Create portal AFTER map data is loaded
     this.createPortal();
-
-    // Update player position
+    // Setup collisions AFTER collision bodies are created
+    this.setupCollisions();
+    // Reposition objects based on map data
     this.updateObjectsFromMapData();
 
     console.log("Map data reloaded successfully");
