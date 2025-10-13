@@ -95,6 +95,11 @@ export class MapEditorScene extends Phaser.Scene {
   public cameraSpeed: number = 10;
   public isDragging: boolean = false;
 
+  // Viewport properties for 80% width layout
+  public viewportWidth!: number;
+  public viewportHeight!: number;
+  public rightPanelWidth!: number;
+
   constructor() {
     super({ key: "MapEditorScene" });
 
@@ -138,13 +143,25 @@ export class MapEditorScene extends Phaser.Scene {
   public create(): void {
     console.log(`🗺️ MapEditorScene started!`);
 
+    // Calculate viewport dimensions (80% of screen width)
+    this.viewportWidth = Math.floor(this.scale.width * 0.8);
+    this.viewportHeight = this.scale.height;
+    this.rightPanelWidth = this.scale.width - this.viewportWidth;
+
+    console.log(
+      `📐 Viewport: ${this.viewportWidth}x${this.viewportHeight}, Right panel: ${this.rightPanelWidth}px`
+    );
+
+    // Create black background for the right panel
+    this.createRightPanelBackground();
+
     // Initialize map system
     this.mapSystem = new MapSystem(this);
 
-    // Set world bounds
+    // Set world bounds (adjusted for viewport)
     this.physics.world.setBounds(0, 0, 4128, 800);
 
-    // Create background
+    // Create background (only in the left viewport)
     this.createBackground();
 
     // Create tilemap system with correct initial dimensions for default map
@@ -219,6 +236,20 @@ export class MapEditorScene extends Phaser.Scene {
         };
         this.updatePreviewObjects();
       });
+  }
+
+  private createRightPanelBackground(): void {
+    // Create black background for the right panel
+    const rightPanelBackground = this.add.rectangle(
+      this.viewportWidth + this.rightPanelWidth / 2,
+      this.viewportHeight / 2,
+      this.rightPanelWidth,
+      this.viewportHeight,
+      0x000000,
+      1.0
+    );
+    rightPanelBackground.setScrollFactor(0);
+    rightPanelBackground.setDepth(-20);
   }
 
   private createBackground(): void {
@@ -849,13 +880,24 @@ export class MapEditorScene extends Phaser.Scene {
 
   private setupCamera(): void {
     this.cameras.main.setBounds(0, 0, 4100, 800);
-    this.cameras.main.setZoom(0.8);
+
+    // Set camera viewport to only use the left 80% of the screen
+    this.cameras.main.setViewport(
+      0,
+      0,
+      this.viewportWidth,
+      this.viewportHeight
+    );
+
+    // Calculate zoom to fit the viewport properly
+    const zoomX = this.viewportWidth / 1200; // Original width was 1200
+    const zoomY = this.viewportHeight / 800; // Original height was 800
+    const zoom = Math.min(zoomX, zoomY) * 0.8; // Keep the original 0.8 factor
+
+    this.cameras.main.setZoom(zoom);
 
     // Center the camera initially
     this.cameras.main.centerOn(2050, 400);
-
-    // Enable camera controls
-    this.cameras.main.setZoom(0.8);
   }
 
   private setupInput(): void {
