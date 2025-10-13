@@ -1,8 +1,14 @@
 import { ASSET_PATHS, GAME_CONSTANTS } from "../data/config";
 
-import { MapSystem } from "../systems/MapSystem";
+import { WorldSystem } from "../systems/WorldSystem";
 import { TilemapSystem } from "../systems/TilemapSystem";
 import { Enemy } from "../entities/Enemy";
+import { ExitZone } from "../entities/ExitZone";
+import {
+  WorldMapData,
+  SpawnPoint,
+  ExitZone as ExitZoneData,
+} from "../types/map";
 
 // MapEditorScene interfaces
 interface EnemyData {
@@ -57,9 +63,9 @@ interface SpriteButton {
 }
 
 export class MapEditorScene extends Phaser.Scene {
-  public mapSystem!: MapSystem;
+  public worldSystem!: WorldSystem;
   public tilemapSystem!: TilemapSystem;
-  public mapData!: MapEditorData;
+  public mapData!: WorldMapData;
   public backgroundImage!: Phaser.GameObjects.Image;
   public darkOverlay!: Phaser.GameObjects.Rectangle;
   public gridGraphics!: Phaser.GameObjects.Graphics;
@@ -79,6 +85,7 @@ export class MapEditorScene extends Phaser.Scene {
   public gridToggleButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
+  public exitZones: ExitZone[] = [];
   public mouseIndicator!: Phaser.GameObjects.Circle;
   public cursors!: any;
   public wasdKeys!: any;
@@ -91,6 +98,11 @@ export class MapEditorScene extends Phaser.Scene {
   public rightPanelWidth!: number;
   public uiCamera!: Phaser.Cameras.Scene2D.Camera;
   public rightPanelGraphics!: Phaser.GameObjects.Graphics;
+
+  // Map list UI
+  public mapListContainer!: Phaser.GameObjects.Container;
+  public mapListButtons: Phaser.GameObjects.Text[] = [];
+  public createMapButton!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: "MapEditorScene" });
@@ -145,8 +157,8 @@ export class MapEditorScene extends Phaser.Scene {
     // Create black background for the right panel
     this.createRightPanelBackground();
 
-    // Initialize map system
-    this.mapSystem = new MapSystem(this);
+    // Initialize world system
+    this.worldSystem = new WorldSystem(this);
 
     // Set world bounds (adjusted for viewport)
     this.physics.world.setBounds(0, 0, 4128, 800);
@@ -166,6 +178,9 @@ export class MapEditorScene extends Phaser.Scene {
     // Create UI
     this.createEditorUI();
 
+    // Create map list
+    this.updateMapList();
+
     // Set up camera
     this.setupCamera();
 
@@ -180,59 +195,45 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private loadDefaultMap(): void {
-    // Don't load default map if we're currently loading a custom map
+    // Don't load default world if we're currently loading a custom world
     if (this.isLoadingCustomMap) {
       return;
     }
 
-    // Try to load default.json map file
-    this.mapSystem
-      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json?v=${Date.now()}`)
-      .then((mapData: any) => {
+    // Try to load default world file
+    this.worldSystem
+      .loadWorldFromURL(
+        `${ASSET_PATHS.maps}/default_world.json?v=${Date.now()}`
+      )
+      .then((worldData) => {
         // Double-check flag in case it changed during async operation
         if (this.isLoadingCustomMap) {
           return;
         }
 
-        this.mapData = mapData;
-        this.loadTileDataFromMap();
-        this.updatePreviewObjects();
+        const currentMap = this.worldSystem.getCurrentMap();
+        if (currentMap) {
+          this.mapData = currentMap;
+          this.loadTileDataFromMap();
+          this.updatePreviewObjects();
+          this.updateMapList();
 
-        // Make sure UI camera ignores all tile sprites after loading
-        if (this.uiCamera) {
-          this.setupCameraIgnoreLists();
+          // Make sure UI camera ignores all tile sprites after loading
+          if (this.uiCamera) {
+            this.setupCameraIgnoreLists();
+          }
         }
       })
       .catch((error: Error) => {
-        // Create a new empty map if default.json doesn't exist
-        this.mapData = {
-          version: "1.0",
-          metadata: {
-            name: "New Map",
-            description: "A new map created in the editor",
-            created: new Date().toISOString(),
-            author: "Map Editor",
-          },
-          world: {
-            width: 4100,
-            height: 800,
-            tileSize: 32,
-          },
-          player: {
-            startPosition: { x: 100, y: 688 },
-            character: "A",
-          },
-          portal: {
-            position: { x: 4000, y: 660 },
-            size: { width: 100, height: 100 },
-          },
-          enemies: [],
-          platforms: [],
-          collectibles: [],
-          checkpoints: [],
-          tiles: [],
-        };
-        this.updatePreviewObjects();
+        console.log("No default world found, creating new empty world");
+        // Create a new empty world
+        const worldData = this.worldSystem.createEmptyWorld("New World");
+        const currentMap = this.worldSystem.getCurrentMap();
+        if (currentMap) {
+          this.mapData = currentMap;
+          this.updatePreviewObjects();
+          this.updateMapList();
+        }
       });
   }
 
@@ -282,6 +283,7 @@ export class MapEditorScene extends Phaser.Scene {
     const uiElements = [
       this.rightPanelGraphics,
       ...this.toolButtons.map((tb) => tb.button),
+      ...this.mapListButtons,
       this.saveButton,
       this.loadButton,
       this.clearButton,
@@ -351,8 +353,13 @@ export class MapEditorScene extends Phaser.Scene {
     const scaleY = worldHeight / imageHeight;
     const scale = Math.max(scaleX, scaleY);
 
+    // Background images have empty space in first 6 columns (at 32px per tile = 192px)
+    // Shift the background left to hide the empty space
+    const emptySpaceWidth = 192; // 6 tiles * 32px
+    const offsetX = -(emptySpaceWidth * scale) / 2;
+
     this.backgroundImage = this.add.image(
-      (imageWidth * scale) / 2,
+      (imageWidth * scale) / 2 + offsetX,
       worldHeight / 2,
       selectedBackground
     );
@@ -360,17 +367,17 @@ export class MapEditorScene extends Phaser.Scene {
     this.backgroundImage.setDepth(-10);
     this.backgroundImage.setScale(scale);
 
-    // Dark overlay
-    this.darkOverlay = this.add.rectangle(
-      worldWidth / 2,
-      worldHeight / 2,
-      worldWidth,
-      worldHeight,
-      0x000000,
-      0.4
-    );
-    this.darkOverlay.setScrollFactor(0.2);
-    this.darkOverlay.setDepth(1);
+    // Dark overlay - temporarily disabled for debugging
+    // this.darkOverlay = this.add.rectangle(
+    //   worldWidth / 2 + offsetX,
+    //   worldHeight / 2,
+    //   worldWidth,
+    //   worldHeight,
+    //   0x000000,
+    //   0.4
+    // );
+    // this.darkOverlay.setScrollFactor(0.3);
+    // this.darkOverlay.setDepth(1);
   }
 
   private createGridOverlay(): void {
@@ -471,21 +478,23 @@ export class MapEditorScene extends Phaser.Scene {
     panelWidth: number
   ): number {
     const tools = [
-      { name: "Player", key: "player", color: "#00ff00" },
+      { name: "Spawn", key: "spawn", color: "#00ffff" },
+      { name: "Exit", key: "exit", color: "#ffff00" },
       { name: "Portal", key: "portal", color: "#ff00ff" },
       { name: "Enemy1", key: "enemy1", color: "#ff0000" },
       { name: "Enemy2", key: "enemy2", color: "#ff8800" },
       { name: "Solid", key: "solid", color: "#8B4513" },
       { name: "Erase", key: "erase", color: "#000000" },
+      { name: "Remove", key: "remove", color: "#ff0000" },
     ];
 
     this.selectedTool = null; // Start with no tool selected
     this.selectedSpriteIndex = null; // Track selected sprite for solid tiles
     this.toolButtons = [];
 
-    // Grid layout: 2 rows x 3 columns
+    // Grid layout: 3 rows x 3 columns (7 tools + 2 empty)
     const cols = 3;
-    const rows = 2;
+    const rows = 3;
     const buttonWidth = 60;
     const buttonHeight = 25;
     const spacingX = 5;
@@ -946,10 +955,10 @@ export class MapEditorScene extends Phaser.Scene {
         this.removeObjectAt(worldX, worldY);
       } else {
         this.placeObject(worldX, worldY);
-        // Start dragging for tile tools
+        // Start dragging for tile tools and remove tool
         if (
           this.selectedTool &&
-          ["ground", "platform", "wall", "solid", "erase"].includes(
+          ["ground", "platform", "wall", "solid", "erase", "remove"].includes(
             this.selectedTool
           )
         ) {
@@ -1013,6 +1022,12 @@ export class MapEditorScene extends Phaser.Scene {
     }
 
     switch (this.selectedTool) {
+      case "spawn":
+        this.addSpawnPoint(x, y);
+        break;
+      case "exit":
+        this.addExitZone(x, y);
+        break;
       case "player":
         this.updatePlayerPosition(x, y);
         break;
@@ -1038,24 +1053,87 @@ export class MapEditorScene extends Phaser.Scene {
       case "erase":
         this.eraseTile(x, y);
         break;
+      case "remove":
+        this.removeObjectAt(x, y);
+        break;
     }
 
     this.updateObjectInfo();
   }
 
   private removeObjectAt(x: number, y: number): void {
-    // Remove enemies near the click position
-    this.mapData.enemies = this.mapData.enemies.filter((enemy) => {
+    // Try to find and remove the closest object to the click position
+    // Only remove one object per click
+
+    let closestObject: {
+      type: string;
+      distance: number;
+      index: number;
+    } | null = null;
+
+    // Check enemies
+    this.mapData.enemies.forEach((enemy, index) => {
       const distance = Phaser.Math.Distance.Between(
         x,
         y,
         enemy.position.x,
         enemy.position.y
       );
-      return distance > 50; // Keep enemies that are more than 50 pixels away
+      if (distance <= 50) {
+        if (!closestObject || distance < closestObject.distance) {
+          closestObject = { type: "enemy", distance, index };
+        }
+      }
     });
 
-    this.updatePreviewObjects();
+    // Check spawn points
+    this.mapData.spawnPoints.forEach((spawn, index) => {
+      const distance = Phaser.Math.Distance.Between(x, y, spawn.x, spawn.y);
+      if (distance <= 50) {
+        if (!closestObject || distance < closestObject.distance) {
+          closestObject = { type: "spawn", distance, index };
+        }
+      }
+    });
+
+    // Check exit zones
+    this.mapData.exits.forEach((exit, index) => {
+      // Check if click is within the exit zone bounds
+      const isInside =
+        x >= exit.x &&
+        x <= exit.x + exit.width &&
+        y >= exit.y &&
+        y <= exit.y + exit.height;
+      // Also check distance from center for easier selection
+      const centerX = exit.x + exit.width / 2;
+      const centerY = exit.y + exit.height / 2;
+      const distance = Phaser.Math.Distance.Between(x, y, centerX, centerY);
+
+      if (isInside || distance <= 75) {
+        if (!closestObject || distance < closestObject.distance) {
+          closestObject = { type: "exit", distance, index };
+        }
+      }
+    });
+
+    // Remove only the closest object
+    if (closestObject) {
+      switch (closestObject.type) {
+        case "enemy":
+          this.mapData.enemies.splice(closestObject.index, 1);
+          console.log("Removed enemy");
+          break;
+        case "spawn":
+          this.mapData.spawnPoints.splice(closestObject.index, 1);
+          console.log("Removed spawn point");
+          break;
+        case "exit":
+          this.mapData.exits.splice(closestObject.index, 1);
+          console.log("Removed exit zone");
+          break;
+      }
+      this.updatePreviewObjects();
+    }
   }
 
   private updatePlayerPosition(x: number, y: number): void {
@@ -1086,6 +1164,56 @@ export class MapEditorScene extends Phaser.Scene {
     };
 
     this.mapData.enemies.push(enemy as any);
+    this.updatePreviewObjects();
+  }
+
+  private addSpawnPoint(x: number, y: number): void {
+    // Auto-generate sequential spawn point ID
+    const nextIndex = this.mapData.spawnPoints.length + 1;
+    const spawnId = `spawn_${nextIndex}`;
+
+    // Create new spawn point
+    this.mapData.spawnPoints.push({
+      id: spawnId,
+      x: Math.round(x),
+      y: Math.round(y),
+    });
+
+    console.log(
+      `Created spawn point "${spawnId}" at (${Math.round(x)}, ${Math.round(y)})`
+    );
+    this.updatePreviewObjects();
+  }
+
+  private addExitZone(x: number, y: number): void {
+    // Auto-generate sequential exit ID
+    const nextIndex = this.mapData.exits.length + 1;
+    const exitId = `exit_${nextIndex}`;
+
+    const targetMapId = prompt("Enter target map ID:");
+    if (!targetMapId) {
+      return;
+    }
+
+    const targetSpawnId = prompt("Enter target spawn point ID:");
+    if (!targetSpawnId) {
+      return;
+    }
+
+    // Create new exit
+    this.mapData.exits.push({
+      id: exitId,
+      x: Math.round(x),
+      y: Math.round(y),
+      width: 100,
+      height: 100,
+      targetMapId: targetMapId,
+      targetSpawnId: targetSpawnId,
+    });
+
+    console.log(
+      `✅ Created exit "${exitId}" → map "${targetMapId}" spawn "${targetSpawnId}"`
+    );
     this.updatePreviewObjects();
   }
 
@@ -1133,29 +1261,64 @@ export class MapEditorScene extends Phaser.Scene {
     this.previewObjects.forEach((obj) => obj.destroy());
     this.previewObjects = [];
 
-    // Create player preview
-    const playerPos = this.mapData.player.startPosition;
-    const playerPreview = this.add.circle(
-      playerPos.x,
-      playerPos.y,
-      20,
-      0x00ff00,
-      0.7
-    );
-    playerPreview.setDepth(50);
-    this.previewObjects.push(playerPreview);
+    // Clear existing exit zones
+    this.exitZones.forEach((exit) => exit.destroy());
+    this.exitZones = [];
 
-    // Create portal preview
-    const portalPos = this.mapData.portal.position;
-    const portalPreview = this.add.circle(
-      portalPos.x,
-      portalPos.y,
-      30,
-      0xff00ff,
-      0.7
-    );
-    portalPreview.setDepth(50);
-    this.previewObjects.push(portalPreview);
+    // Create spawn point previews
+    this.mapData.spawnPoints.forEach((spawn) => {
+      const spawnPreview = this.add.circle(spawn.x, spawn.y, 15, 0x00ffff, 0.7);
+      spawnPreview.setDepth(50);
+      this.previewObjects.push(spawnPreview);
+
+      // Add label
+      const label = this.add.text(spawn.x, spawn.y - 25, spawn.id, {
+        fontSize: "10px",
+        fill: "#00ffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#000000aa",
+        padding: { x: 3, y: 2 },
+      });
+      label.setOrigin(0.5);
+      label.setDepth(50);
+      this.previewObjects.push(label);
+    });
+
+    // Create exit zone previews
+    this.mapData.exits.forEach((exitData) => {
+      const exitZone = new ExitZone(this, exitData);
+      this.exitZones.push(exitZone);
+    });
+
+    // Create player preview if it exists
+    if (this.mapData.player) {
+      const playerPos = this.mapData.player.startPosition;
+      const playerPreview = this.add.circle(
+        playerPos.x,
+        playerPos.y,
+        20,
+        0x00ff00,
+        0.7
+      );
+      playerPreview.setDepth(50);
+      this.previewObjects.push(playerPreview);
+    }
+
+    // Create portal preview if it exists
+    if (this.mapData.portal) {
+      const portalPos = this.mapData.portal.position;
+      const portalPreview = this.add.circle(
+        portalPos.x,
+        portalPos.y,
+        30,
+        0xff00ff,
+        0.7
+      );
+      portalPreview.setDepth(50);
+      this.previewObjects.push(portalPreview);
+    }
 
     // Create enemy previews
     this.mapData.enemies.forEach((enemy) => {
@@ -1171,9 +1334,14 @@ export class MapEditorScene extends Phaser.Scene {
       this.previewObjects.push(enemyPreview);
     });
 
-    // Make sure UI camera ignores all preview objects
-    if (this.uiCamera && this.previewObjects.length > 0) {
-      (this.uiCamera as any).ignore(this.previewObjects);
+    // Make sure UI camera ignores all preview objects and exit zones
+    if (this.uiCamera) {
+      if (this.previewObjects.length > 0) {
+        (this.uiCamera as any).ignore(this.previewObjects);
+      }
+      if (this.exitZones.length > 0) {
+        (this.uiCamera as any).ignore(this.exitZones);
+      }
     }
   }
 
@@ -1182,14 +1350,18 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   public async saveMap(): Promise<void> {
-    // Save tile data to map
+    // Save tile data to current map
     this.saveTileDataToMap();
 
-    const success = await this.mapSystem.saveMap(this.mapData as any);
+    // Update current map in world system
+    this.worldSystem.updateCurrentMap(this.mapData);
+
+    // Save entire world
+    const success = await this.worldSystem.saveWorld();
     if (success) {
-      console.log("Map saved successfully");
+      console.log("World saved successfully");
     } else {
-      console.log("Map save cancelled or failed");
+      console.log("World save cancelled or failed");
     }
   }
 
@@ -1235,19 +1407,23 @@ export class MapEditorScene extends Phaser.Scene {
     fileInput.addEventListener("change", (event: Event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (file) {
-        this.isLoadingCustomMap = true; // Set flag to prevent default map override
+        this.isLoadingCustomMap = true; // Set flag to prevent default world override
 
-        this.mapSystem
-          .loadMap(file)
-          .then((mapData: any) => {
-            this.mapData = mapData;
-            this.loadTileDataFromMap();
-            this.updatePreviewObjects();
+        this.worldSystem
+          .loadWorld(file)
+          .then((worldData) => {
+            const currentMap = this.worldSystem.getCurrentMap();
+            if (currentMap) {
+              this.mapData = currentMap;
+              this.loadTileDataFromMap();
+              this.updatePreviewObjects();
+              this.updateMapList();
+            }
             this.isLoadingCustomMap = false; // Clear flag
           })
           .catch((error: Error) => {
-            console.error("Error loading map:", error);
-            alert("Error loading map: " + error.message);
+            console.error("Error loading world:", error);
+            alert("Error loading world: " + error.message);
             this.isLoadingCustomMap = false; // Clear flag on error
           });
       }
@@ -1255,26 +1431,6 @@ export class MapEditorScene extends Phaser.Scene {
     });
 
     fileInput.click();
-  }
-
-  // Method to load a specific map file programmatically (for testing)
-  public async loadMapFromURL(url: string): Promise<MapEditorData> {
-    console.log(`🔄 Loading map from URL: ${url}`);
-    this.isLoadingCustomMap = true;
-
-    try {
-      const mapData = await this.mapSystem.loadMapFromURL(url);
-      this.mapData = mapData as any;
-      this.loadTileDataFromMap();
-      this.updatePreviewObjects();
-      this.isLoadingCustomMap = false;
-      console.log(`✅ Map loaded successfully from URL: ${url}`);
-      return mapData as any;
-    } catch (error) {
-      console.error("Error loading map from URL:", error);
-      this.isLoadingCustomMap = false;
-      throw error;
-    }
   }
 
   private loadTileDataFromMap(): void {
@@ -1389,7 +1545,7 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Update background
     this.backgroundImage.destroy();
-    this.darkOverlay.destroy();
+    // this.darkOverlay.destroy(); // Disabled - overlay not currently created
     this.createBackground();
 
     // Update grid
@@ -1458,5 +1614,122 @@ export class MapEditorScene extends Phaser.Scene {
       default:
         return `Unknown(${tileType})`;
     }
+  }
+
+  // Update map list in the right panel
+  private updateMapList(): void {
+    // Clear existing map list
+    this.mapListButtons.forEach((button) => button.destroy());
+    this.mapListButtons = [];
+
+    if (this.createMapButton) {
+      this.createMapButton.destroy();
+    }
+
+    // Position for map list in right panel
+    const panelPadding = 10;
+    let yOffset = this.viewportHeight - 250; // Start from bottom of panel
+
+    // Title
+    const title = this.add.text(panelPadding, yOffset, "Maps", {
+      fontSize: "14px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 2,
+    });
+    this.mapListButtons.push(title);
+    yOffset += 20;
+
+    // Get all maps from world
+    const mapIds = this.worldSystem.getAllMapIds();
+    const currentMapId = this.worldSystem.currentMapId;
+
+    // Create button for each map
+    mapIds.forEach((mapId) => {
+      const map = this.worldSystem.getMap(mapId);
+      if (!map) return;
+
+      const isActive = mapId === currentMapId;
+      const button = this.add
+        .text(
+          panelPadding,
+          yOffset,
+          `${isActive ? "● " : "  "}${mapId}\n  ${map.metadata.name}`,
+          {
+            fontSize: "10px",
+            fill: isActive ? "#00ff00" : "#ffffff",
+            fontStyle: isActive ? "bold" : "normal",
+            stroke: "#000000",
+            strokeThickness: 1,
+            backgroundColor: isActive ? "#00330044" : "#44444444",
+            padding: { x: 4, y: 2 },
+          }
+        )
+        .setInteractive();
+
+      button.on("pointerdown", () => {
+        this.switchToMap(mapId);
+      });
+
+      this.mapListButtons.push(button);
+      yOffset += 30;
+    });
+
+    // Create "New Map" button
+    this.createMapButton = this.add
+      .text(panelPadding, yOffset, "+ New Map", {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#0066aa",
+        padding: { x: 8, y: 4 },
+      })
+      .setInteractive();
+
+    this.createMapButton.on("pointerdown", () => {
+      this.createNewMap();
+    });
+
+    this.mapListButtons.push(this.createMapButton);
+  }
+
+  // Switch to a different map
+  private switchToMap(mapId: string): void {
+    // Save current map data before switching
+    this.saveTileDataToMap();
+    this.worldSystem.updateCurrentMap(this.mapData);
+
+    // Load new map
+    const newMap = this.worldSystem.getMap(mapId);
+    if (!newMap) {
+      console.error(`Map ${mapId} not found`);
+      return;
+    }
+
+    this.worldSystem.currentMapId = mapId;
+    this.mapData = newMap;
+
+    // Reload the map
+    this.loadTileDataFromMap();
+    this.updatePreviewObjects();
+    this.updateMapList();
+  }
+
+  // Create a new map
+  private createNewMap(): void {
+    // Auto-generate map name based on number of maps
+    const mapCount = this.worldSystem.getAllMapIds().length;
+    const mapName = `Map ${mapCount + 1}`;
+
+    // Create new map in world
+    const newMap = this.worldSystem.createNewMap(mapName);
+
+    console.log(`✅ Created new map: ${newMap.id} (${mapName})`);
+
+    // Switch to the new map
+    this.switchToMap(newMap.id);
   }
 }

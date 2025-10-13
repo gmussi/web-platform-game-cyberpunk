@@ -235,7 +235,7 @@ export class LoadingScene extends Phaser.Scene {
 
   private loadMapData(): void {
     // Load default map
-    this.load.json("defaultMap", `${ASSET_PATHS.maps}/default.json`);
+    this.load.json("defaultWorld", `${ASSET_PATHS.maps}/default_world.json`);
   }
 
   private updateProgress(progress: number): void {
