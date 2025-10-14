@@ -601,11 +601,13 @@ export class MapEditorScene extends Phaser.Scene {
       border.setDepth(1000);
 
       spriteButton.on("pointerdown", () => {
-        this.selectedSpriteIndex = i;
-        this.selectedTool = "solid";
-        this.updateToolSelection();
-
-        this.closeSpritePicker();
+        // Delay close to let the click handler finish first
+        this.time.delayedCall(1, () => {
+          this.selectedSpriteIndex = i;
+          this.selectedTool = "solid";
+          this.updateToolSelection();
+          this.closeSpritePicker();
+        });
       });
 
       spriteButton.on("pointerover", () => {
@@ -634,22 +636,37 @@ export class MapEditorScene extends Phaser.Scene {
       .setInteractive();
 
     closeButton.on("pointerdown", () => {
-      this.closeSpritePicker();
+      // Delay close to let the click handler finish first
+      this.time.delayedCall(1, () => {
+        this.closeSpritePicker();
+      });
     });
   }
 
   private closeSpritePicker(): void {
-    if (this.spritePicker) {
-      this.spritePicker.destroy();
-      this.spritePicker = null;
-    }
-
-    if (this.spriteButtons) {
+    // Hide and destroy sprite buttons and borders
+    if (this.spriteButtons && this.spriteButtons.length > 0) {
       this.spriteButtons.forEach(({ sprite, border }) => {
-        sprite.destroy();
-        border.destroy();
+        if (sprite && sprite.scene) {
+          sprite.setVisible(false);
+          sprite.setActive(false);
+          sprite.destroy();
+        }
+        if (border && border.scene) {
+          border.setVisible(false);
+          border.setActive(false);
+          border.destroy();
+        }
       });
       this.spriteButtons = [];
+    }
+
+    // Hide and destroy the background
+    if (this.spritePicker && this.spritePicker.scene) {
+      this.spritePicker.setVisible(false);
+      this.spritePicker.setActive(false);
+      this.spritePicker.destroy();
+      this.spritePicker = null;
     }
 
     // Destroy close button
@@ -657,6 +674,7 @@ export class MapEditorScene extends Phaser.Scene {
       (child: any) => child.text === "Close" && child.depth === 1001
     );
     if (closeButton) {
+      closeButton.setVisible(false);
       closeButton.destroy();
     }
 
@@ -665,6 +683,7 @@ export class MapEditorScene extends Phaser.Scene {
       (child: any) => child.text === "Select Sprite" && child.depth === 1001
     );
     if (title) {
+      title.setVisible(false);
       title.destroy();
     }
   }
@@ -1322,7 +1341,16 @@ export class MapEditorScene extends Phaser.Scene {
   private isClickOnUI(pointer: Phaser.Input.Pointer): boolean {
     // Check if click is on the right panel (where all UI is located)
     // Right panel starts at viewportWidth (80% of screen width)
-    return pointer.x >= this.viewportWidth;
+    if (pointer.x >= this.viewportWidth) {
+      return true;
+    }
+
+    // Check if any modal is open
+    if (this.spritePicker || this.mapSelector || this.spawnPointSelector) {
+      return true; // Block all map interactions when a modal is open
+    }
+
+    return false;
   }
 
   private createPreviewObjects(): void {
