@@ -75,6 +75,10 @@ export class MapEditorScene extends Phaser.Scene {
   public toolButtons: ToolButton[] = [];
   public spritePicker: Phaser.GameObjects.Rectangle | null = null;
   public spriteButtons: SpriteButton[] = [];
+  public mapSelector: Phaser.GameObjects.Rectangle | null = null;
+  public mapSelectorButtons: Phaser.GameObjects.Text[] = [];
+  public spawnPointSelector: Phaser.GameObjects.Rectangle | null = null;
+  public spawnPointSelectorButtons: Phaser.GameObjects.Text[] = [];
   public saveButton!: Phaser.GameObjects.Text;
   public loadButton!: Phaser.GameObjects.Text;
   public clearButton!: Phaser.GameObjects.Text;
@@ -665,6 +669,335 @@ export class MapEditorScene extends Phaser.Scene {
     }
   }
 
+  private openMapSelector(callback: (mapId: string | null) => void): void {
+    // Close existing selector if open
+    if (this.mapSelector) {
+      this.closeMapSelector();
+      return;
+    }
+
+    // Center the selector in the left viewport (80% of screen)
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    // Create selector background
+    this.mapSelector = this.add.rectangle(
+      centerX,
+      centerY,
+      400,
+      500,
+      0x000000,
+      0.8
+    );
+    this.mapSelector.setScrollFactor(0);
+    this.mapSelector.setDepth(1000);
+
+    // Create title
+    const title = this.add
+      .text(centerX, centerY - 220, "Select Target Map", {
+        fontSize: "18px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5);
+
+    this.mapSelectorButtons.push(title);
+
+    // Get all available maps
+    const mapIds = this.worldSystem.getAllMapIds();
+    const startY = centerY - 180;
+    const itemHeight = 40;
+    const maxVisibleItems = 8;
+
+    // Create scrollable list of maps
+    mapIds.forEach((mapId, index) => {
+      const map = this.worldSystem.getMap(mapId);
+      if (!map) return;
+
+      const yPos = startY + index * itemHeight;
+
+      // Only show items that fit in the visible area
+      if (index < maxVisibleItems) {
+        const mapName = map.metadata.name || mapId;
+        const isCurrentMap = mapId === this.worldSystem.currentMapId;
+        const displayText = `${mapId} - ${mapName}${
+          isCurrentMap ? " (current)" : ""
+        }`;
+
+        const button = this.add
+          .text(centerX, yPos, displayText, {
+            fontSize: "12px",
+            fill: isCurrentMap ? "#00ff00" : "#ffffff",
+            fontStyle: "bold",
+            backgroundColor: "#444444",
+            padding: { x: 10, y: 5 },
+          })
+          .setScrollFactor(0)
+          .setDepth(1001)
+          .setOrigin(0.5)
+          .setInteractive();
+
+        button.on("pointerdown", () => {
+          // Delay close to let the click handler finish first
+          this.time.delayedCall(1, () => {
+            this.closeMapSelector();
+            callback(mapId);
+          });
+        });
+
+        button.on("pointerover", () => {
+          button.setBackgroundColor("#666666");
+        });
+
+        button.on("pointerout", () => {
+          button.setBackgroundColor("#444444");
+        });
+
+        this.mapSelectorButtons.push(button);
+      }
+    });
+
+    // Add cancel button
+    const cancelButton = this.add
+      .text(centerX, centerY + 220, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 10, y: 6 },
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5)
+      .setInteractive();
+
+    cancelButton.on("pointerdown", () => {
+      console.log("Map selector cancelled");
+      // Delay close to let the click handler finish first
+      this.time.delayedCall(1, () => {
+        this.closeMapSelector();
+        callback(null);
+      });
+    });
+
+    cancelButton.on("pointerover", () => {
+      cancelButton.setBackgroundColor("#cc0000");
+    });
+
+    cancelButton.on("pointerout", () => {
+      cancelButton.setBackgroundColor("#aa0000");
+    });
+
+    this.mapSelectorButtons.push(cancelButton);
+  }
+
+  private closeMapSelector(): void {
+    console.log("Closing map selector...", {
+      hasSelector: !!this.mapSelector,
+      buttonsCount: this.mapSelectorButtons?.length,
+    });
+
+    // Hide and disable all buttons
+    if (this.mapSelectorButtons && this.mapSelectorButtons.length > 0) {
+      this.mapSelectorButtons.forEach((button, index) => {
+        if (button && button.scene) {
+          console.log(`Hiding button ${index}`);
+          button.setVisible(false);
+          button.setActive(false);
+          button.destroy();
+        }
+      });
+      this.mapSelectorButtons = [];
+    }
+
+    // Hide and disable the background
+    if (this.mapSelector && this.mapSelector.scene) {
+      console.log("Hiding selector background");
+      this.mapSelector.setVisible(false);
+      this.mapSelector.setActive(false);
+      this.mapSelector.destroy();
+      this.mapSelector = null;
+    }
+
+    console.log("Map selector closed");
+  }
+
+  private openSpawnPointSelector(
+    mapId: string,
+    callback: (spawnId: string | null) => void
+  ): void {
+    // Close existing selector if open
+    if (this.spawnPointSelector) {
+      this.closeSpawnPointSelector();
+      return;
+    }
+
+    // Get the target map
+    const targetMap = this.worldSystem.getMap(mapId);
+    if (!targetMap) {
+      console.error(`Map ${mapId} not found`);
+      callback(null);
+      return;
+    }
+
+    // Check if map has spawn points
+    if (!targetMap.spawnPoints || targetMap.spawnPoints.length === 0) {
+      alert(
+        `Map "${mapId}" has no spawn points. Please add spawn points to that map first.`
+      );
+      callback(null);
+      return;
+    }
+
+    // Center the selector in the left viewport (80% of screen)
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    // Create selector background
+    this.spawnPointSelector = this.add.rectangle(
+      centerX,
+      centerY,
+      400,
+      500,
+      0x000000,
+      0.8
+    );
+    this.spawnPointSelector.setScrollFactor(0);
+    this.spawnPointSelector.setDepth(1000);
+
+    // Create title
+    const mapName = targetMap.metadata.name || mapId;
+    const title = this.add
+      .text(centerX, centerY - 220, `Select Spawn Point\n(${mapName})`, {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5);
+
+    this.spawnPointSelectorButtons.push(title);
+
+    // Get all spawn points
+    const spawnPoints = targetMap.spawnPoints;
+    const startY = centerY - 160;
+    const itemHeight = 40;
+    const maxVisibleItems = 8;
+
+    // Create scrollable list of spawn points
+    spawnPoints.forEach((spawn, index) => {
+      const yPos = startY + index * itemHeight;
+
+      // Only show items that fit in the visible area
+      if (index < maxVisibleItems) {
+        const displayText = `${spawn.id} (${Math.round(spawn.x)}, ${Math.round(
+          spawn.y
+        )})`;
+
+        const button = this.add
+          .text(centerX, yPos, displayText, {
+            fontSize: "12px",
+            fill: "#ffffff",
+            fontStyle: "bold",
+            backgroundColor: "#444444",
+            padding: { x: 10, y: 5 },
+          })
+          .setScrollFactor(0)
+          .setDepth(1001)
+          .setOrigin(0.5)
+          .setInteractive();
+
+        button.on("pointerdown", () => {
+          // Delay close to let the click handler finish first
+          this.time.delayedCall(1, () => {
+            this.closeSpawnPointSelector();
+            callback(spawn.id);
+          });
+        });
+
+        button.on("pointerover", () => {
+          button.setBackgroundColor("#666666");
+        });
+
+        button.on("pointerout", () => {
+          button.setBackgroundColor("#444444");
+        });
+
+        this.spawnPointSelectorButtons.push(button);
+      }
+    });
+
+    // Add cancel button
+    const cancelButton = this.add
+      .text(centerX, centerY + 220, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 10, y: 6 },
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5)
+      .setInteractive();
+
+    cancelButton.on("pointerdown", () => {
+      console.log("Spawn point selector cancelled");
+      // Delay close to let the click handler finish first
+      this.time.delayedCall(1, () => {
+        this.closeSpawnPointSelector();
+        callback(null);
+      });
+    });
+
+    cancelButton.on("pointerover", () => {
+      cancelButton.setBackgroundColor("#cc0000");
+    });
+
+    cancelButton.on("pointerout", () => {
+      cancelButton.setBackgroundColor("#aa0000");
+    });
+
+    this.spawnPointSelectorButtons.push(cancelButton);
+  }
+
+  private closeSpawnPointSelector(): void {
+    console.log("Closing spawn point selector...", {
+      hasSelector: !!this.spawnPointSelector,
+      buttonsCount: this.spawnPointSelectorButtons?.length,
+    });
+
+    // Hide and disable all buttons
+    if (
+      this.spawnPointSelectorButtons &&
+      this.spawnPointSelectorButtons.length > 0
+    ) {
+      this.spawnPointSelectorButtons.forEach((button, index) => {
+        if (button && button.scene) {
+          console.log(`Hiding spawn button ${index}`);
+          button.setVisible(false);
+          button.setActive(false);
+          button.destroy();
+        }
+      });
+      this.spawnPointSelectorButtons = [];
+    }
+
+    // Hide and disable the background
+    if (this.spawnPointSelector && this.spawnPointSelector.scene) {
+      console.log("Hiding spawn point selector background");
+      this.spawnPointSelector.setVisible(false);
+      this.spawnPointSelector.setActive(false);
+      this.spawnPointSelector.destroy();
+      this.spawnPointSelector = null;
+    }
+
+    console.log("Spawn point selector closed");
+  }
+
   public toggleGrid(): void {
     this.gridVisible = !this.gridVisible;
     this.gridGraphics.setVisible(this.gridVisible);
@@ -1177,31 +1510,35 @@ export class MapEditorScene extends Phaser.Scene {
     const nextIndex = this.mapData.exits.length + 1;
     const exitId = `exit_${nextIndex}`;
 
-    const targetMapId = prompt("Enter target map ID:");
-    if (!targetMapId) {
-      return;
-    }
+    // Step 1: Select target map
+    this.openMapSelector((targetMapId) => {
+      if (!targetMapId) {
+        return; // User cancelled
+      }
 
-    const targetSpawnId = prompt("Enter target spawn point ID:");
-    if (!targetSpawnId) {
-      return;
-    }
+      // Step 2: Select spawn point in that map
+      this.openSpawnPointSelector(targetMapId, (targetSpawnId) => {
+        if (!targetSpawnId) {
+          return; // User cancelled
+        }
 
-    // Create new exit
-    this.mapData.exits.push({
-      id: exitId,
-      x: Math.round(x),
-      y: Math.round(y),
-      width: 100,
-      height: 100,
-      targetMapId: targetMapId,
-      targetSpawnId: targetSpawnId,
+        // Create new exit with selected values
+        this.mapData.exits.push({
+          id: exitId,
+          x: Math.round(x),
+          y: Math.round(y),
+          width: 100,
+          height: 100,
+          targetMapId: targetMapId,
+          targetSpawnId: targetSpawnId,
+        });
+
+        console.log(
+          `✅ Created exit "${exitId}" → map "${targetMapId}" spawn "${targetSpawnId}"`
+        );
+        this.updatePreviewObjects();
+      });
     });
-
-    console.log(
-      `✅ Created exit "${exitId}" → map "${targetMapId}" spawn "${targetSpawnId}"`
-    );
-    this.updatePreviewObjects();
   }
 
   private placeTile(
