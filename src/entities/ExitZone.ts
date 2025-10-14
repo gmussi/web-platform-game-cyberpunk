@@ -14,6 +14,10 @@ export class ExitZone extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, exitData: ExitZoneData) {
     super(scene, exitData.x, exitData.y);
 
+    console.log(
+      `🟨 ExitZone constructor: edge=${exitData.edge}, input position=(${exitData.x}, ${exitData.y}), size=${exitData.width}x${exitData.height}`
+    );
+
     this.scene = scene;
     this.exitData = exitData;
 
@@ -23,6 +27,10 @@ export class ExitZone extends Phaser.GameObjects.Container {
     // Add to scene
     scene.add.existing(this);
 
+    console.log(
+      `🟨 ExitZone after add.existing: position=(${this.x}, ${this.y})`
+    );
+
     // Add physics body
     scene.physics.add.existing(this);
     this.physicsBody = this.body as Phaser.Physics.Arcade.Body;
@@ -30,11 +38,16 @@ export class ExitZone extends Phaser.GameObjects.Container {
     this.physicsBody.setAllowGravity(false);
     this.physicsBody.setImmovable(true);
 
+    console.log(
+      `🟨 ExitZone physics body: position=(${this.physicsBody.x}, ${this.physicsBody.y}), size=${this.physicsBody.width}x${this.physicsBody.height}`
+    );
+
     this.setDepth(25);
   }
 
   private createVisuals(): void {
     // Create fill (semi-transparent)
+    // Position at (0, 0) relative to container, with origin at top-left (0, 0)
     this.zoneFill = this.scene.add.rectangle(
       0,
       0,
@@ -43,7 +56,12 @@ export class ExitZone extends Phaser.GameObjects.Container {
       this.getColorForMap(this.exitData.targetMapId),
       0.3
     );
+    this.zoneFill.setOrigin(0, 0); // Top-left origin
     this.add(this.zoneFill);
+
+    console.log(
+      `🟨 Rectangle fill: local pos (0, 0), origin (0, 0), size ${this.exitData.width}x${this.exitData.height}`
+    );
 
     // Create border (more visible)
     this.zoneBorder = this.scene.add.rectangle(
@@ -52,6 +70,7 @@ export class ExitZone extends Phaser.GameObjects.Container {
       this.exitData.width,
       this.exitData.height
     );
+    this.zoneBorder.setOrigin(0, 0); // Top-left origin
     this.zoneBorder.setStrokeStyle(
       3,
       this.getColorForMap(this.exitData.targetMapId),

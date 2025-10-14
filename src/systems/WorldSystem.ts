@@ -255,6 +255,20 @@ export class WorldSystem {
     return this.worldData.maps[this.currentMapId] || null;
   }
 
+  // Get spawn point by ID from current map
+  public getSpawnPoint(spawnId: string): SpawnPoint | null {
+    if (!this.worldData) {
+      return null;
+    }
+
+    const currentMap = this.getCurrentMap();
+    if (!currentMap || !currentMap.spawnPoints) {
+      return null;
+    }
+
+    return currentMap.spawnPoints.find((spawn) => spawn.id === spawnId) || null;
+  }
+
   // Get map by ID
   public getMap(mapId: string): WorldMapData | null {
     if (!this.worldData) {
@@ -264,7 +278,7 @@ export class WorldSystem {
   }
 
   // Switch to a different map
-  public switchMap(mapId: string, spawnId: string): boolean {
+  public switchMap(mapId: string, spawnId: string | null): boolean {
     if (!this.worldData) {
       console.error("No world data loaded");
       return false;
@@ -276,12 +290,7 @@ export class WorldSystem {
       return false;
     }
 
-    const spawnPoint = targetMap.spawnPoints.find((sp) => sp.id === spawnId);
-    if (!spawnPoint) {
-      console.error(`Spawn point ${spawnId} does not exist in map ${mapId}`);
-      return false;
-    }
-
+    // No spawn point validation needed for edge-based system
     this.currentMapId = mapId;
     return true;
   }
@@ -307,13 +316,6 @@ export class WorldSystem {
         height: 800,
         tileSize: 32,
       },
-      spawnPoints: [
-        {
-          id: "default",
-          x: 100,
-          y: 688,
-        },
-      ],
       exits: [],
       portal: null,
       enemies: [],
@@ -406,7 +408,7 @@ export class WorldSystem {
         created: new Date().toISOString(),
       },
       startingMap: "map_1",
-      startingSpawn: "default",
+      startingPosition: { x: 100, y: 688 },
       maps: {
         map_1: {
           id: "map_1",
@@ -422,13 +424,6 @@ export class WorldSystem {
             height: 800,
             tileSize: 32,
           },
-          spawnPoints: [
-            {
-              id: "default",
-              x: 100,
-              y: 688,
-            },
-          ],
           exits: [],
           portal: null,
           enemies: [],
@@ -443,15 +438,5 @@ export class WorldSystem {
     this.worldData = worldData;
     this.currentMapId = "map_1";
     return worldData;
-  }
-
-  // Get spawn point by ID from current map
-  public getSpawnPoint(spawnId: string): SpawnPoint | null {
-    const currentMap = this.getCurrentMap();
-    if (!currentMap) {
-      return null;
-    }
-
-    return currentMap.spawnPoints.find((sp) => sp.id === spawnId) || null;
   }
 }

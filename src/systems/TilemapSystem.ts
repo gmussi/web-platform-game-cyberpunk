@@ -64,10 +64,14 @@ export class TilemapSystem {
     );
   }
 
-  // Tile types - simplified to only EMPTY and SOLID for now
+  // Tile types - including exit tiles for edge-based transitions
   static TILE_TYPES = {
     EMPTY: 0,
     SOLID: 1, // All non-zero values are treated as SOLID tiles
+    EXIT_LEFT: 100,
+    EXIT_RIGHT: 101,
+    EXIT_TOP: 102,
+    EXIT_BOTTOM: 103,
   };
 
   // Tile image mapping - maps tile types to specific tileset indices
@@ -167,7 +171,8 @@ export class TilemapSystem {
     // Clear existing visual for this tile
     this.clearTileVisual(x, y);
 
-    if (tileType !== TilemapSystem.TILE_TYPES.EMPTY) {
+    // Only render solid tiles (empty tiles and special tiles like exits don't get visuals)
+    if (this.isSolidTile(tileType)) {
       let spriteIndex: number | null = null;
 
       // Use autotile system if enabled, otherwise use stored sprite index
@@ -241,6 +246,15 @@ export class TilemapSystem {
       return;
     }
 
+    // Skip exit tiles in GameScene (invisible in gameplay)
+    if (
+      this.scene.scene.key === "GameScene" &&
+      tileType >= 100 &&
+      tileType <= 103
+    ) {
+      return;
+    }
+
     // Check if tileset textures are ready
     if (!this.scene.textures.exists("tileset_sprites")) {
       console.warn("Tileset textures not ready yet, skipping tile visual");
@@ -278,6 +292,37 @@ export class TilemapSystem {
     );
     tileSprite.setDisplaySize(this.tileSize, this.tileSize);
     tileSprite.setDepth(4); // Same depth as visual layer
+
+    // Add colored overlay for exit tiles in MapEditorScene
+    if (
+      this.scene.scene.key === "MapEditorScene" &&
+      tileType >= 100 &&
+      tileType <= 103
+    ) {
+      const exitColors = {
+        [TilemapSystem.TILE_TYPES.EXIT_LEFT]: 0x00ffff, // Cyan
+        [TilemapSystem.TILE_TYPES.EXIT_RIGHT]: 0xff00ff, // Magenta
+        [TilemapSystem.TILE_TYPES.EXIT_TOP]: 0xffff00, // Yellow
+        [TilemapSystem.TILE_TYPES.EXIT_BOTTOM]: 0xff8800, // Orange
+      };
+
+      const overlay = this.scene.add.rectangle(
+        worldX + this.tileSize / 2,
+        worldY + this.tileSize / 2,
+        this.tileSize,
+        this.tileSize,
+        exitColors[tileType],
+        0.5
+      );
+      overlay.setDepth(5); // Above the tile sprite
+      overlay.setStrokeStyle(2, 0xffffff, 0.8); // White border
+
+      // Store overlay reference for cleanup
+      if (!this.tileSprites) {
+        this.tileSprites = [];
+      }
+      this.tileSprites.push(overlay);
+    }
 
     // Store reference for cleanup
     if (!this.tileSprites) {
@@ -398,7 +443,13 @@ export class TilemapSystem {
 
   // Check if a tile type is solid
   private isSolidTile(tileType: number): boolean {
-    return tileType !== TilemapSystem.TILE_TYPES.EMPTY; // All non-zero values are solid
+    const isSolid = tileType === TilemapSystem.TILE_TYPES.SOLID;
+    if (tileType >= 100 && tileType <= 103) {
+      console.log(
+        `🔍 isSolidTile check: exit tile type ${tileType} -> ${isSolid}`
+      );
+    }
+    return isSolid;
   }
 
   // Create collision body for a tile

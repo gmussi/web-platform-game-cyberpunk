@@ -4,6 +4,7 @@ import { DEFAULT_MAP } from "../data/levels";
 
 import { WorldSystem } from "../systems/WorldSystem";
 import { TilemapSystem } from "../systems/TilemapSystem";
+import { WorldViewRenderer } from "../systems/WorldViewRenderer";
 import { Player } from "../entities/Player";
 import { Enemy } from "../entities/Enemy";
 import { Platform } from "../entities/Platform";
@@ -88,6 +89,10 @@ export class GameScene extends Phaser.Scene {
   public frameCount: number = 0;
   public upKey!: Phaser.Input.Keyboard.Key;
   public wKey!: Phaser.Input.Keyboard.Key;
+  public transitionCooldown: number = 0;
+  public readonly TRANSITION_COOLDOWN_MS = 1000; // 1 second grace period
+  public worldViewRenderer!: WorldViewRenderer;
+  private activeColliders: Phaser.Physics.Arcade.Collider[] = [];
 
   constructor() {
     super({ key: "GameScene" });
@@ -231,6 +236,12 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     // Initialize world system
     this.worldSystem = new WorldSystem(this as any);
+
+    // Initialize world view renderer
+    this.worldViewRenderer = new WorldViewRenderer(
+      this as any,
+      this.worldSystem.worldData
+    );
 
     // Create character animations
     this.createCharacterAnimations();
@@ -631,29 +642,51 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createPlayer(): void {
-    // Create player with default position (will be repositioned when map loads)
-    let startX = 100; // Default starting position
-    let startY = 688; // Default starting position
-
-    // Paladin starts near the portal, other characters start at the beginning
-    if (gameData.selectedCharacter === "D") {
-      startX = 3800; // Paladin starts close to portal (portal is at x=4000)
-    }
-
-    // Calculate ground level from tilemap (bottom 3 rows)
-    const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
-    const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
-    startY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
+    // Get starting position from world data or use default
+    const startingPos = this.getStartingPlayerPosition();
 
     this.player = new Player(
       this as any,
-      startX,
-      startY,
+      startingPos.x,
+      startingPos.y,
       gameData.selectedCharacter ?? 0
     );
 
     // Add player to physics groups for collision detection
     this.playerGroup = this.physics.add.group([this.player]);
+  }
+
+  private getStartingPlayerPosition(): { x: number; y: number } {
+    // Check if world data is loaded
+    if (!this.worldSystem.worldData) {
+      // Fallback to center if world data not loaded yet
+      return {
+        x: 400, // Default center position
+        y: 300,
+      };
+    }
+
+    // Check if world has a default starting position
+    if (this.worldSystem.worldData.startingPosition) {
+      return this.worldSystem.worldData.startingPosition;
+    }
+
+    // Otherwise use first exit on left edge, or center
+    if (this.mapData && this.mapData.exits) {
+      const leftExit = this.mapData.exits.find((e) => e.edge === "left");
+      if (leftExit) {
+        return {
+          x: leftExit.x + leftExit.width / 2 + 64,
+          y: leftExit.y + leftExit.height / 2,
+        };
+      }
+    }
+
+    // Fallback to center
+    return {
+      x: this.mapData?.world?.width ? this.mapData.world.width / 2 : 400,
+      y: this.mapData?.world?.height ? this.mapData.world.height / 2 : 300,
+    };
   }
 
   private repositionPlayer(): void {
@@ -843,29 +876,39 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupCollisions(): void {
+    // Clean up any existing colliders first
+    this.cleanupColliders();
+
     // Player vs Tilemap
-    this.physics.add.collider(this.player, this.tilemapSystem.collisionGroup);
+    const playerTilemapCollider = this.physics.add.collider(
+      this.player,
+      this.tilemapSystem.collisionGroup
+    );
+    this.activeColliders.push(playerTilemapCollider);
 
     // Also try individual collision bodies as backup
     this.tilemapSystem.collisionBodies.forEach((body: any, index: number) => {
-      this.physics.add.collider(this.player, body);
+      const collider = this.physics.add.collider(this.player, body);
+      this.activeColliders.push(collider);
     });
 
     // Player vs Enemies
-    this.physics.add.overlap(
+    const playerEnemyOverlap = this.physics.add.overlap(
       this.player,
       this.enemies,
       (player: Player, enemy: Enemy) => {
         // Collision handling is done in Enemy class
       }
     );
+    this.activeColliders.push(playerEnemyOverlap);
 
     // Enemies vs Tilemap - use individual collision bodies
     console.log(
       `Setting up enemy collisions with ${this.tilemapSystem.collisionBodies.length} collision bodies`
     );
     this.tilemapSystem.collisionBodies.forEach((body: any, index: number) => {
-      this.physics.add.collider(this.enemies, body);
+      const collider = this.physics.add.collider(this.enemies, body);
+      this.activeColliders.push(collider);
       console.log(`Added collision for enemies with body ${index}:`, {
         x: body.x,
         y: body.y,
@@ -875,7 +918,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Player vs Portal - only the animated portal sprite
-    this.physics.add.overlap(
+    const portalOverlap = this.physics.add.overlap(
       this.player,
       this.portalSprite,
       (player: Player, portal: Phaser.GameObjects.Sprite) => {
@@ -884,6 +927,19 @@ export class GameScene extends Phaser.Scene {
         this.scene.start("VictoryScene");
       }
     );
+    this.activeColliders.push(portalOverlap);
+  }
+
+  private cleanupColliders(): void {
+    // Remove all active colliders from the physics world
+    this.activeColliders.forEach((collider) => {
+      if (collider) {
+        // Disable the collider using type assertion
+        (collider as any).active = false;
+        // Phaser will automatically clean up disabled colliders
+      }
+    });
+    this.activeColliders = [];
   }
 
   private createUI(): void {
@@ -1156,6 +1212,11 @@ export class GameScene extends Phaser.Scene {
       this.loadMapFromFile();
     }
 
+    // Handle world view toggle
+    if (Phaser.Input.Keyboard.JustDown(this.wKey)) {
+      this.worldViewRenderer.toggle();
+    }
+
     // Update player
     if (this.player) {
       this.player.update();
@@ -1177,25 +1238,8 @@ export class GameScene extends Phaser.Scene {
       this.updateHealthBar(this.player.health);
     }
 
-    // Check exit zone collisions
-    if (this.player && this.exitZones && this.exitZones.length > 0) {
-      this.exitZones.forEach((exitZone) => {
-        const isOverlapping = exitZone.checkPlayerOverlap(this.player);
-
-        // If player is overlapping and presses UP or W, trigger map transition
-        if (
-          isOverlapping &&
-          (Phaser.Input.Keyboard.JustDown(this.upKey) ||
-            Phaser.Input.Keyboard.JustDown(this.wKey))
-        ) {
-          const targetInfo = exitZone.getTargetInfo();
-          console.log(
-            `🚪 Entering exit to map ${targetInfo.mapId}, spawn ${targetInfo.spawnId}`
-          );
-          this.transitionToMap(targetInfo.mapId, targetInfo.spawnId);
-        }
-      });
-    }
+    // Check for automatic edge transitions
+    this.checkEdgeTransition();
 
     // Manual portal collision check (backup) - only checks animated portal sprite
     if (this.player && this.portalSprite) {
@@ -1213,99 +1257,181 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private transitionToMap(targetMapId: string, targetSpawnId: string): void {
-    // Prevent multiple transitions
-    if ((this as any).isTransitioning) {
+  private checkEdgeTransition(): void {
+    if ((this as any).isTransitioning) return;
+
+    // Check if map data is loaded
+    if (!this.mapData || !this.mapData.world) {
       return;
     }
+
+    // Check cooldown (prevents immediate re-transition after spawning)
+    if (this.transitionCooldown > 0) {
+      this.transitionCooldown -= this.game.loop.delta;
+      return;
+    }
+
+    const px = this.player.x;
+    const py = this.player.y;
+    const threshold = 32;
+
+    // Detect edge
+    let edge: string | null = null;
+    if (px < threshold) edge = "left";
+    else if (px > this.mapData.world.width - threshold) edge = "right";
+    else if (py < threshold) edge = "top";
+    else if (py > this.mapData.world.height - threshold) edge = "bottom";
+
+    if (!edge) return;
+
+    // Find matching exit zone
+    const exit = this.findExitAtPlayerPosition(edge, px, py);
+
+    if (exit) {
+      console.log(
+        `🚪 Exit found at ${edge} edge, transitioning to ${exit.targetMapId}`
+      );
+      this.transitionToMap(exit.targetMapId, exit);
+    } else {
+      console.log(`⚠️ Player at ${edge} edge (${px}, ${py}) but no exit found`);
+    }
+  }
+
+  private findExitAtPlayerPosition(
+    edge: string,
+    px: number,
+    py: number
+  ): any | null {
+    console.log(
+      `🔍 Looking for ${edge} exit at player pos (${px}, ${py}), total exits:`,
+      this.mapData.exits.length
+    );
+    return this.mapData.exits.find((e: any) => {
+      if (e.edge !== edge) return false;
+
+      const isHorizontal = edge === "top" || edge === "bottom";
+      const playerPos = isHorizontal ? px : py;
+      const mapSize = isHorizontal
+        ? this.mapData.world.width
+        : this.mapData.world.height;
+      const playerNormalized = playerPos / mapSize;
+
+      return playerNormalized >= e.edgeStart && playerNormalized <= e.edgeEnd;
+    });
+  }
+
+  private transitionToMap(targetMapId: string, fromExit: any): void {
+    if ((this as any).isTransitioning) return;
     (this as any).isTransitioning = true;
 
-    // Store player health for transition
     const playerHealth = this.player?.health || gameData.maxHealth;
 
     console.log(
-      `🌀 Transitioning to map ${targetMapId} at spawn ${targetSpawnId}, health: ${playerHealth}`
+      `🌀 Transitioning to map ${targetMapId}, health: ${playerHealth}`
     );
 
-    // Fade out
-    this.cameras.main.fadeOut(500, 0, 0, 0);
+    // Switch map
+    const success = this.worldSystem.switchMap(targetMapId, null); // No spawn ID needed
 
-    this.cameras.main.once("camerafadeoutcomplete", () => {
-      // Switch to target map
-      const success = this.worldSystem.switchMap(targetMapId, targetSpawnId);
+    if (!success) {
+      console.error(`Failed to switch to map ${targetMapId}`);
+      (this as any).isTransitioning = false;
+      return;
+    }
 
-      if (!success) {
-        console.error(`Failed to switch to map ${targetMapId}`);
-        (this as any).isTransitioning = false;
-        this.cameras.main.fadeIn(500, 0, 0, 0);
-        return;
-      }
+    // Get new map
+    const newMapData = this.worldSystem.getCurrentMap();
+    if (!newMapData) {
+      console.error(`Failed to get map data for ${targetMapId}`);
+      (this as any).isTransitioning = false;
+      return;
+    }
 
-      // Get new map data
-      const newMapData = this.worldSystem.getCurrentMap();
-      if (!newMapData) {
-        console.error(`Failed to get map data for ${targetMapId}`);
-        (this as any).isTransitioning = false;
-        this.cameras.main.fadeIn(500, 0, 0, 0);
-        return;
-      }
+    // Calculate spawn position on opposite edge
+    const spawnPos = this.calculateOppositeEdgeSpawn(fromExit, newMapData);
 
-      // Get spawn point
-      const spawnPoint = this.worldSystem.getSpawnPoint(targetSpawnId);
-      if (!spawnPoint) {
-        console.error(
-          `Spawn point ${targetSpawnId} not found in map ${targetMapId}`
-        );
-        (this as any).isTransitioning = false;
-        this.cameras.main.fadeIn(500, 0, 0, 0);
-        return;
-      }
+    this.mapData = newMapData;
 
-      console.log(`📍 Spawning at (${spawnPoint.x}, ${spawnPoint.y})`);
+    // Reload map content
+    this.cleanupMapContent();
+    this.loadTileDataFromMap();
+    this.tilemapSystem.createCollisionBodies();
+    this.createEnemies();
+    this.createExitZones();
+    this.createPortal();
 
-      // Update map data
-      this.mapData = newMapData;
+    // Spawn player at calculated position
+    this.player.setPosition(spawnPos.x, spawnPos.y);
+    this.player.health = playerHealth;
 
-      // Clean up old objects
-      this.enemies.forEach((enemy) => enemy.destroy());
-      this.enemies = [];
-      this.exitZones.forEach((exit) => exit.destroy());
-      this.exitZones = [];
-      if (this.portalSprite) {
-        this.portalSprite.destroy();
-      }
+    this.setupCollisions();
+    this.setupWorldBounds();
+    this.setupCamera();
 
-      // Reload tile data
-      this.loadTileDataFromMap();
+    // Set transition cooldown to prevent immediate re-transition
+    this.transitionCooldown = this.TRANSITION_COOLDOWN_MS;
 
-      // Recreate collision bodies
-      this.tilemapSystem.createCollisionBodies();
+    (this as any).isTransitioning = false;
+    console.log(`✅ Transition to map ${targetMapId} complete`);
+  }
 
-      // Recreate game objects
-      this.createEnemies();
-      this.createExitZones();
-      this.createPortal();
+  private calculateOppositeEdgeSpawn(
+    fromExit: any,
+    targetMap: any
+  ): { x: number; y: number } {
+    // Map edge to opposite edge
+    const oppositeEdge = {
+      left: "right",
+      right: "left",
+      top: "bottom",
+      bottom: "top",
+    }[fromExit.edge];
 
-      // Reposition player at spawn point and restore health
-      this.player.setPosition(spawnPoint.x, spawnPoint.y);
-      this.player.health = playerHealth;
-      this.updateHealthBar(playerHealth);
+    // Find matching exit on opposite edge with similar position
+    const targetExit = targetMap.exits.find((e: any) => {
+      if (e.edge !== oppositeEdge) return false;
 
-      // Re-setup collisions
-      this.setupCollisions();
-
-      // Update camera bounds
-      this.setupWorldBounds();
-      this.setupCamera();
-
-      // Fade in
-      this.cameras.main.fadeIn(500, 0, 0, 0);
-
-      this.cameras.main.once("camerafadeincomplete", () => {
-        (this as any).isTransitioning = false;
-        console.log(`✅ Transition to map ${targetMapId} complete`);
-      });
+      // Check if exit ranges overlap (allows some flexibility)
+      const overlap = !(
+        e.edgeEnd < fromExit.edgeStart || e.edgeStart > fromExit.edgeEnd
+      );
+      return overlap;
     });
+
+    if (!targetExit) {
+      console.warn(
+        `No matching exit found on ${oppositeEdge} edge of ${targetMap.id}`
+      );
+      // Fallback: spawn at map center
+      return {
+        x: targetMap.world.width / 2,
+        y: targetMap.world.height / 2,
+      };
+    }
+
+    // Calculate spawn position at center of target exit
+    const spawnX = targetExit.x + targetExit.width / 2;
+    const spawnY = targetExit.y + targetExit.height / 2;
+
+    // Offset slightly inward from edge
+    const offset = 64; // 2 tiles
+    if (targetExit.edge === "left") return { x: spawnX + offset, y: spawnY };
+    if (targetExit.edge === "right") return { x: spawnX - offset, y: spawnY };
+    if (targetExit.edge === "top") return { x: spawnX, y: spawnY + offset };
+    if (targetExit.edge === "bottom") return { x: spawnX, y: spawnY - offset };
+
+    return { x: spawnX, y: spawnY };
+  }
+
+  private cleanupMapContent(): void {
+    // Clean up old objects
+    this.enemies.forEach((enemy) => enemy.destroy());
+    this.enemies = [];
+    this.exitZones.forEach((exit) => exit.destroy());
+    this.exitZones = [];
+    if (this.portalSprite) {
+      this.portalSprite.destroy();
+    }
   }
 
   private startBackgroundMusic(): void {
@@ -1363,6 +1489,9 @@ export class GameScene extends Phaser.Scene {
   public shutdown(): void {
     // Clean up background music when scene is destroyed
     this.stopBackgroundMusic();
+
+    // Clean up colliders
+    this.cleanupColliders();
 
     // Clean up map file input
     if (this.mapFileInput && this.mapFileInput.parentNode) {

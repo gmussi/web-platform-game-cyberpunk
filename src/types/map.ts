@@ -61,12 +61,17 @@ export interface SpawnPoint {
 
 export interface ExitZone {
   id: string;
-  x: number;
+  x: number; // World position (calculated from tiles)
   y: number;
-  width: number;
+  width: number; // Dimensions (calculated from tile count)
   height: number;
-  targetMapId: string;
-  targetSpawnId: string;
+  edge: "left" | "right" | "top" | "bottom";
+  edgePosition: number; // Center position along edge (0.0-1.0)
+  edgeStart: number; // Start position along edge (0.0-1.0)
+  edgeEnd: number; // End position along edge (0.0-1.0)
+  tileStart: number; // Start tile index
+  tileEnd: number; // End tile index
+  targetMapId: string; // Which map this leads to
 }
 
 export interface WorldMapData {
@@ -83,7 +88,6 @@ export interface WorldMapData {
     height: number;
     tileSize: number;
   };
-  spawnPoints: SpawnPoint[];
   exits: ExitZone[];
   player?: {
     startPosition: { x: number; y: number };
@@ -110,6 +114,8 @@ export interface WorldMapData {
   collectibles?: any[];
   checkpoints?: any[];
   tiles: any[];
+  gridPosition?: { x: number; y: number }; // Calculated by layout system
+  gridHeight?: number; // Height in grid units
 }
 
 export interface WorldData {
@@ -121,6 +127,6 @@ export interface WorldData {
     created: string;
   };
   startingMap: string;
-  startingSpawn: string;
+  startingPosition?: { x: number; y: number }; // Optional starting position
   maps: Record<string, WorldMapData>;
 }
