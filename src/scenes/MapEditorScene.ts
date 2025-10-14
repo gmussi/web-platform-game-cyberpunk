@@ -86,6 +86,7 @@ export class MapEditorScene extends Phaser.Scene {
   public objectInfoText!: Phaser.GameObjects.Text;
   public coordinateText!: Phaser.GameObjects.Text;
   public gridToggleButton!: Phaser.GameObjects.Text;
+  public autotileToggleButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
   public exitZones: ExitZone[] = [];
@@ -294,6 +295,7 @@ export class MapEditorScene extends Phaser.Scene {
       this.objectInfoText,
       this.coordinateText,
       this.gridToggleButton,
+      this.autotileToggleButton,
     ].filter((el) => el !== undefined);
 
     // Also include all text elements in the right panel (titles, instructions, hints, etc.)
@@ -454,11 +456,14 @@ export class MapEditorScene extends Phaser.Scene {
     // Grid toggle
     yOffset = this.createGridToggle(panelPadding, yOffset, panelWidth);
 
+    // Autotile toggle
+    yOffset = this.createAutotileToggle(panelPadding, yOffset, panelWidth);
+
     // Keyboard shortcut hint
     this.add.text(
       panelPadding,
       yOffset,
-      "Press T for tile selector\nPress G for grid toggle",
+      "Press T for tile selector\nPress G for grid toggle\nPress A for autotile",
       {
         fontSize: "10px",
         fill: "#ffff00",
@@ -467,7 +472,7 @@ export class MapEditorScene extends Phaser.Scene {
         strokeThickness: 1,
       }
     );
-    yOffset += 35;
+    yOffset += 45;
 
     // Create map resize controls
     this.createMapResizeControls(panelPadding, yOffset, panelWidth);
@@ -1036,6 +1041,26 @@ export class MapEditorScene extends Phaser.Scene {
     );
   }
 
+  public toggleAutotile(): void {
+    const currentState =
+      this.tilemapSystem.autoTileSystem?.isEnabled() ?? false;
+    const newState = !currentState;
+
+    if (this.tilemapSystem.autoTileSystem) {
+      this.tilemapSystem.autoTileSystem.setEnabled(newState);
+    }
+
+    if (this.autotileToggleButton) {
+      this.autotileToggleButton.setText(`Autotile: ${newState ? "ON" : "OFF"}`);
+      this.autotileToggleButton.setBackgroundColor(
+        newState ? "#00aa00" : "#aa0000"
+      );
+    }
+
+    // Redraw all tiles to reflect autotile state change
+    this.tilemapSystem.redrawVisualLayer();
+  }
+
   private createMapButtons(x: number, y: number, panelWidth: number): number {
     // Grid layout: 2 rows x 2 columns
     const cols = 2;
@@ -1132,6 +1157,46 @@ export class MapEditorScene extends Phaser.Scene {
       this.gridToggleButton.setBackgroundColor(
         this.gridVisible ? "#00aa00" : "#aa0000"
       );
+    });
+
+    return y + 25 + 10;
+  }
+
+  private createAutotileToggle(
+    x: number,
+    y: number,
+    panelWidth: number
+  ): number {
+    const autotileEnabled =
+      this.tilemapSystem.autoTileSystem?.isEnabled() ?? true;
+    this.autotileToggleButton = this.add
+      .text(x, y, `Autotile: ${autotileEnabled ? "ON" : "OFF"}`, {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: autotileEnabled ? "#00aa00" : "#aa0000",
+        padding: { x: 8, y: 4 },
+      })
+      .setInteractive();
+
+    this.autotileToggleButton.on("pointerdown", () => {
+      const currentState =
+        this.tilemapSystem.autoTileSystem?.isEnabled() ?? false;
+      const newState = !currentState;
+
+      if (this.tilemapSystem.autoTileSystem) {
+        this.tilemapSystem.autoTileSystem.setEnabled(newState);
+      }
+
+      this.autotileToggleButton.setText(`Autotile: ${newState ? "ON" : "OFF"}`);
+      this.autotileToggleButton.setBackgroundColor(
+        newState ? "#00aa00" : "#aa0000"
+      );
+
+      // Redraw all tiles to reflect autotile state change
+      this.tilemapSystem.redrawVisualLayer();
     });
 
     return y + 25 + 10;
@@ -1342,6 +1407,11 @@ export class MapEditorScene extends Phaser.Scene {
     // Add G key handler for grid toggle
     this.input.keyboard.on("keydown-G", () => {
       this.toggleGrid();
+    });
+
+    // Add A key handler for autotile toggle
+    this.input.keyboard.on("keydown-A", () => {
+      this.toggleAutotile();
     });
 
     // Camera controls
