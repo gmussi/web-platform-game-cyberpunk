@@ -18,7 +18,7 @@ export interface AutotileRule {
 // (they're only relevant when both adjacent cardinals are solid)
 export const AUTOTILE_RULES: AutotileRule[] = [
   // Row 1
-  // 1,1: S, E, SE, SW?, NE?
+  // 1,1: S, E, SE, SW?, NE?, NW?
   {
     tileIndex: 0,
     north: false, // not listed = must be empty
@@ -28,7 +28,7 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     northeast: null, // ? = don't care
     southeast: true, // listed = must be solid
     southwest: null, // ? = don't care
-    northwest: false, // not listed = must be empty
+    northwest: null, // not listed = must be empty
   },
   // 1,2: W, SW, S, SE, E, NW?, NE?
   {
@@ -42,14 +42,14 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     southwest: true,
     northwest: null,
   },
-  // 1,3: W, SW, S, NW?, SE?
+  // 1,3: W, SW, S, NW?, SE?, NE?
   {
     tileIndex: 2,
     north: false,
     south: true,
     east: false,
     west: true,
-    northeast: false,
+    northeast: null,
     southeast: null,
     southwest: true,
     northwest: null,
@@ -214,7 +214,7 @@ export const AUTOTILE_RULES: AutotileRule[] = [
   },
 
   // Row 3
-  // 3,1: N, NE, E, NW?, SE?
+  // 3,1: N, NE, E, NW?, SE?, SW?
   {
     tileIndex: 16,
     north: true,
@@ -223,7 +223,7 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     west: false,
     northeast: true,
     southeast: null,
-    southwest: false,
+    southwest: null,
     northwest: null,
   },
   // 3,2: N, NE, NW, W, E, SE?, SW?
@@ -238,7 +238,7 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     southwest: null,
     northwest: true,
   },
-  // 3,3: W, NW, N, SW?, NE?
+  // 3,3: W, NW, N, SW?, NE?, SE?
   {
     tileIndex: 18,
     north: true,
@@ -246,7 +246,7 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     east: false,
     west: true,
     northeast: null,
-    southeast: false,
+    southeast: null,
     southwest: null,
     northwest: true,
   },
@@ -360,14 +360,14 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     southwest: false,
     northwest: false,
   },
-  // 4,5: N, S, SE?, E, NE?
+  // 4,5: N, S, SE?, E
   {
     tileIndex: 28,
     north: true,
     south: true,
     east: true,
     west: false,
-    northeast: null,
+    northeast: false,
     southeast: null,
     southwest: false,
     northwest: false,
