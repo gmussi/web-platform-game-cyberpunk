@@ -67,7 +67,6 @@ export class MapEditorScene extends Phaser.Scene {
   public tilemapSystem!: TilemapSystem;
   public mapData!: WorldMapData;
   public backgroundImage!: Phaser.GameObjects.Image;
-  public darkOverlay!: Phaser.GameObjects.Rectangle;
   public gridGraphics!: Phaser.GameObjects.Graphics;
   public gridVisible: boolean = true;
   public isLoadingCustomMap: boolean = false;
@@ -366,18 +365,6 @@ export class MapEditorScene extends Phaser.Scene {
     this.backgroundImage.setScrollFactor(0.3);
     this.backgroundImage.setDepth(-10);
     this.backgroundImage.setScale(scale);
-
-    // Dark overlay - temporarily disabled for debugging
-    // this.darkOverlay = this.add.rectangle(
-    //   worldWidth / 2 + offsetX,
-    //   worldHeight / 2,
-    //   worldWidth,
-    //   worldHeight,
-    //   0x000000,
-    //   0.4
-    // );
-    // this.darkOverlay.setScrollFactor(0.3);
-    // this.darkOverlay.setDepth(1);
   }
 
   private createGridOverlay(): void {
@@ -1545,7 +1532,6 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Update background
     this.backgroundImage.destroy();
-    // this.darkOverlay.destroy(); // Disabled - overlay not currently created
     this.createBackground();
 
     // Update grid
