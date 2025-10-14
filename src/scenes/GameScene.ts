@@ -241,7 +241,8 @@ export class GameScene extends Phaser.Scene {
     this.worldViewRenderer = new WorldViewRenderer(
       this as any,
       this.worldSystem.worldData,
-      this.worldSystem.visitedMaps
+      this.worldSystem.visitedMaps,
+      () => this.worldSystem.currentMapId
     );
 
     // Create character animations
@@ -1374,6 +1375,11 @@ export class GameScene extends Phaser.Scene {
 
     // Set transition cooldown to prevent immediate re-transition
     this.transitionCooldown = this.TRANSITION_COOLDOWN_MS;
+
+    // Update world view if it's currently visible
+    if (this.worldViewRenderer.getIsVisible()) {
+      this.worldViewRenderer.update();
+    }
 
     (this as any).isTransitioning = false;
     console.log(`✅ Transition to map ${targetMapId} complete`);

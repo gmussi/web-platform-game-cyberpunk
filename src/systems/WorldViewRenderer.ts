@@ -9,6 +9,7 @@ export class WorldViewRenderer {
   private worldViewGroup: Phaser.GameObjects.Group | null = null;
   private isVisible: boolean = false;
   private visitedMaps: Set<string>; // Track which maps to display
+  private getCurrentMapId: () => string | null; // Function to get current map ID
 
   // Rendering settings
   private readonly BOX_SIZE = 80;
@@ -20,11 +21,14 @@ export class WorldViewRenderer {
   constructor(
     scene: Phaser.Scene,
     worldData: WorldData | null,
-    visitedMaps?: Set<string>
+    visitedMaps?: Set<string>,
+    getCurrentMapId?: () => string | null
   ) {
     this.scene = scene;
     this.worldData = worldData;
     this.visitedMaps = visitedMaps || new Set<string>();
+    this.getCurrentMapId =
+      getCurrentMapId || (() => worldData?.startingMap || null);
     // Lazy initialize layoutSystem when worldData is available
   }
 
@@ -274,7 +278,8 @@ export class WorldViewRenderer {
       const boxHeight = this.BOX_SIZE * size.height;
 
       // Determine if this is the current map
-      const isCurrentMap = mapId === this.worldData.startingMap;
+      const currentMapId = this.getCurrentMapId();
+      const isCurrentMap = mapId === currentMapId;
       const color = isCurrentMap
         ? this.CURRENT_MAP_COLOR
         : this.OTHER_MAP_COLOR;
