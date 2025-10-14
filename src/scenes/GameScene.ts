@@ -240,7 +240,8 @@ export class GameScene extends Phaser.Scene {
     // Initialize world view renderer
     this.worldViewRenderer = new WorldViewRenderer(
       this as any,
-      this.worldSystem.worldData
+      this.worldSystem.worldData,
+      this.worldSystem.visitedMaps
     );
 
     // Create character animations
@@ -1007,7 +1008,7 @@ export class GameScene extends Phaser.Scene {
 
     // Instructions
     this.add
-      .text(500, 5, "Arrow Keys: Move | Space: Jump", {
+      .text(500, 5, "Arrow Keys: Move | Space: Jump | W: World View", {
         fontSize: "14px",
         fill: "#ffffff",
         fontStyle: "bold",

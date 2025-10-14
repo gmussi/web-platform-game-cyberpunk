@@ -19,12 +19,14 @@ export class WorldSystem {
   public worldData: WorldData | null;
   public currentMapId: string | null;
   public worldFileName: string;
+  public visitedMaps: Set<string>; // Track which maps the player has visited
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.worldData = null;
     this.currentMapId = null;
     this.worldFileName = "default_world.json";
+    this.visitedMaps = new Set<string>();
   }
 
   // Load world data from file
@@ -45,6 +47,8 @@ export class WorldSystem {
             this.worldData = worldData;
             // Set current map to starting map
             this.currentMapId = worldData.startingMap;
+            // Mark starting map as visited
+            this.visitedMaps.add(worldData.startingMap);
             resolve(worldData);
           } else {
             reject(new Error("Invalid world data format"));
@@ -86,6 +90,8 @@ export class WorldSystem {
       if (this.validateWorldData(worldData)) {
         this.worldData = worldData;
         this.currentMapId = worldData.startingMap;
+        // Mark starting map as visited
+        this.visitedMaps.add(worldData.startingMap);
         return worldData;
       } else {
         throw new Error("Invalid world data format");
@@ -292,6 +298,8 @@ export class WorldSystem {
 
     // No spawn point validation needed for edge-based system
     this.currentMapId = mapId;
+    // Mark this map as visited
+    this.visitedMaps.add(mapId);
     return true;
   }
 

@@ -8,6 +8,7 @@ export class WorldViewRenderer {
   private layoutResult: LayoutResult | null = null;
   private worldViewGroup: Phaser.GameObjects.Group | null = null;
   private isVisible: boolean = false;
+  private visitedMaps: Set<string>; // Track which maps to display
 
   // Rendering settings
   private readonly BOX_SIZE = 80;
@@ -16,9 +17,14 @@ export class WorldViewRenderer {
   private readonly OTHER_MAP_COLOR = 0x0066ff; // Blue for other maps
   private readonly CONNECTION_COLOR = 0xffffff; // White for connections
 
-  constructor(scene: Phaser.Scene, worldData: WorldData | null) {
+  constructor(
+    scene: Phaser.Scene,
+    worldData: WorldData | null,
+    visitedMaps?: Set<string>
+  ) {
     this.scene = scene;
     this.worldData = worldData;
+    this.visitedMaps = visitedMaps || new Set<string>();
     // Lazy initialize layoutSystem when worldData is available
   }
 
@@ -51,7 +57,14 @@ export class WorldViewRenderer {
     if (!this.isVisible) return;
 
     if (this.worldViewGroup) {
-      this.worldViewGroup.destroy();
+      // Destroy all children in the group first
+      this.worldViewGroup
+        .getChildren()
+        .forEach((child: Phaser.GameObjects.GameObject) => {
+          child.destroy();
+        });
+      // Then destroy the group itself
+      this.worldViewGroup.destroy(true);
       this.worldViewGroup = null;
     }
     this.isVisible = false;
@@ -127,10 +140,13 @@ export class WorldViewRenderer {
    * Render connections between maps
    */
   private renderConnections(startX: number, startY: number): void {
-    if (!this.layoutResult) return;
+    if (!this.layoutResult || !this.worldData) return;
 
     Object.keys(this.layoutResult.mapPositions).forEach((mapId) => {
-      const mapData = this.worldData.maps[mapId];
+      // Only show connections from visited maps
+      if (!this.visitedMaps.has(mapId)) return;
+
+      const mapData = this.worldData!.maps[mapId];
       if (!mapData) return;
 
       const sourcePos = this.layoutResult!.mapPositions[mapId];
@@ -140,6 +156,9 @@ export class WorldViewRenderer {
       // Draw connections for each exit
       mapData.exits.forEach((exit) => {
         const targetMapId = exit.targetMapId;
+        // Only show connection if target map has also been visited
+        if (!this.visitedMaps.has(targetMapId)) return;
+
         const targetPos = this.layoutResult!.mapPositions[targetMapId];
 
         if (!targetPos) return;
@@ -236,10 +255,13 @@ export class WorldViewRenderer {
    * Render map boxes
    */
   private renderMapBoxes(startX: number, startY: number): void {
-    if (!this.layoutResult) return;
+    if (!this.layoutResult || !this.worldData) return;
 
     Object.keys(this.layoutResult.mapPositions).forEach((mapId) => {
-      const mapData = this.worldData.maps[mapId];
+      // Only show visited maps
+      if (!this.visitedMaps.has(mapId)) return;
+
+      const mapData = this.worldData!.maps[mapId];
       if (!mapData) return;
 
       const pos = this.layoutResult!.mapPositions[mapId];
@@ -332,5 +354,12 @@ export class WorldViewRenderer {
     // Reset layout system to pick up new data
     this.layoutSystem = null;
     this.layoutResult = null;
+  }
+
+  /**
+   * Update the visited maps set (call this to sync with WorldSystem)
+   */
+  public setVisitedMaps(visitedMaps: Set<string>): void {
+    this.visitedMaps = visitedMaps;
   }
 }
