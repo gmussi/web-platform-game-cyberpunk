@@ -10,6 +10,7 @@ export class WorldViewRenderer {
   private isVisible: boolean = false;
   private visitedMaps: Set<string>; // Track which maps to display
   private getCurrentMapId: () => string | null; // Function to get current map ID
+  private showAllMaps: boolean; // Whether to show all maps regardless of visited status
 
   // Rendering settings
   private readonly BOX_SIZE = 80;
@@ -17,18 +18,22 @@ export class WorldViewRenderer {
   private readonly CURRENT_MAP_COLOR = 0x00ff00; // Green for current map
   private readonly OTHER_MAP_COLOR = 0x0066ff; // Blue for other maps
   private readonly CONNECTION_COLOR = 0xffffff; // White for connections
+  private readonly EXIT_INDICATOR_COLOR = 0xff0000; // Red for exit indicators
+  private readonly EXIT_INDICATOR_THICKNESS = 4; // Line thickness in pixels
 
   constructor(
     scene: Phaser.Scene,
     worldData: WorldData | null,
     visitedMaps?: Set<string>,
-    getCurrentMapId?: () => string | null
+    getCurrentMapId?: () => string | null,
+    showAllMaps: boolean = false
   ) {
     this.scene = scene;
     this.worldData = worldData;
     this.visitedMaps = visitedMaps || new Set<string>();
     this.getCurrentMapId =
       getCurrentMapId || (() => worldData?.startingMap || null);
+    this.showAllMaps = showAllMaps;
     // Lazy initialize layoutSystem when worldData is available
   }
 
@@ -147,8 +152,8 @@ export class WorldViewRenderer {
     if (!this.layoutResult || !this.worldData) return;
 
     Object.keys(this.layoutResult.mapPositions).forEach((mapId) => {
-      // Only show connections from visited maps
-      if (!this.visitedMaps.has(mapId)) return;
+      // Only show connections from visited maps (unless showAllMaps is true)
+      if (!this.showAllMaps && !this.visitedMaps.has(mapId)) return;
 
       const mapData = this.worldData!.maps[mapId];
       if (!mapData) return;
@@ -160,8 +165,8 @@ export class WorldViewRenderer {
       // Draw connections for each exit
       mapData.exits.forEach((exit) => {
         const targetMapId = exit.targetMapId;
-        // Only show connection if target map has also been visited
-        if (!this.visitedMaps.has(targetMapId)) return;
+        // Only show connection if target map has also been visited (unless showAllMaps is true)
+        if (!this.showAllMaps && !this.visitedMaps.has(targetMapId)) return;
 
         const targetPos = this.layoutResult!.mapPositions[targetMapId];
 
@@ -262,8 +267,8 @@ export class WorldViewRenderer {
     if (!this.layoutResult || !this.worldData) return;
 
     Object.keys(this.layoutResult.mapPositions).forEach((mapId) => {
-      // Only show visited maps
-      if (!this.visitedMaps.has(mapId)) return;
+      // Only show visited maps (unless showAllMaps is true)
+      if (!this.showAllMaps && !this.visitedMaps.has(mapId)) return;
 
       const mapData = this.worldData!.maps[mapId];
       if (!mapData) return;
@@ -316,6 +321,79 @@ export class WorldViewRenderer {
 
       this.worldViewGroup!.add(box);
       this.worldViewGroup!.add(nameText);
+
+      // Render exit indicators on the box edges
+      this.renderExitIndicators(mapData, boxX, boxY, boxWidth, boxHeight);
+    });
+  }
+
+  /**
+   * Render exit indicators on map boxes
+   */
+  private renderExitIndicators(
+    mapData: WorldMapData,
+    boxX: number,
+    boxY: number,
+    boxWidth: number,
+    boxHeight: number
+  ): void {
+    if (!mapData.exits || mapData.exits.length === 0) return;
+
+    mapData.exits.forEach((exit) => {
+      const graphics = this.scene.add.graphics();
+      graphics.lineStyle(
+        this.EXIT_INDICATOR_THICKNESS,
+        this.EXIT_INDICATOR_COLOR,
+        1
+      );
+      graphics.setScrollFactor(0);
+      graphics.setDepth(1004);
+
+      let startX: number, startY: number, endX: number, endY: number;
+
+      switch (exit.edge) {
+        case "left":
+          // Vertical line on left edge
+          startX = boxX;
+          endX = boxX;
+          startY = boxY + exit.edgeStart * boxHeight;
+          endY = boxY + exit.edgeEnd * boxHeight;
+          break;
+
+        case "right":
+          // Vertical line on right edge
+          startX = boxX + boxWidth;
+          endX = boxX + boxWidth;
+          startY = boxY + exit.edgeStart * boxHeight;
+          endY = boxY + exit.edgeEnd * boxHeight;
+          break;
+
+        case "top":
+          // Horizontal line on top edge
+          startX = boxX + exit.edgeStart * boxWidth;
+          endX = boxX + exit.edgeEnd * boxWidth;
+          startY = boxY;
+          endY = boxY;
+          break;
+
+        case "bottom":
+          // Horizontal line on bottom edge
+          startX = boxX + exit.edgeStart * boxWidth;
+          endX = boxX + exit.edgeEnd * boxWidth;
+          startY = boxY + boxHeight;
+          endY = boxY + boxHeight;
+          break;
+
+        default:
+          return;
+      }
+
+      graphics.beginPath();
+      graphics.moveTo(startX, startY);
+      graphics.lineTo(endX, endY);
+      graphics.strokePath();
+
+      this.worldViewGroup!.add(graphics);
     });
   }
 

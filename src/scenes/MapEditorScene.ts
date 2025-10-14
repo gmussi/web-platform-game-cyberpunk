@@ -179,12 +179,13 @@ export class MapEditorScene extends Phaser.Scene {
     // Initialize world system
     this.worldSystem = new WorldSystem(this);
 
-    // Initialize world view renderer
+    // Initialize world view renderer (show all maps in editor)
     this.worldViewRenderer = new WorldViewRenderer(
       this,
       this.worldSystem.worldData,
       this.worldSystem.visitedMaps,
-      () => this.worldSystem.currentMapId
+      () => this.worldSystem.currentMapId,
+      true // showAllMaps = true for map editor
     );
 
     // Set world bounds (adjusted for viewport)
