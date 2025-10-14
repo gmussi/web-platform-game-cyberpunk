@@ -319,6 +319,16 @@ export class MapEditorScene extends Phaser.Scene {
     // Ignore tilemap sprites from UI camera
     this.ignoreTilemapSprites();
 
+    // Ignore grid graphics from UI camera
+    if (this.gridGraphics) {
+      (this.uiCamera as any).ignore(this.gridGraphics);
+    }
+
+    // Ignore background image from UI camera
+    if (this.backgroundImage) {
+      (this.uiCamera as any).ignore(this.backgroundImage);
+    }
+
     console.log(
       `🎥 Camera setup: Main camera ignoring ${uiElements.length} UI elements, UI camera ignoring ${mapElements.length} map elements`
     );
@@ -1902,6 +1912,16 @@ export class MapEditorScene extends Phaser.Scene {
     // Update grid
     this.gridGraphics.destroy();
     this.createGridOverlay();
+
+    // Make sure UI camera ignores the new grid and background
+    if (this.uiCamera) {
+      if (this.gridGraphics) {
+        (this.uiCamera as any).ignore(this.gridGraphics);
+      }
+      if (this.backgroundImage) {
+        (this.uiCamera as any).ignore(this.backgroundImage);
+      }
+    }
 
     // Update map data world dimensions
     if (this.mapData) {
