@@ -384,6 +384,30 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     southwest: null,
     northwest: false,
   },
+  // 4,7: N, E, SE, S, SW, W
+  {
+    tileIndex: 30,
+    north: true,
+    south: true,
+    east: true,
+    west: true,
+    northeast: false,
+    southeast: true,
+    southwest: true,
+    northwest: false,
+  },
+  // 4,8: N, E, NE, S, NW, W
+  {
+    tileIndex: 31,
+    north: true,
+    south: true,
+    east: true,
+    west: true,
+    northeast: true,
+    southeast: false,
+    southwest: false,
+    northwest: true,
+  },
 
   // Row 7
   // 7,1: SW?, S, E, NE?
