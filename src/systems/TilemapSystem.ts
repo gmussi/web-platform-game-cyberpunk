@@ -89,28 +89,20 @@ export class TilemapSystem {
     if (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight) {
       this.tiles[y][x] = tileType;
 
-      // If autotiling is enabled and this is a solid tile, use autotile system
-      if (
-        tileType === TilemapSystem.TILE_TYPES.SOLID &&
-        this.autoTileSystem?.isEnabled()
-      ) {
-        // Don't store manual sprite index when autotiling is enabled
-        // The autotile system will calculate it
+      // Handle sprite index storage based on autotiling state
+      if (tileType === TilemapSystem.TILE_TYPES.SOLID) {
         if (!this.tileSpriteIndices) {
           this.tileSpriteIndices = [];
         }
         this.tileSpriteIndices[y] = this.tileSpriteIndices[y] || [];
-        this.tileSpriteIndices[y][x] = null; // Clear manual override
-      } else if (
-        tileType === TilemapSystem.TILE_TYPES.SOLID &&
-        spriteIndex !== null
-      ) {
-        // Store sprite index for solid tiles (manual mode)
-        if (!this.tileSpriteIndices) {
-          this.tileSpriteIndices = [];
+
+        if (this.autoTileSystem?.isEnabled()) {
+          // Autotiling enabled: clear manual sprite index, let autotile system handle it
+          this.tileSpriteIndices[y][x] = null;
+        } else {
+          // Autotiling disabled: store the provided sprite index (manual mode)
+          this.tileSpriteIndices[y][x] = spriteIndex;
         }
-        this.tileSpriteIndices[y] = this.tileSpriteIndices[y] || [];
-        this.tileSpriteIndices[y][x] = spriteIndex;
       }
 
       // Update this tile and all neighbors
@@ -178,7 +170,7 @@ export class TilemapSystem {
     if (tileType !== TilemapSystem.TILE_TYPES.EMPTY) {
       let spriteIndex: number | null = null;
 
-      // Use autotile system if enabled
+      // Use autotile system if enabled, otherwise use stored sprite index
       if (this.autoTileSystem?.isEnabled()) {
         spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
       } else {
@@ -320,6 +312,14 @@ export class TilemapSystem {
             this.tileSpriteIndices[y][x] !== undefined
           ) {
             spriteIndex = this.tileSpriteIndices[y][x];
+          }
+
+          // If autotiling is disabled and we have a stored sprite index, use it
+          if (!this.autoTileSystem?.isEnabled() && spriteIndex !== null) {
+            // Use the stored sprite index for manual tiles
+          } else if (this.autoTileSystem?.isEnabled()) {
+            // Use autotile system to calculate sprite index
+            spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
           }
 
           // Determine tile image based on context (fallback if no sprite index)

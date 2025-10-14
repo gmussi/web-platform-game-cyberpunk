@@ -1057,8 +1057,8 @@ export class MapEditorScene extends Phaser.Scene {
       );
     }
 
-    // Redraw all tiles to reflect autotile state change
-    this.tilemapSystem.redrawVisualLayer();
+    // Don't redraw existing tiles - autotiling toggle only affects new tile placement
+    // Existing tiles should remain unchanged
   }
 
   private createMapButtons(x: number, y: number, panelWidth: number): number {
@@ -1195,8 +1195,8 @@ export class MapEditorScene extends Phaser.Scene {
         newState ? "#00aa00" : "#aa0000"
       );
 
-      // Redraw all tiles to reflect autotile state change
-      this.tilemapSystem.redrawVisualLayer();
+      // Don't redraw existing tiles - autotiling toggle only affects new tile placement
+      // Existing tiles should remain unchanged
     });
 
     return y + 25 + 10;

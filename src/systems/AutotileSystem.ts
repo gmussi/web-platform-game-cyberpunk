@@ -49,7 +49,15 @@ export class AutotileSystem {
   // Calculate the correct tile index for a position based on its neighbors
   public calculateTileIndex(x: number, y: number): number {
     if (!this.enabled) {
-      return 0; // Return default tile if autotiling is disabled
+      // When autotiling is disabled, return the current tile's sprite index
+      // This preserves manually placed tiles
+      const currentTile = this.getTileCallback(x, y);
+      if (currentTile === 0) {
+        return 0; // Empty tile
+      }
+      // For solid tiles, we need to get the stored sprite index
+      // This will be handled by the TilemapSystem when it calls this method
+      return 0; // Will be overridden by TilemapSystem with stored sprite index
     }
 
     // Check if the current tile is solid (only solid tiles get autotiled)
