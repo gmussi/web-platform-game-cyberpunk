@@ -410,6 +410,18 @@ export const AUTOTILE_RULES: AutotileRule[] = [
     southwest: false,
     northwest: null,
   },
+  // 7,3: NW?, W, S, SE?
+  {
+    tileIndex: 50,
+    north: true,
+    south: true,
+    east: true,
+    west: true,
+    northeast: false,
+    southeast: false,
+    southwest: false,
+    northwest: false,
+  },
 
   // Row 8
   // 8,1: NW?, N, E, SE?
