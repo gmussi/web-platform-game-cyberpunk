@@ -3,8 +3,8 @@ import { WorldLayoutSystem, LayoutResult } from "./WorldLayoutSystem";
 
 export class WorldViewRenderer {
   private scene: Phaser.Scene;
-  private worldData: WorldData;
-  private layoutSystem: WorldLayoutSystem;
+  private worldData: WorldData | null;
+  private layoutSystem: WorldLayoutSystem | null = null;
   private layoutResult: LayoutResult | null = null;
   private worldViewGroup: Phaser.GameObjects.Group | null = null;
   private isVisible: boolean = false;
@@ -16,10 +16,10 @@ export class WorldViewRenderer {
   private readonly OTHER_MAP_COLOR = 0x0066ff; // Blue for other maps
   private readonly CONNECTION_COLOR = 0xffffff; // White for connections
 
-  constructor(scene: Phaser.Scene, worldData: WorldData) {
+  constructor(scene: Phaser.Scene, worldData: WorldData | null) {
     this.scene = scene;
     this.worldData = worldData;
-    this.layoutSystem = new WorldLayoutSystem(worldData);
+    // Lazy initialize layoutSystem when worldData is available
   }
 
   /**
@@ -27,6 +27,17 @@ export class WorldViewRenderer {
    */
   public show(): void {
     if (this.isVisible) return;
+
+    // Check if world data is available
+    if (!this.worldData) {
+      console.warn("World data not yet loaded. Cannot show world view.");
+      return;
+    }
+
+    // Lazy initialize layout system if needed
+    if (!this.layoutSystem) {
+      this.layoutSystem = new WorldLayoutSystem(this.worldData);
+    }
 
     this.calculateLayout();
     this.createWorldView();
@@ -71,6 +82,10 @@ export class WorldViewRenderer {
    * Calculate the layout for all maps
    */
   private calculateLayout(): void {
+    if (!this.layoutSystem) {
+      console.error("Layout system not initialized");
+      return;
+    }
     this.layoutResult = this.layoutSystem.calculateLayout();
   }
 
@@ -307,5 +322,15 @@ export class WorldViewRenderer {
    */
   public getIsVisible(): boolean {
     return this.isVisible;
+  }
+
+  /**
+   * Update the world data reference (call after world data is loaded)
+   */
+  public setWorldData(worldData: WorldData): void {
+    this.worldData = worldData;
+    // Reset layout system to pick up new data
+    this.layoutSystem = null;
+    this.layoutResult = null;
   }
 }

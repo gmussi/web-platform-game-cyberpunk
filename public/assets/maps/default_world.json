@@ -6,8 +6,8 @@
     "author": "Test System",
     "created": "2025-01-27T00:00:00.000Z"
   },
-  "startingMap": "room_2",
-  "startingSpawn": "spawn_2",
+  "startingMap": "room_1",
+  "startingSpawn": "spawn_1",
   "maps": {
     "room_1": {
       "id": "room_1",

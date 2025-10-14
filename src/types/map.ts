@@ -127,6 +127,7 @@ export interface WorldData {
     created: string;
   };
   startingMap: string;
+  startingSpawn: string; // ID of the spawn point to use
   startingPosition?: { x: number; y: number }; // Optional starting position
   maps: Record<string, WorldMapData>;
 }

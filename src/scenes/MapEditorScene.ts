@@ -236,6 +236,9 @@ export class MapEditorScene extends Phaser.Scene {
           return;
         }
 
+        // Update world view renderer with loaded world data
+        this.worldViewRenderer.setWorldData(worldData);
+
         const currentMap = this.worldSystem.getCurrentMap();
         if (currentMap) {
           this.mapData = currentMap;
@@ -1806,6 +1809,9 @@ export class MapEditorScene extends Phaser.Scene {
         this.worldSystem
           .loadWorld(file)
           .then((worldData) => {
+            // Update world view renderer with loaded world data
+            this.worldViewRenderer.setWorldData(worldData);
+
             const currentMap = this.worldSystem.getCurrentMap();
             if (currentMap) {
               this.mapData = currentMap;

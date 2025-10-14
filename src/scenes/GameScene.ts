@@ -294,6 +294,9 @@ export class GameScene extends Phaser.Scene {
           worldData.metadata?.name
         );
 
+        // Update world view renderer with loaded world data
+        this.worldViewRenderer.setWorldData(worldData);
+
         // Load the starting map
         const currentMap = this.worldSystem.getCurrentMap();
         if (!currentMap) {
