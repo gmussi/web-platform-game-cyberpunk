@@ -109,6 +109,7 @@ export class MapEditorScene extends Phaser.Scene {
   public mouseIndicator!: Phaser.GameObjects.Circle;
   public cursors!: any;
   public wasdKeys!: any;
+  public toggleKey!: Phaser.Input.Keyboard.Key;
   public cameraSpeed: number = 10;
   public isDragging: boolean = false;
 
@@ -1661,6 +1662,14 @@ export class MapEditorScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasdKeys = this.input.keyboard.addKeys("W,S,A,D");
 
+    // Toggle key (Tab) and prevent browser focus change
+    this.toggleKey = this.input.keyboard.addKey(
+      (Phaser.Input.Keyboard as any).KeyCodes.TAB
+    );
+    this.input.keyboard.on("keydown-TAB", (event: KeyboardEvent) => {
+      event.preventDefault();
+    });
+
     // Add T key handler for tile selector
     this.input.keyboard.on("keydown-T", () => {
       this.openSpritePicker();
@@ -2263,31 +2272,31 @@ export class MapEditorScene extends Phaser.Scene {
       const panStep = 20; // pixels per frame; independent from tilemap camera speed
       let dx = 0;
       let dy = 0;
-      if (this.cursors.left.isDown || this.wasdKeys.A.isDown) dx += panStep;
-      if (this.cursors.right.isDown || this.wasdKeys.D.isDown) dx -= panStep;
-      if (this.cursors.up.isDown || this.wasdKeys.W.isDown) dy += panStep;
-      if (this.cursors.down.isDown || this.wasdKeys.S.isDown) dy -= panStep;
+      if (this.cursors.left.isDown) dx += panStep;
+      if (this.cursors.right.isDown) dx -= panStep;
+      if (this.cursors.up.isDown) dy += panStep;
+      if (this.cursors.down.isDown) dy -= panStep;
       if (dx !== 0 || dy !== 0) {
         (this.worldViewRenderer as any).panBy(dx, dy);
       }
     } else {
-      // Camera movement
-      if (this.cursors.left.isDown || this.wasdKeys.A.isDown) {
+      // Camera movement (arrows only)
+      if (this.cursors.left.isDown) {
         this.cameras.main.scrollX -= this.cameraSpeed;
       }
-      if (this.cursors.right.isDown || this.wasdKeys.D.isDown) {
+      if (this.cursors.right.isDown) {
         this.cameras.main.scrollX += this.cameraSpeed;
       }
-      if (this.cursors.up.isDown || this.wasdKeys.W.isDown) {
+      if (this.cursors.up.isDown) {
         this.cameras.main.scrollY -= this.cameraSpeed;
       }
-      if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
+      if (this.cursors.down.isDown) {
         this.cameras.main.scrollY += this.cameraSpeed;
       }
     }
 
-    // Handle world view toggle
-    if (Phaser.Input.Keyboard.JustDown(this.wasdKeys.W)) {
+    // Handle world view toggle (Tab)
+    if (Phaser.Input.Keyboard.JustDown(this.toggleKey)) {
       this.worldViewRenderer.toggle();
     }
 
