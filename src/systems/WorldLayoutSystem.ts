@@ -104,11 +104,11 @@ export class WorldLayoutSystem {
         own.height,
         Math.max(leftStack, rightStack)
       );
+      // Width should mirror height logic: do not add top and bottom stacks together.
+      // Taking the max avoids unnecessarily wide parents when there are exits on both edges.
       const requiredWidth = Math.max(
         own.width,
-        widthsTop.length > 0 && widthsBottom.length > 0
-          ? topStack + bottomStack
-          : Math.max(topStack, bottomStack)
+        Math.max(topStack, bottomStack)
       );
 
       const size = { width: requiredWidth, height: requiredHeight };
