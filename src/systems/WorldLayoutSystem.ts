@@ -65,8 +65,17 @@ export class WorldLayoutSystem {
       if (visiting.has(mapId)) return baseSizes[mapId]; // break cycles if any
       visiting.add(mapId);
 
-      const own = baseSizes[mapId] || { width: 1, height: 1 };
       const exits = getExitsByEdge(mapId);
+      const exitCount =
+        (exits.left?.length || 0) +
+        (exits.right?.length || 0) +
+        (exits.top?.length || 0) +
+        (exits.bottom?.length || 0);
+      // Leaf-like rooms (0 or 1 exits) stay minimal; only parents expand
+      const own =
+        exitCount <= 1
+          ? { width: 1, height: 1 }
+          : baseSizes[mapId] || { width: 1, height: 1 };
 
       // Sum of stacks along each edge using descendant sizes
       const sumHeights = (list: ExitZone[]) =>
