@@ -386,6 +386,7 @@ export class WorldViewRenderer {
       boxHeight: number;
     }> = [];
 
+    const debugDoorLines: Array<any> = [];
     Object.keys(this.layoutResult.mapPositions).forEach((mapId) => {
       // Only show visited maps (unless showAllMaps is true)
       if (!this.showAllMaps && !this.visitedMaps.has(mapId)) return;
@@ -468,7 +469,18 @@ export class WorldViewRenderer {
       this.worldViewGroup!.add(nameText);
 
       // Render exit indicators on the box edges
-      this.renderExitIndicators(mapData, boxX, boxY, boxWidth, boxHeight);
+      this.renderExitIndicators(
+        mapData,
+        boxX,
+        boxY,
+        boxWidth,
+        boxHeight,
+        startX,
+        startY,
+        boxSize,
+        spacing,
+        debugDoorLines
+      );
     });
 
     // Emit a consolidated JSON snapshot for debugging the layout
@@ -476,78 +488,173 @@ export class WorldViewRenderer {
       // Use a distinctive prefix for easy grepping in console
       console.log(
         "🧭 WorldView layout boxes JSON:",
-        JSON.stringify(debugLayout)
+        JSON.stringify({ boxes: debugLayout, doors: debugDoorLines })
       );
     } catch (e) {
       // no-op if JSON serialization fails
     }
   }
 
-  /**
-   * Render exit indicators on map boxes
-   */
   private renderExitIndicators(
     mapData: WorldMapData,
     boxX: number,
     boxY: number,
     boxWidth: number,
-    boxHeight: number
+    boxHeight: number,
+    startX?: number,
+    startY?: number,
+    boxSize?: number,
+    spacing?: number,
+    debugDoorLines?: Array<any>
   ): void {
     if (!mapData.exits || mapData.exits.length === 0) return;
 
-    mapData.exits.forEach((exit) => {
-      const graphics = this.scene.add.graphics();
-      graphics.lineStyle(
-        this.EXIT_INDICATOR_THICKNESS,
-        this.EXIT_INDICATOR_COLOR,
-        1
-      );
-      graphics.setScrollFactor(0);
-      graphics.setDepth(1004);
+    const pos = (this.layoutResult as any)?.mapPositions;
+    const sizes = (this.layoutResult as any)?.mapSizes;
+    const sBox = boxSize ?? this.BOX_SIZE * this.zoomScale;
+    const sSpace = spacing ?? this.BOX_SPACING * this.zoomScale;
+    const originX = startX ?? 0;
+    const originY = startY ?? 0;
 
-      let startX: number, startY: number, endX: number, endY: number;
+    const exitsByEdge: Record<string, typeof mapData.exits> = {
+      left: [],
+      right: [],
+      top: [],
+      bottom: [],
+    } as any;
+    (mapData.exits || []).forEach((e) => exitsByEdge[e.edge]?.push(e));
 
-      switch (exit.edge) {
-        case "left":
-          // Vertical line on left edge
-          startX = boxX;
-          endX = boxX;
-          startY = boxY + exit.edgeStart * boxHeight;
-          endY = boxY + exit.edgeEnd * boxHeight;
-          break;
+    const getNeighborRect = (
+      neighborId: string
+    ): { x: number; y: number; w: number; h: number } | null => {
+      const p = pos?.[neighborId];
+      const s = sizes?.[neighborId];
+      if (!p || !s) return null;
+      const nbX = originX + p.x * (sBox + sSpace);
+      const nbY = originY + p.y * (sBox + sSpace);
+      const nbW = sBox * s.width + sSpace * Math.max(0, s.width - 1);
+      const nbH = sBox * s.height + sSpace * Math.max(0, s.height - 1);
+      return { x: nbX, y: nbY, w: nbW, h: nbH };
+    };
 
-        case "right":
-          // Vertical line on right edge
-          startX = boxX + boxWidth;
-          endX = boxX + boxWidth;
-          startY = boxY + exit.edgeStart * boxHeight;
-          endY = boxY + exit.edgeEnd * boxHeight;
-          break;
+    const drawEdge = (edge: "left" | "right" | "top" | "bottom") => {
+      const list = exitsByEdge[edge] || [];
+      if (list.length === 0) return;
 
-        case "top":
-          // Horizontal line on top edge
-          startX = boxX + exit.edgeStart * boxWidth;
-          endX = boxX + exit.edgeEnd * boxWidth;
-          startY = boxY;
-          endY = boxY;
-          break;
+      list.forEach((exit, idx) => {
+        const graphics = this.scene.add.graphics();
+        graphics.lineStyle(
+          this.EXIT_INDICATOR_THICKNESS,
+          this.EXIT_INDICATOR_COLOR,
+          1
+        );
+        graphics.setScrollFactor(0);
+        graphics.setDepth(1004);
 
-        case "bottom":
-          // Horizontal line on bottom edge
-          startX = boxX + exit.edgeStart * boxWidth;
-          endX = boxX + exit.edgeEnd * boxWidth;
-          startY = boxY + boxHeight;
-          endY = boxY + boxHeight;
-          break;
+        let x1: number, y1: number, x2: number, y2: number;
+        let debugAnchor: any = null;
 
-        default:
-          return;
-      }
+        if (edge === "left" || edge === "right") {
+          const nb = getNeighborRect(exit.targetMapId);
+          let yMid: number;
+          if (nb) {
+            const overlapStart = Math.max(boxY, nb.y);
+            const overlapEnd = Math.min(boxY + boxHeight, nb.y + nb.h);
+            if (overlapEnd > overlapStart) {
+              yMid = (overlapStart + overlapEnd) / 2;
+              debugAnchor = {
+                strategy: "overlap",
+                range: [overlapStart, overlapEnd],
+                value: yMid,
+              };
+            } else {
+              const center = nb.y + nb.h / 2;
+              yMid = Math.min(
+                Math.max(center, boxY + 10),
+                boxY + boxHeight - 10
+              );
+              debugAnchor = {
+                strategy: "neighbor-clamped",
+                center,
+                value: yMid,
+              };
+            }
+          } else {
+            yMid = boxY + (boxHeight * (idx + 1)) / (list.length + 1);
+            debugAnchor = { strategy: "even", value: yMid };
+          }
+          if (edge === "left") {
+            x1 = boxX;
+            x2 = boxX;
+            y1 = yMid - 10;
+            y2 = yMid + 10;
+          } else {
+            x1 = boxX + boxWidth;
+            x2 = boxX + boxWidth;
+            y1 = yMid - 10;
+            y2 = yMid + 10;
+          }
+        } else {
+          const nb = getNeighborRect(exit.targetMapId);
+          let xMid: number;
+          if (nb) {
+            const overlapStart = Math.max(boxX, nb.x);
+            const overlapEnd = Math.min(boxX + boxWidth, nb.x + nb.w);
+            if (overlapEnd > overlapStart) {
+              xMid = (overlapStart + overlapEnd) / 2;
+              debugAnchor = {
+                strategy: "overlap",
+                range: [overlapStart, overlapEnd],
+                value: xMid,
+              };
+            } else {
+              const center = nb.x + nb.w / 2;
+              xMid = Math.min(
+                Math.max(center, boxX + 10),
+                boxX + boxWidth - 10
+              );
+              debugAnchor = {
+                strategy: "neighbor-clamped",
+                center,
+                value: xMid,
+              };
+            }
+          } else {
+            xMid = boxX + (boxWidth * (idx + 1)) / (list.length + 1);
+            debugAnchor = { strategy: "even", value: xMid };
+          }
+          if (edge === "top") {
+            y1 = boxY;
+            y2 = boxY;
+            x1 = xMid - 10;
+            x2 = xMid + 10;
+          } else {
+            y1 = boxY + boxHeight;
+            y2 = boxY + boxHeight;
+            x1 = xMid - 10;
+            x2 = xMid + 10;
+          }
+        }
 
-      (graphics as any).lineBetween(startX, startY, endX, endY);
+        (graphics as any).lineBetween(x1, y1, x2, y2);
+        this.worldViewGroup!.add(graphics);
 
-      this.worldViewGroup!.add(graphics);
-    });
+        debugDoorLines &&
+          debugDoorLines.push({
+            mapId: mapData.id,
+            edge,
+            exitId: exit.id,
+            targetMapId: exit.targetMapId,
+            anchor: debugAnchor,
+            line: { x1, y1, x2, y2 },
+          });
+      });
+    };
+
+    drawEdge("left");
+    drawEdge("right");
+    drawEdge("top");
+    drawEdge("bottom");
   }
 
   /**
