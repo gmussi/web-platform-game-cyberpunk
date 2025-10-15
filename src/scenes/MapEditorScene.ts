@@ -81,7 +81,7 @@ export class MapEditorScene extends Phaser.Scene {
   public worldViewRenderer!: WorldViewRenderer;
   public tilemapSystem!: TilemapSystem;
   public mapData!: WorldMapData;
-  public backgroundImage!: Phaser.GameObjects.Image;
+  public backgroundImage!: Phaser.GameObjects.GameObject;
   public gridGraphics!: Phaser.GameObjects.Graphics;
   public gridVisible: boolean = true;
   public isLoadingCustomMap: boolean = false;
@@ -383,31 +383,20 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    const backgroundKeys = ["background1", "background2", "background3"];
-    const selectedBackground = backgroundKeys[0]; // Use first background for editor
+    const worldWidth = this.tilemapSystem
+      ? this.tilemapSystem.getWorldWidth()
+      : 4100;
+    const worldHeight = this.tilemapSystem
+      ? this.tilemapSystem.getWorldHeight()
+      : 800;
 
-    const worldWidth = 4100;
-    const worldHeight = 800;
-    const imageWidth = this.textures.get(selectedBackground).source[0].width;
-    const imageHeight = this.textures.get(selectedBackground).source[0].height;
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 1);
+    bg.fillRect(0, 0, worldWidth as number, worldHeight as number);
+    bg.setScrollFactor(1);
+    bg.setDepth(-10);
 
-    const scaleX = worldWidth / imageWidth;
-    const scaleY = worldHeight / imageHeight;
-    const scale = Math.max(scaleX, scaleY);
-
-    // Background images have empty space in first 6 columns (at 32px per tile = 192px)
-    // Shift the background left to hide the empty space
-    const emptySpaceWidth = 192; // 6 tiles * 32px
-    const offsetX = -(emptySpaceWidth * scale) / 2;
-
-    this.backgroundImage = this.add.image(
-      (imageWidth * scale) / 2 + offsetX,
-      worldHeight / 2,
-      selectedBackground
-    );
-    this.backgroundImage.setScrollFactor(0.3);
-    this.backgroundImage.setDepth(-10);
-    this.backgroundImage.setScale(scale);
+    this.backgroundImage = bg as unknown as Phaser.GameObjects.GameObject;
   }
 
   private createGridOverlay(): void {
@@ -2143,6 +2132,12 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Create new map in world
     const newMap = this.worldSystem.createNewMap(mapName);
+
+    // Set initial size to 9x9 tiles
+    const tileSize = this.tilemapSystem?.tileSize ?? 32;
+    newMap.world.tileSize = tileSize;
+    newMap.world.width = 9 * tileSize;
+    newMap.world.height = 9 * tileSize;
 
     console.log(`✅ Created new map: ${newMap.id} (${mapName})`);
 

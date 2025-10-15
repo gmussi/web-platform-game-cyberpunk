@@ -1,10 +1,10 @@
 {
   "version": "2.0",
   "metadata": {
-    "name": "Test World - 2 Rooms",
-    "description": "Simple test world with 2 rooms for edge-based exit testing",
-    "author": "Test System",
-    "created": "2025-01-27T00:00:00.000Z"
+    "name": "Requested Multi-Room World",
+    "description": "World with rooms 1-9 and 3-tile exits",
+    "author": "Map Editor",
+    "created": "2025-10-15T00:00:00.000Z"
   },
   "startingMap": "room_1",
   "startingSpawn": "spawn_1",
@@ -14,43 +14,34 @@
       "version": "2.0",
       "metadata": {
         "name": "Room 1",
-        "description": "First test room with right exit",
-        "created": "2025-01-27T00:00:00.000Z",
-        "author": "Test System"
+        "description": "Spawn room, right exit to Room 2",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
       },
       "world": {
-        "width": 320,
-        "height": 320,
+        "width": 288,
+        "height": 288,
         "tileSize": 32
       },
-      "spawnPoints": [
-        {
-          "id": "spawn_1",
-          "x": 160,
-          "y": 160
-        }
-      ],
+      "spawnPoints": [{ "id": "spawn_1", "x": 144, "y": 144 }],
       "exits": [
         {
-          "id": "exit_right_1",
-          "x": 288,
-          "y": 128,
+          "id": "room1_exit_right_to_room2",
+          "x": 256,
+          "y": 96,
           "width": 32,
           "height": 96,
           "edge": "right",
           "edgePosition": 0.5,
-          "edgeStart": 0.4,
-          "edgeEnd": 0.6,
-          "tileStart": 4,
-          "tileEnd": 6,
+          "edgeStart": 0.3333333333,
+          "edgeEnd": 0.6666666667,
+          "tileStart": 3,
+          "tileEnd": 5,
           "targetMapId": "room_2"
         }
       ],
       "player": {
-        "startPosition": {
-          "x": 160,
-          "y": 160
-        },
+        "startPosition": { "x": 144, "y": 144 },
         "character": "A"
       },
       "portal": null,
@@ -59,298 +50,522 @@
       "collectibles": [],
       "checkpoints": [],
       "tiles": [
-        [
-          { "type": 1, "spriteIndex": 4 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 5 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 101, "spriteIndex": null }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 101, "spriteIndex": null }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 101, "spriteIndex": null }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 12 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 13 }
-        ]
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
       ]
     },
+
     "room_2": {
       "id": "room_2",
       "version": "2.0",
       "metadata": {
         "name": "Room 2",
-        "description": "Second test room with left exit",
-        "created": "2025-01-27T00:00:00.000Z",
-        "author": "Test System"
+        "description": "Bottom exits to Rooms 3 and 4, right to 5, top to 6",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
       },
       "world": {
-        "width": 320,
-        "height": 320,
+        "width": 288,
+        "height": 576,
         "tileSize": 32
       },
-      "spawnPoints": [
-        {
-          "id": "spawn_1",
-          "x": 160,
-          "y": 160
-        }
-      ],
+      "spawnPoints": [],
       "exits": [
         {
-          "id": "exit_left_1",
+          "id": "room2_bottom_to_room3",
+          "x": 32,
+          "y": 544,
+          "width": 96,
+          "height": 32,
+          "edge": "bottom",
+          "edgePosition": 0.2777777778,
+          "edgeStart": 0.1111111111,
+          "edgeEnd": 0.4444444444,
+          "tileStart": 1,
+          "tileEnd": 3,
+          "targetMapId": "room_3"
+        },
+        {
+          "id": "room2_bottom_to_room4",
+          "x": 160,
+          "y": 544,
+          "width": 96,
+          "height": 32,
+          "edge": "bottom",
+          "edgePosition": 0.7222222222,
+          "edgeStart": 0.5555555556,
+          "edgeEnd": 0.8888888889,
+          "tileStart": 5,
+          "tileEnd": 7,
+          "targetMapId": "room_4"
+        },
+        {
+          "id": "room2_right_to_room5",
+          "x": 256,
+          "y": 256,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5277777778,
+          "edgeStart": 0.4444444444,
+          "edgeEnd": 0.6111111111,
+          "tileStart": 8,
+          "tileEnd": 10,
+          "targetMapId": "room_5"
+        },
+        {
+          "id": "room2_top_to_room6",
+          "x": 96,
+          "y": 0,
+          "width": 96,
+          "height": 32,
+          "edge": "top",
+          "edgePosition": 0.5,
+          "edgeStart": 0.3333333333,
+          "edgeEnd": 0.6666666667,
+          "tileStart": 3,
+          "tileEnd": 5,
+          "targetMapId": "room_6"
+        },
+        {
+          "id": "room2_left_to_room1",
           "x": 0,
-          "y": 128,
+          "y": 256,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5277777778,
+          "edgeStart": 0.4444444444,
+          "edgeEnd": 0.6111111111,
+          "tileStart": 8,
+          "tileEnd": 10,
+          "targetMapId": "room_1"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 102, 102, 102, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 101],
+        [100, 0, 0, 0, 0, 0, 0, 0, 101],
+        [100, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 103, 103, 103, 1, 103, 103, 103, 1]
+      ]
+    },
+
+    "room_3": {
+      "id": "room_3",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 3",
+        "description": "Top exit to Room 2",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 288,
+        "height": 288,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room3_top_to_room2",
+          "x": 96,
+          "y": 0,
+          "width": 96,
+          "height": 32,
+          "edge": "top",
+          "edgePosition": 0.5,
+          "edgeStart": 0.3333333333,
+          "edgeEnd": 0.6666666667,
+          "tileStart": 3,
+          "tileEnd": 5,
+          "targetMapId": "room_2"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 102, 102, 102, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+
+    "room_4": {
+      "id": "room_4",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 4",
+        "description": "Top exit to Room 2, right exit to Room 7",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 288,
+        "height": 288,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room4_top_to_room2",
+          "x": 96,
+          "y": 0,
+          "width": 96,
+          "height": 32,
+          "edge": "top",
+          "edgePosition": 0.5,
+          "edgeStart": 0.3333333333,
+          "edgeEnd": 0.6666666667,
+          "tileStart": 3,
+          "tileEnd": 5,
+          "targetMapId": "room_2"
+        },
+        {
+          "id": "room4_right_to_room7",
+          "x": 256,
+          "y": 96,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.3333333333,
+          "edgeEnd": 0.6666666667,
+          "tileStart": 3,
+          "tileEnd": 5,
+          "targetMapId": "room_7"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 102, 102, 102, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+
+    "room_7": {
+      "id": "room_7",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 7",
+        "description": "Left exit to Room 4",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 288,
+        "height": 288,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room7_left_to_room4",
+          "x": 0,
+          "y": 96,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.3333333333,
+          "edgeEnd": 0.6666666667,
+          "tileStart": 3,
+          "tileEnd": 5,
+          "targetMapId": "room_4"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+
+    "room_5": {
+      "id": "room_5",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 5",
+        "description": "Left exit to Room 2",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 480,
+        "height": 480,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room5_left_to_room2",
+          "x": 0,
+          "y": 192,
           "width": 32,
           "height": 96,
           "edge": "left",
           "edgePosition": 0.5,
           "edgeStart": 0.4,
           "edgeEnd": 0.6,
-          "tileStart": 4,
-          "tileEnd": 6,
-          "targetMapId": "room_1"
+          "tileStart": 6,
+          "tileEnd": 8,
+          "targetMapId": "room_2"
         }
       ],
-      "player": {
-        "startPosition": {
-          "x": 160,
-          "y": 160
-        },
-        "character": "A"
-      },
       "portal": null,
       "enemies": [],
       "platforms": [],
       "collectibles": [],
       "checkpoints": [],
       "tiles": [
-        [
-          { "type": 1, "spriteIndex": 4 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 17 },
-          { "type": 1, "spriteIndex": 5 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 100, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 100, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 100, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 10 },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 0, "spriteIndex": null },
-          { "type": 1, "spriteIndex": 8 }
-        ],
-        [
-          { "type": 1, "spriteIndex": 12 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 1 },
-          { "type": 1, "spriteIndex": 13 }
-        ]
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+
+    "room_6": {
+      "id": "room_6",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 6",
+        "description": "Bottom exit to Room 2, right exits to Rooms 8 and 9",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 576,
+        "height": 288,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room6_bottom_to_room2",
+          "x": 256,
+          "y": 256,
+          "width": 96,
+          "height": 32,
+          "edge": "bottom",
+          "edgePosition": 0.5277777778,
+          "edgeStart": 0.4444444444,
+          "edgeEnd": 0.6111111111,
+          "tileStart": 8,
+          "tileEnd": 10,
+          "targetMapId": "room_2"
+        },
+        {
+          "id": "room6_right_to_room8",
+          "x": 544,
+          "y": 64,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.3888888889,
+          "edgeStart": 0.2222222222,
+          "edgeEnd": 0.5555555556,
+          "tileStart": 2,
+          "tileEnd": 4,
+          "targetMapId": "room_8"
+        },
+        {
+          "id": "room6_right_to_room9",
+          "x": 544,
+          "y": 192,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.8333333333,
+          "edgeStart": 0.6666666667,
+          "edgeEnd": 1.0,
+          "tileStart": 6,
+          "tileEnd": 8,
+          "targetMapId": "room_9"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 101],
+        [1, 1, 1, 1, 1, 1, 1, 1, 103, 103, 103, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+
+    "room_8": {
+      "id": "room_8",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 8",
+        "description": "Left exit to Room 6",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 320,
+        "height": 320,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room8_left_to_room6",
+          "x": 0,
+          "y": 96,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.45,
+          "edgeStart": 0.3,
+          "edgeEnd": 0.6,
+          "tileStart": 3,
+          "tileEnd": 5,
+          "targetMapId": "room_6"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]
+    },
+
+    "room_9": {
+      "id": "room_9",
+      "version": "2.0",
+      "metadata": {
+        "name": "Room 9",
+        "description": "Left exit to Room 6",
+        "created": "2025-10-15T00:00:00.000Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 320,
+        "height": 320,
+        "tileSize": 32
+      },
+      "spawnPoints": [],
+      "exits": [
+        {
+          "id": "room9_left_to_room6",
+          "x": 0,
+          "y": 192,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.75,
+          "edgeStart": 0.6,
+          "edgeEnd": 0.9,
+          "tileStart": 6,
+          "tileEnd": 8,
+          "targetMapId": "room_6"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [100, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
       ]
     }
   }

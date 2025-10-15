@@ -66,14 +66,10 @@ export class WorldViewRenderer {
     if (!this.isVisible) return;
 
     if (this.worldViewGroup) {
-      // Destroy all children in the group first
-      this.worldViewGroup
-        .getChildren()
-        .forEach((child: Phaser.GameObjects.GameObject) => {
-          child.destroy();
-        });
-      // Then destroy the group itself
-      this.worldViewGroup.destroy(true);
+      (this.worldViewGroup as any).children.each((child: any) =>
+        child.destroy()
+      );
+      (this.worldViewGroup as any).destroy(true);
       this.worldViewGroup = null;
     }
     this.isVisible = false;
@@ -119,11 +115,10 @@ export class WorldViewRenderer {
 
     // Create group for all world view elements
     this.worldViewGroup = this.scene.add.group();
-    this.worldViewGroup.setDepth(1000); // Above everything else
 
     // Calculate viewport center
-    const centerX = this.scene.cameras.main.width / 2;
-    const centerY = this.scene.cameras.main.height / 2;
+    const centerX = (this.scene.cameras.main as any).width / 2;
+    const centerY = (this.scene.cameras.main as any).height / 2;
 
     // Calculate total world dimensions
     const totalWidth =
@@ -135,8 +130,7 @@ export class WorldViewRenderer {
     const startX = centerX - totalWidth / 2;
     const startY = centerY - totalHeight / 2;
 
-    // Render connections first (so they appear behind boxes)
-    this.renderConnections(startX, startY);
+    // Connections disabled per request
 
     // Render map boxes
     this.renderMapBoxes(startX, startY);
@@ -189,10 +183,12 @@ export class WorldViewRenderer {
         // Draw connection line
         const line = this.scene.add.graphics();
         line.lineStyle(2, this.CONNECTION_COLOR, 0.8);
-        line.beginPath();
-        line.moveTo(connectionLine.startX, connectionLine.startY);
-        line.lineTo(connectionLine.endX, connectionLine.endY);
-        line.strokePath();
+        (line as any).lineBetween(
+          connectionLine.startX,
+          connectionLine.startY,
+          connectionLine.endX,
+          connectionLine.endY
+        );
         line.setScrollFactor(0);
         line.setDepth(1001);
 
@@ -265,6 +261,18 @@ export class WorldViewRenderer {
    */
   private renderMapBoxes(startX: number, startY: number): void {
     if (!this.layoutResult || !this.worldData) return;
+    const debugLayout: Array<{
+      id: string;
+      name: string;
+      gridX: number;
+      gridY: number;
+      widthUnits: number;
+      heightUnits: number;
+      boxX: number;
+      boxY: number;
+      boxWidth: number;
+      boxHeight: number;
+    }> = [];
 
     Object.keys(this.layoutResult.mapPositions).forEach((mapId) => {
       // Only show visited maps (unless showAllMaps is true)
@@ -281,6 +289,20 @@ export class WorldViewRenderer {
 
       const boxWidth = this.BOX_SIZE * size.width;
       const boxHeight = this.BOX_SIZE * size.height;
+
+      // Collect debug info
+      debugLayout.push({
+        id: mapId,
+        name: mapData.metadata.name,
+        gridX: pos.x,
+        gridY: pos.y,
+        widthUnits: size.width,
+        heightUnits: size.height,
+        boxX,
+        boxY,
+        boxWidth,
+        boxHeight,
+      });
 
       // Determine if this is the current map
       const currentMapId = this.getCurrentMapId();
@@ -312,7 +334,6 @@ export class WorldViewRenderer {
           fontSize: "12px",
           fill: "#ffffff",
           fontStyle: "bold",
-          align: "center",
         }
       );
       nameText.setOrigin(0.5);
@@ -325,6 +346,17 @@ export class WorldViewRenderer {
       // Render exit indicators on the box edges
       this.renderExitIndicators(mapData, boxX, boxY, boxWidth, boxHeight);
     });
+
+    // Emit a consolidated JSON snapshot for debugging the layout
+    try {
+      // Use a distinctive prefix for easy grepping in console
+      console.log(
+        "🧭 WorldView layout boxes JSON:",
+        JSON.stringify(debugLayout, null, 2)
+      );
+    } catch (e) {
+      // no-op if JSON serialization fails
+    }
   }
 
   /**
@@ -388,10 +420,7 @@ export class WorldViewRenderer {
           return;
       }
 
-      graphics.beginPath();
-      graphics.moveTo(startX, startY);
-      graphics.lineTo(endX, endY);
-      graphics.strokePath();
+      (graphics as any).lineBetween(startX, startY, endX, endY);
 
       this.worldViewGroup!.add(graphics);
     });
