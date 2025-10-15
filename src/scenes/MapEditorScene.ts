@@ -2084,6 +2084,14 @@ export class MapEditorScene extends Phaser.Scene {
         return "Empty";
       case TilemapSystem.TILE_TYPES.SOLID:
         return "Solid";
+      case TilemapSystem.TILE_TYPES.EXIT_LEFT:
+        return "Left Exit";
+      case TilemapSystem.TILE_TYPES.EXIT_RIGHT:
+        return "Right Exit";
+      case TilemapSystem.TILE_TYPES.EXIT_TOP:
+        return "Top Exit";
+      case TilemapSystem.TILE_TYPES.EXIT_BOTTOM:
+        return "Bottom Exit";
       default:
         return `Unknown(${tileType})`;
     }
