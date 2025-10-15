@@ -1345,7 +1345,13 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private setupCamera(): void {
-    this.cameras.main.setBounds(0, 0, 4100, 800);
+    // Center the camera on the current map within the editor viewport
+    const worldW = this.tilemapSystem
+      ? this.tilemapSystem.getWorldWidth()
+      : 4100;
+    const worldH = this.tilemapSystem
+      ? this.tilemapSystem.getWorldHeight()
+      : 800;
 
     // Set camera viewport to only use the left 80% of the screen
     (this.cameras.main as any).setViewport(
@@ -1355,15 +1361,26 @@ export class MapEditorScene extends Phaser.Scene {
       this.viewportHeight
     );
 
-    // Calculate zoom to fit the viewport properly
-    const zoomX = this.viewportWidth / 1200; // Original width was 1200
-    const zoomY = this.viewportHeight / 800; // Original height was 800
-    const zoom = Math.min(zoomX, zoomY) * 0.8; // Keep the original 0.8 factor
-
+    // Keep existing zoom behavior
+    const zoomX = this.viewportWidth / 1200;
+    const zoomY = this.viewportHeight / 800;
+    const zoom = Math.min(zoomX, zoomY) * 0.8;
     this.cameras.main.setZoom(zoom);
 
-    // Center the camera initially
-    this.cameras.main.centerOn(2050, 400);
+    // Pad bounds to allow centering small maps within the viewport
+    const viewWorldW = this.viewportWidth / zoom;
+    const viewWorldH = this.viewportHeight / zoom;
+    const offsetX = Math.max(0, (viewWorldW - worldW) / 2);
+    const offsetY = Math.max(0, (viewWorldH - worldH) / 2);
+    this.cameras.main.setBounds(
+      -offsetX,
+      -offsetY,
+      worldW + offsetX * 2,
+      worldH + offsetY * 2
+    );
+
+    // Center camera on the map
+    this.cameras.main.centerOn(worldW / 2, worldH / 2);
   }
 
   private setupInput(): void {
@@ -1969,13 +1986,21 @@ export class MapEditorScene extends Phaser.Scene {
       this.tilemapSystem.getWorldHeight()
     );
 
-    // Update camera bounds
+    // Update camera bounds and recentre on the map with padding so small maps center
+    const zoom = (this.cameras.main as any).zoom || 1;
+    const viewWorldW = this.viewportWidth / zoom;
+    const viewWorldH = this.viewportHeight / zoom;
+    const worldW = this.tilemapSystem.getWorldWidth();
+    const worldH = this.tilemapSystem.getWorldHeight();
+    const offsetX = Math.max(0, (viewWorldW - worldW) / 2);
+    const offsetY = Math.max(0, (viewWorldH - worldH) / 2);
     this.cameras.main.setBounds(
-      0,
-      0,
-      this.tilemapSystem.getWorldWidth(),
-      this.tilemapSystem.getWorldHeight()
+      -offsetX,
+      -offsetY,
+      worldW + offsetX * 2,
+      worldH + offsetY * 2
     );
+    this.cameras.main.centerOn(worldW / 2, worldH / 2);
 
     // Update background
     this.backgroundImage.destroy();

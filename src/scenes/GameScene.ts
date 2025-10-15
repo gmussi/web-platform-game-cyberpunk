@@ -1138,7 +1138,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupCamera(): void {
-    // Set camera bounds for extended world with maximized playable area
+    // Set camera bounds and center small maps within the viewport
     const worldWidth = this.tilemapSystem
       ? this.tilemapSystem.getWorldWidth()
       : 4128;
@@ -1146,10 +1146,30 @@ export class GameScene extends Phaser.Scene {
       ? this.tilemapSystem.getWorldHeight()
       : 800;
 
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    const viewW = (this.cameras.main as any).width;
+    const viewH = (this.cameras.main as any).height;
 
-    // Start camera following player
-    this.cameras.main.startFollow(this.player);
+    const fitX = worldWidth <= viewW;
+    const fitY = worldHeight <= viewH;
+    const offsetX = fitX ? (viewW - worldWidth) / 2 : 0;
+    const offsetY = fitY ? (viewH - worldHeight) / 2 : 0;
+
+    // Use negative origin so we can scroll into padding and visually center small maps
+    this.cameras.main.setBounds(
+      -offsetX,
+      -offsetY,
+      worldWidth + offsetX * 2,
+      worldHeight + offsetY * 2
+    );
+
+    if (fitX && fitY) {
+      // Center map and keep it centered (no follow needed)
+      this.cameras.main.stopFollow();
+      this.cameras.main.setScroll(-offsetX, -offsetY);
+    } else {
+      // Follow player if the map is larger on any axis
+      this.cameras.main.startFollow(this.player);
+    }
 
     // Set camera deadzone for smoother following
     this.cameras.main.setDeadzone(100, 50);
