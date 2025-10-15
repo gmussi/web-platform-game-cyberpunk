@@ -73,36 +73,35 @@ export class WorldLayoutSystem {
         (exits.bottom?.length || 0);
       // Leaf-like rooms (0 or 1 exits) stay minimal; parents expand just enough
       // to accommodate stacked children on each side, not the full world size.
-      const own =
-        exitCount <= 1
-          ? { width: 1, height: 1 }
-          : {
-              width: Math.max(
-                1,
-                Math.max(exits.top?.length || 0, exits.bottom?.length || 0)
-              ),
-              height: Math.max(
-                1,
-                Math.max(exits.left?.length || 0, exits.right?.length || 0)
-              ),
-            };
+      const own = { width: 1, height: 1 };
 
-      // Sum of stacks along each edge using descendant sizes
-      const sumHeights = (list: ExitZone[]) =>
-        list.map((e) => dfs(e.targetMapId).height).reduce((a, b) => a + b, 0);
-      const sumWidths = (list: ExitZone[]) =>
-        list.map((e) => dfs(e.targetMapId).width).reduce((a, b) => a + b, 0);
+      // Adaptive stacking logic: if an edge has multiple exits, stack (sum) children on that edge;
+      // if it has 0 or 1 exit, only the tallest/widest child impacts size (no unnecessary sum).
+      const heightsLeft = (exits.left || []).map(
+        (e) => dfs(e.targetMapId).height
+      );
+      const heightsRight = (exits.right || []).map(
+        (e) => dfs(e.targetMapId).height
+      );
+      const widthsTop = (exits.top || []).map((e) => dfs(e.targetMapId).width);
+      const widthsBottom = (exits.bottom || []).map(
+        (e) => dfs(e.targetMapId).width
+      );
 
-      const requiredHeight = Math.max(
-        own.height,
-        sumHeights(exits.left || []),
-        sumHeights(exits.right || [])
-      );
-      const requiredWidth = Math.max(
-        own.width,
-        sumWidths(exits.top || []),
-        sumWidths(exits.bottom || [])
-      );
+      const stackOrMax = (vals: number[], count: number) => {
+        if (count <= 0) return 0;
+        if (count === 1) return 1; // single neighbor on a side should not inflate parent size
+        return vals.reduce((a, b) => a + b, 0);
+      };
+
+      const leftStack = stackOrMax(heightsLeft, heightsLeft.length);
+      const rightStack = stackOrMax(heightsRight, heightsRight.length);
+      const topStack = stackOrMax(widthsTop, widthsTop.length);
+      const bottomStack = stackOrMax(widthsBottom, widthsBottom.length);
+
+      // Parent size must accommodate the largest stack on either side in that axis
+      const requiredHeight = Math.max(own.height, leftStack, rightStack);
+      const requiredWidth = Math.max(own.width, topStack, bottomStack);
 
       const size = { width: requiredWidth, height: requiredHeight };
       memo[mapId] = size;
