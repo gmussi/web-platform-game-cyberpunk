@@ -51,3 +51,83 @@ export interface MapValidationResult {
   errors: string[];
   warnings: string[];
 }
+
+// World System Types (v2.0)
+export interface SpawnPoint {
+  id: string;
+  x: number;
+  y: number;
+}
+
+export interface ExitZone {
+  id: string;
+  x: number; // World position (calculated from tiles)
+  y: number;
+  width: number; // Dimensions (calculated from tile count)
+  height: number;
+  edge: "left" | "right" | "top" | "bottom";
+  edgePosition: number; // Center position along edge (0.0-1.0)
+  edgeStart: number; // Start position along edge (0.0-1.0)
+  edgeEnd: number; // End position along edge (0.0-1.0)
+  tileStart: number; // Start tile index
+  tileEnd: number; // End tile index
+  targetMapId: string; // Which map this leads to
+}
+
+export interface WorldMapData {
+  id: string;
+  version: string;
+  metadata: {
+    name: string;
+    description: string;
+    created: string;
+    author: string;
+  };
+  world: {
+    width: number;
+    height: number;
+    tileSize: number;
+  };
+  exits: ExitZone[];
+  player?: {
+    startPosition: { x: number; y: number };
+    character: string;
+  };
+  portal: {
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+    animationSpeed?: number;
+  } | null;
+  enemies: Array<{
+    id: string;
+    type: "stationary" | "moving" | "patrol";
+    enemyType: string;
+    position: { x: number; y: number };
+    properties: {
+      damage: number;
+      health: number;
+      speed?: number;
+      patrolRange?: number;
+    };
+  }>;
+  platforms?: any[];
+  collectibles?: any[];
+  checkpoints?: any[];
+  tiles: any[];
+  gridPosition?: { x: number; y: number }; // Calculated by layout system
+  gridHeight?: number; // Height in grid units
+}
+
+export interface WorldData {
+  version: string;
+  metadata: {
+    name: string;
+    description: string;
+    author: string;
+    created: string;
+  };
+  startingMap: string;
+  startingSpawn: string; // ID of the spawn point to use
+  startingPosition?: { x: number; y: number }; // Optional starting position
+  maps: Record<string, WorldMapData>;
+}

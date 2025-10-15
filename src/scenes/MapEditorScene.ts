@@ -1,8 +1,15 @@
 import { ASSET_PATHS, GAME_CONSTANTS } from "../data/config";
 
-import { MapSystem } from "../systems/MapSystem";
+import { WorldSystem } from "../systems/WorldSystem";
 import { TilemapSystem } from "../systems/TilemapSystem";
+import { WorldViewRenderer } from "../systems/WorldViewRenderer";
 import { Enemy } from "../entities/Enemy";
+import { ExitZone } from "../entities/ExitZone";
+import {
+  WorldMapData,
+  SpawnPoint,
+  ExitZone as ExitZoneData,
+} from "../types/map";
 
 // MapEditorScene interfaces
 interface EnemyData {
@@ -16,6 +23,19 @@ interface EnemyData {
     speed?: number;
     patrolRange?: number;
   };
+}
+
+interface DetectedExit {
+  edge: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  tileStart: number;
+  tileEnd: number;
+  edgeStart: number;
+  edgeEnd: number;
+  edgePosition: number;
 }
 
 interface MapEditorData {
@@ -57,11 +77,11 @@ interface SpriteButton {
 }
 
 export class MapEditorScene extends Phaser.Scene {
-  public mapSystem!: MapSystem;
+  public worldSystem!: WorldSystem;
+  public worldViewRenderer!: WorldViewRenderer;
   public tilemapSystem!: TilemapSystem;
-  public mapData!: MapEditorData;
-  public backgroundImage!: Phaser.GameObjects.Image;
-  public darkOverlay!: Phaser.GameObjects.Rectangle;
+  public mapData!: WorldMapData;
+  public backgroundImage!: Phaser.GameObjects.GameObject;
   public gridGraphics!: Phaser.GameObjects.Graphics;
   public gridVisible: boolean = true;
   public isLoadingCustomMap: boolean = false;
@@ -70,6 +90,10 @@ export class MapEditorScene extends Phaser.Scene {
   public toolButtons: ToolButton[] = [];
   public spritePicker: Phaser.GameObjects.Rectangle | null = null;
   public spriteButtons: SpriteButton[] = [];
+  public mapSelector: Phaser.GameObjects.Rectangle | null = null;
+  public mapSelectorButtons: Phaser.GameObjects.Text[] = [];
+  public spawnPointSelector: Phaser.GameObjects.Rectangle | null = null;
+  public spawnPointSelectorButtons: Phaser.GameObjects.Text[] = [];
   public saveButton!: Phaser.GameObjects.Text;
   public loadButton!: Phaser.GameObjects.Text;
   public clearButton!: Phaser.GameObjects.Text;
@@ -77,8 +101,10 @@ export class MapEditorScene extends Phaser.Scene {
   public objectInfoText!: Phaser.GameObjects.Text;
   public coordinateText!: Phaser.GameObjects.Text;
   public gridToggleButton!: Phaser.GameObjects.Text;
+  public autotileToggleButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
+  public exitZones: ExitZone[] = [];
   public mouseIndicator!: Phaser.GameObjects.Circle;
   public cursors!: any;
   public wasdKeys!: any;
@@ -91,6 +117,11 @@ export class MapEditorScene extends Phaser.Scene {
   public rightPanelWidth!: number;
   public uiCamera!: Phaser.Cameras.Scene2D.Camera;
   public rightPanelGraphics!: Phaser.GameObjects.Graphics;
+
+  // Map list UI
+  public mapListContainer!: Phaser.GameObjects.Container;
+  public mapListButtons: Phaser.GameObjects.Text[] = [];
+  public createMapButton!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: "MapEditorScene" });
@@ -145,8 +176,22 @@ export class MapEditorScene extends Phaser.Scene {
     // Create black background for the right panel
     this.createRightPanelBackground();
 
-    // Initialize map system
-    this.mapSystem = new MapSystem(this);
+    // Initialize world system
+    this.worldSystem = new WorldSystem(this);
+
+    // Initialize world view renderer (show all maps in editor)
+    this.worldViewRenderer = new WorldViewRenderer(
+      this,
+      this.worldSystem.worldData,
+      this.worldSystem.visitedMaps,
+      () => this.worldSystem.currentMapId,
+      true, // showAllMaps = true for map editor
+      (mapId: string) => {
+        if (mapId && mapId !== this.worldSystem.currentMapId) {
+          this.switchToMap(mapId);
+        }
+      }
+    );
 
     // Set world bounds (adjusted for viewport)
     this.physics.world.setBounds(0, 0, 4128, 800);
@@ -166,6 +211,9 @@ export class MapEditorScene extends Phaser.Scene {
     // Create UI
     this.createEditorUI();
 
+    // Create map list
+    this.updateMapList();
+
     // Set up camera
     this.setupCamera();
 
@@ -180,59 +228,48 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private loadDefaultMap(): void {
-    // Don't load default map if we're currently loading a custom map
+    // Don't load default world if we're currently loading a custom world
     if (this.isLoadingCustomMap) {
       return;
     }
 
-    // Try to load default.json map file
-    this.mapSystem
-      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json?v=${Date.now()}`)
-      .then((mapData: any) => {
+    // Try to load default world file
+    this.worldSystem
+      .loadWorldFromURL(
+        `${ASSET_PATHS.maps}/default_world.json?v=${Date.now()}`
+      )
+      .then((worldData) => {
         // Double-check flag in case it changed during async operation
         if (this.isLoadingCustomMap) {
           return;
         }
 
-        this.mapData = mapData;
-        this.loadTileDataFromMap();
-        this.updatePreviewObjects();
+        // Update world view renderer with loaded world data
+        this.worldViewRenderer.setWorldData(worldData);
 
-        // Make sure UI camera ignores all tile sprites after loading
-        if (this.uiCamera) {
-          this.setupCameraIgnoreLists();
+        const currentMap = this.worldSystem.getCurrentMap();
+        if (currentMap) {
+          this.mapData = currentMap;
+          this.loadTileDataFromMap();
+          this.updatePreviewObjects();
+          this.updateMapList();
+
+          // Make sure UI camera ignores all tile sprites after loading
+          if (this.uiCamera) {
+            this.setupCameraIgnoreLists();
+          }
         }
       })
       .catch((error: Error) => {
-        // Create a new empty map if default.json doesn't exist
-        this.mapData = {
-          version: "1.0",
-          metadata: {
-            name: "New Map",
-            description: "A new map created in the editor",
-            created: new Date().toISOString(),
-            author: "Map Editor",
-          },
-          world: {
-            width: 4100,
-            height: 800,
-            tileSize: 32,
-          },
-          player: {
-            startPosition: { x: 100, y: 688 },
-            character: "A",
-          },
-          portal: {
-            position: { x: 4000, y: 660 },
-            size: { width: 100, height: 100 },
-          },
-          enemies: [],
-          platforms: [],
-          collectibles: [],
-          checkpoints: [],
-          tiles: [],
-        };
-        this.updatePreviewObjects();
+        console.log("No default world found, creating new empty world");
+        // Create a new empty world
+        const worldData = this.worldSystem.createEmptyWorld("New World");
+        const currentMap = this.worldSystem.getCurrentMap();
+        if (currentMap) {
+          this.mapData = currentMap;
+          this.updatePreviewObjects();
+          this.updateMapList();
+        }
       });
   }
 
@@ -282,6 +319,7 @@ export class MapEditorScene extends Phaser.Scene {
     const uiElements = [
       this.rightPanelGraphics,
       ...this.toolButtons.map((tb) => tb.button),
+      ...this.mapListButtons,
       this.saveButton,
       this.loadButton,
       this.clearButton,
@@ -289,6 +327,7 @@ export class MapEditorScene extends Phaser.Scene {
       this.objectInfoText,
       this.coordinateText,
       this.gridToggleButton,
+      this.autotileToggleButton,
     ].filter((el) => el !== undefined);
 
     // Also include all text elements in the right panel (titles, instructions, hints, etc.)
@@ -313,6 +352,16 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Ignore tilemap sprites from UI camera
     this.ignoreTilemapSprites();
+
+    // Ignore grid graphics from UI camera
+    if (this.gridGraphics) {
+      (this.uiCamera as any).ignore(this.gridGraphics);
+    }
+
+    // Ignore background image from UI camera
+    if (this.backgroundImage) {
+      (this.uiCamera as any).ignore(this.backgroundImage);
+    }
 
     console.log(
       `🎥 Camera setup: Main camera ignoring ${uiElements.length} UI elements, UI camera ignoring ${mapElements.length} map elements`
@@ -339,38 +388,20 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    const backgroundKeys = ["background1", "background2", "background3"];
-    const selectedBackground = backgroundKeys[0]; // Use first background for editor
+    const worldWidth = this.tilemapSystem
+      ? this.tilemapSystem.getWorldWidth()
+      : 4100;
+    const worldHeight = this.tilemapSystem
+      ? this.tilemapSystem.getWorldHeight()
+      : 800;
 
-    const worldWidth = 4100;
-    const worldHeight = 800;
-    const imageWidth = this.textures.get(selectedBackground).source[0].width;
-    const imageHeight = this.textures.get(selectedBackground).source[0].height;
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 1);
+    bg.fillRect(0, 0, worldWidth as number, worldHeight as number);
+    bg.setScrollFactor(1);
+    bg.setDepth(-10);
 
-    const scaleX = worldWidth / imageWidth;
-    const scaleY = worldHeight / imageHeight;
-    const scale = Math.max(scaleX, scaleY);
-
-    this.backgroundImage = this.add.image(
-      (imageWidth * scale) / 2,
-      worldHeight / 2,
-      selectedBackground
-    );
-    this.backgroundImage.setScrollFactor(0.3);
-    this.backgroundImage.setDepth(-10);
-    this.backgroundImage.setScale(scale);
-
-    // Dark overlay
-    this.darkOverlay = this.add.rectangle(
-      worldWidth / 2,
-      worldHeight / 2,
-      worldWidth,
-      worldHeight,
-      0x000000,
-      0.4
-    );
-    this.darkOverlay.setScrollFactor(0.2);
-    this.darkOverlay.setDepth(1);
+    this.backgroundImage = bg as unknown as Phaser.GameObjects.GameObject;
   }
 
   private createGridOverlay(): void {
@@ -446,11 +477,14 @@ export class MapEditorScene extends Phaser.Scene {
     // Grid toggle
     yOffset = this.createGridToggle(panelPadding, yOffset, panelWidth);
 
+    // Autotile toggle
+    yOffset = this.createAutotileToggle(panelPadding, yOffset, panelWidth);
+
     // Keyboard shortcut hint
     this.add.text(
       panelPadding,
       yOffset,
-      "Press T for tile selector\nPress G for grid toggle",
+      "Press T for tile selector\nPress G for grid toggle\nPress A for autotile",
       {
         fontSize: "10px",
         fill: "#ffff00",
@@ -459,7 +493,7 @@ export class MapEditorScene extends Phaser.Scene {
         strokeThickness: 1,
       }
     );
-    yOffset += 35;
+    yOffset += 45;
 
     // Create map resize controls
     this.createMapResizeControls(panelPadding, yOffset, panelWidth);
@@ -471,24 +505,29 @@ export class MapEditorScene extends Phaser.Scene {
     panelWidth: number
   ): number {
     const tools = [
-      { name: "Player", key: "player", color: "#00ff00" },
+      { name: "Left", key: "exit_left", color: "#00ffff" },
+      { name: "Right", key: "exit_right", color: "#ff00ff" },
+      { name: "Top", key: "exit_top", color: "#ffff00" },
+      { name: "Bottom", key: "exit_bottom", color: "#ff8800" },
       { name: "Portal", key: "portal", color: "#ff00ff" },
       { name: "Enemy1", key: "enemy1", color: "#ff0000" },
       { name: "Enemy2", key: "enemy2", color: "#ff8800" },
       { name: "Solid", key: "solid", color: "#8B4513" },
       { name: "Erase", key: "erase", color: "#000000" },
+      { name: "Remove", key: "remove", color: "#ff0000" },
+      { name: "Resize", key: "resize", color: "#0066aa" },
     ];
 
     this.selectedTool = null; // Start with no tool selected
     this.selectedSpriteIndex = null; // Track selected sprite for solid tiles
     this.toolButtons = [];
 
-    // Grid layout: 2 rows x 3 columns
-    const cols = 3;
-    const rows = 2;
+    // Grid layout: 3 rows x 4 columns (10 tools)
+    const cols = 4;
+    const rows = 3;
     const buttonWidth = 60;
     const buttonHeight = 25;
-    const spacingX = 5;
+    const spacingX = 0;
     const spacingY = 5;
 
     tools.forEach((tool, index) => {
@@ -513,6 +552,8 @@ export class MapEditorScene extends Phaser.Scene {
       button.on("pointerdown", () => {
         if (tool.key === "solid") {
           this.openSpritePicker();
+        } else if (tool.key === "resize") {
+          this.openResizeModal();
         } else {
           this.selectedTool = tool.key;
           this.selectedSpriteIndex = null;
@@ -601,11 +642,13 @@ export class MapEditorScene extends Phaser.Scene {
       border.setDepth(1000);
 
       spriteButton.on("pointerdown", () => {
-        this.selectedSpriteIndex = i;
-        this.selectedTool = "solid";
-        this.updateToolSelection();
-
-        this.closeSpritePicker();
+        // Delay close to let the click handler finish first
+        this.time.delayedCall(1, () => {
+          this.selectedSpriteIndex = i;
+          this.selectedTool = "solid";
+          this.updateToolSelection();
+          this.closeSpritePicker();
+        });
       });
 
       spriteButton.on("pointerover", () => {
@@ -634,22 +677,37 @@ export class MapEditorScene extends Phaser.Scene {
       .setInteractive();
 
     closeButton.on("pointerdown", () => {
-      this.closeSpritePicker();
+      // Delay close to let the click handler finish first
+      this.time.delayedCall(1, () => {
+        this.closeSpritePicker();
+      });
     });
   }
 
   private closeSpritePicker(): void {
-    if (this.spritePicker) {
-      this.spritePicker.destroy();
-      this.spritePicker = null;
-    }
-
-    if (this.spriteButtons) {
+    // Hide and destroy sprite buttons and borders
+    if (this.spriteButtons && this.spriteButtons.length > 0) {
       this.spriteButtons.forEach(({ sprite, border }) => {
-        sprite.destroy();
-        border.destroy();
+        if (sprite && sprite.scene) {
+          sprite.setVisible(false);
+          sprite.setActive(false);
+          sprite.destroy();
+        }
+        if (border && border.scene) {
+          border.setVisible(false);
+          border.setActive(false);
+          border.destroy();
+        }
       });
       this.spriteButtons = [];
+    }
+
+    // Hide and destroy the background
+    if (this.spritePicker && this.spritePicker.scene) {
+      this.spritePicker.setVisible(false);
+      this.spritePicker.setActive(false);
+      this.spritePicker.destroy();
+      this.spritePicker = null;
     }
 
     // Destroy close button
@@ -657,6 +715,7 @@ export class MapEditorScene extends Phaser.Scene {
       (child: any) => child.text === "Close" && child.depth === 1001
     );
     if (closeButton) {
+      closeButton.setVisible(false);
       closeButton.destroy();
     }
 
@@ -665,10 +724,425 @@ export class MapEditorScene extends Phaser.Scene {
       (child: any) => child.text === "Select Sprite" && child.depth === 1001
     );
     if (title) {
+      title.setVisible(false);
       title.destroy();
     }
   }
 
+  private openMapSelector(callback: (mapId: string | null) => void): void {
+    // Close existing selector if open
+    if (this.mapSelector) {
+      this.closeMapSelector();
+      return;
+    }
+
+    // Center the selector in the left viewport (80% of screen)
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    // Create selector background
+    this.mapSelector = this.add.rectangle(
+      centerX,
+      centerY,
+      400,
+      500,
+      0x000000,
+      0.8
+    );
+    this.mapSelector.setScrollFactor(0);
+    this.mapSelector.setDepth(1000);
+
+    // Create title
+    const title = this.add
+      .text(centerX, centerY - 220, "Select Target Map", {
+        fontSize: "18px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5);
+
+    this.mapSelectorButtons.push(title);
+
+    // Get all available maps
+    const mapIds = this.worldSystem.getAllMapIds();
+    const startY = centerY - 180;
+    const itemHeight = 40;
+    const maxVisibleItems = 8;
+
+    // Create scrollable list of maps
+    mapIds.forEach((mapId, index) => {
+      const map = this.worldSystem.getMap(mapId);
+      if (!map) return;
+
+      const yPos = startY + index * itemHeight;
+
+      // Only show items that fit in the visible area
+      if (index < maxVisibleItems) {
+        const mapName = map.metadata.name || mapId;
+        const isCurrentMap = mapId === this.worldSystem.currentMapId;
+        const displayText = `${mapId} - ${mapName}${
+          isCurrentMap ? " (current)" : ""
+        }`;
+
+        const button = this.add
+          .text(centerX, yPos, displayText, {
+            fontSize: "12px",
+            fill: isCurrentMap ? "#00ff00" : "#ffffff",
+            fontStyle: "bold",
+            backgroundColor: "#444444",
+            padding: { x: 10, y: 5 },
+          })
+          .setScrollFactor(0)
+          .setDepth(1001)
+          .setOrigin(0.5)
+          .setInteractive();
+
+        button.on("pointerdown", () => {
+          // Delay close to let the click handler finish first
+          this.time.delayedCall(1, () => {
+            this.closeMapSelector();
+            callback(mapId);
+          });
+        });
+
+        button.on("pointerover", () => {
+          button.setBackgroundColor("#666666");
+        });
+
+        button.on("pointerout", () => {
+          button.setBackgroundColor("#444444");
+        });
+
+        this.mapSelectorButtons.push(button);
+      }
+    });
+
+    // Add cancel button
+    const cancelButton = this.add
+      .text(centerX, centerY + 220, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 10, y: 6 },
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5)
+      .setInteractive();
+
+    cancelButton.on("pointerdown", () => {
+      console.log("Map selector cancelled");
+      // Delay close to let the click handler finish first
+      this.time.delayedCall(1, () => {
+        this.closeMapSelector();
+        callback(null);
+      });
+    });
+
+    cancelButton.on("pointerover", () => {
+      cancelButton.setBackgroundColor("#cc0000");
+    });
+
+    cancelButton.on("pointerout", () => {
+      cancelButton.setBackgroundColor("#aa0000");
+    });
+
+    this.mapSelectorButtons.push(cancelButton);
+  }
+
+  private closeMapSelector(): void {
+    console.log("Closing map selector...", {
+      hasSelector: !!this.mapSelector,
+      buttonsCount: this.mapSelectorButtons?.length,
+    });
+
+    // Hide and disable all buttons
+    if (this.mapSelectorButtons && this.mapSelectorButtons.length > 0) {
+      this.mapSelectorButtons.forEach((button, index) => {
+        if (button && button.scene) {
+          console.log(`Hiding button ${index}`);
+          button.setVisible(false);
+          button.setActive(false);
+          button.destroy();
+        }
+      });
+      this.mapSelectorButtons = [];
+    }
+
+    // Hide and disable the background
+    if (this.mapSelector && this.mapSelector.scene) {
+      console.log("Hiding selector background");
+      this.mapSelector.setVisible(false);
+      this.mapSelector.setActive(false);
+      this.mapSelector.destroy();
+      this.mapSelector = null;
+    }
+
+    console.log("Map selector closed");
+  }
+
+  private openSpawnPointSelector(
+    mapId: string,
+    callback: (spawnId: string | null) => void
+  ): void {
+    // Close existing selector if open
+    if (this.spawnPointSelector) {
+      this.closeSpawnPointSelector();
+      return;
+    }
+
+    // Get the target map
+    const targetMap = this.worldSystem.getMap(mapId);
+    if (!targetMap) {
+      console.error(`Map ${mapId} not found`);
+      callback(null);
+      return;
+    }
+
+    // No spawn point validation needed for edge-based system
+
+    // Center the selector in the left viewport (80% of screen)
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    // Create selector background
+    this.spawnPointSelector = this.add.rectangle(
+      centerX,
+      centerY,
+      400,
+      500,
+      0x000000,
+      0.8
+    );
+    this.spawnPointSelector.setScrollFactor(0);
+    this.spawnPointSelector.setDepth(1000);
+
+    // Create title
+    const mapName = targetMap.metadata.name || mapId;
+    const title = this.add
+      .text(centerX, centerY - 220, `Select Spawn Point\n(${mapName})`, {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5);
+
+    this.spawnPointSelectorButtons.push(title);
+
+    // Spawn points no longer exist in edge-based system
+    const startY = centerY - 160;
+    const itemHeight = 40;
+    const maxVisibleItems = 8;
+
+    // Spawn points no longer exist in edge-based system
+    // Spawn points no longer exist in edge-based system
+    // The entire forEach loop has been removed
+
+    // Add cancel button
+    const cancelButton = this.add
+      .text(centerX, centerY + 220, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 10, y: 6 },
+      })
+      .setScrollFactor(0)
+      .setDepth(1001)
+      .setOrigin(0.5)
+      .setInteractive();
+
+    cancelButton.on("pointerdown", () => {
+      console.log("Spawn point selector cancelled");
+      // Delay close to let the click handler finish first
+      this.time.delayedCall(1, () => {
+        this.closeSpawnPointSelector();
+        callback(null);
+      });
+    });
+
+    cancelButton.on("pointerover", () => {
+      cancelButton.setBackgroundColor("#cc0000");
+    });
+
+    cancelButton.on("pointerout", () => {
+      cancelButton.setBackgroundColor("#aa0000");
+    });
+
+    this.spawnPointSelectorButtons.push(cancelButton);
+  }
+
+  private closeSpawnPointSelector(): void {
+    console.log("Closing spawn point selector...", {
+      hasSelector: !!this.spawnPointSelector,
+      buttonsCount: this.spawnPointSelectorButtons?.length,
+    });
+
+    // Hide and disable all buttons
+    if (
+      this.spawnPointSelectorButtons &&
+      this.spawnPointSelectorButtons.length > 0
+    ) {
+      this.spawnPointSelectorButtons.forEach((button, index) => {
+        if (button && button.scene) {
+          console.log(`Hiding spawn button ${index}`);
+          button.setVisible(false);
+          button.setActive(false);
+          button.destroy();
+        }
+      });
+      this.spawnPointSelectorButtons = [];
+    }
+
+    // Hide and disable the background
+    if (this.spawnPointSelector && this.spawnPointSelector.scene) {
+      console.log("Hiding spawn point selector background");
+      this.spawnPointSelector.setVisible(false);
+      this.spawnPointSelector.setActive(false);
+      this.spawnPointSelector.destroy();
+      this.spawnPointSelector = null;
+    }
+
+    console.log("Spawn point selector closed");
+  }
+
+  private openResizeModal(afterResize?: () => void): void {
+    // Prevent multiple modals
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    const modalBg = this.add.rectangle(
+      centerX,
+      centerY,
+      360,
+      200,
+      0x000000,
+      0.9
+    );
+    modalBg.setScrollFactor(0);
+    modalBg.setDepth(1000);
+
+    const title = this.add
+      .text(centerX, centerY - 70, "Resize Map (tiles)", {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(1001);
+
+    const labelW = this.add
+      .text(centerX - 120, centerY - 25, "Width:", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelW.setScrollFactor(0);
+    labelW.setDepth(1001);
+
+    const labelH = this.add
+      .text(centerX - 120, centerY + 15, "Height:", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelH.setScrollFactor(0);
+    labelH.setDepth(1001);
+
+    // Simple HTML inputs overlay for ease
+    const inputWidth = document.createElement("input");
+    inputWidth.type = "number";
+    inputWidth.min = "1";
+    inputWidth.value = String(this.tilemapSystem.mapWidth);
+    const inputHeight = document.createElement("input");
+    inputHeight.type = "number";
+    inputHeight.min = "1";
+    inputHeight.value = String(this.tilemapSystem.mapHeight);
+
+    const positionInput = (el: HTMLInputElement, x: number, y: number) => {
+      el.style.position = "fixed";
+      el.style.left = `${x - 40}px`;
+      el.style.top = `${y - 10}px`;
+      el.style.width = "80px";
+      el.style.zIndex = "10000";
+      document.body.appendChild(el);
+    };
+
+    // Convert scene coords to page coords approximately
+    const canvasBounds = (
+      this.sys.game.canvas as unknown as HTMLCanvasElement
+    ).getBoundingClientRect();
+    positionInput(
+      inputWidth,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY - 25
+    );
+    positionInput(
+      inputHeight,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY + 15
+    );
+
+    const applyBtn = this.add
+      .text(centerX - 40, centerY + 60, "Apply", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#00aa00",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+    applyBtn.setScrollFactor(0);
+    applyBtn.setDepth(1001);
+
+    const cancelBtn = this.add
+      .text(centerX + 40, centerY + 60, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+    cancelBtn.setScrollFactor(0);
+    cancelBtn.setDepth(1001);
+
+    const cleanup = () => {
+      [modalBg, title, labelW, labelH, applyBtn, cancelBtn].forEach((o) =>
+        o.destroy()
+      );
+      document.body.contains(inputWidth) &&
+        document.body.removeChild(inputWidth);
+      document.body.contains(inputHeight) &&
+        document.body.removeChild(inputHeight);
+    };
+
+    applyBtn.on("pointerdown", () => {
+      const newW = Math.max(1, parseInt(inputWidth.value || "1", 10));
+      const newH = Math.max(1, parseInt(inputHeight.value || "1", 10));
+      if (
+        newW !== this.tilemapSystem.mapWidth ||
+        newH !== this.tilemapSystem.mapHeight
+      ) {
+        this.tilemapSystem.resizeMap(newW, newH);
+        this.updateMapAfterResize();
+      }
+      cleanup();
+      afterResize && afterResize();
+    });
+
+    cancelBtn.on("pointerdown", () => {
+      cleanup();
+    });
+  }
   public toggleGrid(): void {
     this.gridVisible = !this.gridVisible;
     this.gridGraphics.setVisible(this.gridVisible);
@@ -678,10 +1152,30 @@ export class MapEditorScene extends Phaser.Scene {
     );
   }
 
+  public toggleAutotile(): void {
+    const currentState =
+      this.tilemapSystem.autoTileSystem?.isEnabled() ?? false;
+    const newState = !currentState;
+
+    if (this.tilemapSystem.autoTileSystem) {
+      this.tilemapSystem.autoTileSystem.setEnabled(newState);
+    }
+
+    if (this.autotileToggleButton) {
+      this.autotileToggleButton.setText(`Autotile: ${newState ? "ON" : "OFF"}`);
+      this.autotileToggleButton.setBackgroundColor(
+        newState ? "#00aa00" : "#aa0000"
+      );
+    }
+
+    // Don't redraw existing tiles - autotiling toggle only affects new tile placement
+    // Existing tiles should remain unchanged
+  }
+
   private createMapButtons(x: number, y: number, panelWidth: number): number {
-    // Grid layout: 2 rows x 2 columns
+    // Grid layout: 3 rows x 2 columns (5 buttons)
     const cols = 2;
-    const rows = 2;
+    const rows = 3;
     const buttonWidth = 85;
     const buttonHeight = 25;
     const spacingX = 5;
@@ -690,6 +1184,11 @@ export class MapEditorScene extends Phaser.Scene {
     const buttons = [
       { name: "Save Map", color: "#00aa00", action: () => this.saveMap() },
       { name: "Load Map", color: "#0066aa", action: () => this.loadMap() },
+      {
+        name: "Configure Exits",
+        color: "#ff8800",
+        action: () => this.configureExits(),
+      },
       { name: "Clear All", color: "#aa0000", action: () => this.clearAll() },
       {
         name: "Back",
@@ -779,6 +1278,46 @@ export class MapEditorScene extends Phaser.Scene {
     return y + 25 + 10;
   }
 
+  private createAutotileToggle(
+    x: number,
+    y: number,
+    panelWidth: number
+  ): number {
+    const autotileEnabled =
+      this.tilemapSystem.autoTileSystem?.isEnabled() ?? true;
+    this.autotileToggleButton = this.add
+      .text(x, y, `Autotile: ${autotileEnabled ? "ON" : "OFF"}`, {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: autotileEnabled ? "#00aa00" : "#aa0000",
+        padding: { x: 8, y: 4 },
+      })
+      .setInteractive();
+
+    this.autotileToggleButton.on("pointerdown", () => {
+      const currentState =
+        this.tilemapSystem.autoTileSystem?.isEnabled() ?? false;
+      const newState = !currentState;
+
+      if (this.tilemapSystem.autoTileSystem) {
+        this.tilemapSystem.autoTileSystem.setEnabled(newState);
+      }
+
+      this.autotileToggleButton.setText(`Autotile: ${newState ? "ON" : "OFF"}`);
+      this.autotileToggleButton.setBackgroundColor(
+        newState ? "#00aa00" : "#aa0000"
+      );
+
+      // Don't redraw existing tiles - autotiling toggle only affects new tile placement
+      // Existing tiles should remain unchanged
+    });
+
+    return y + 25 + 10;
+  }
+
   private createMapResizeControls(
     x: number,
     y: number,
@@ -799,115 +1338,20 @@ export class MapEditorScene extends Phaser.Scene {
         strokeThickness: 1,
       }
     );
-    currentY += 20;
+    currentY += 12;
 
-    // Add row button
-    const addRowButton = this.add
-      .text(x, currentY, "+ Row", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#00aa00",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    addRowButton.on("pointerdown", () => {
-      this.tilemapSystem.resizeMap(
-        this.tilemapSystem.mapWidth,
-        this.tilemapSystem.mapHeight + 1
-      );
-      this.updateMapAfterResize();
-      mapSizeText.setText(
-        `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-      );
-    });
-
-    // Remove row button
-    const removeRowButton = this.add
-      .text(x + 50, currentY, "- Row", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#aa0000",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    removeRowButton.on("pointerdown", () => {
-      if (this.tilemapSystem.mapHeight > 1) {
-        this.tilemapSystem.resizeMap(
-          this.tilemapSystem.mapWidth,
-          this.tilemapSystem.mapHeight - 1
-        );
-        this.updateMapAfterResize();
-        mapSizeText.setText(
-          `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-        );
-      }
-    });
-    currentY += 22;
-
-    // Add column button
-    const addColumnButton = this.add
-      .text(x, currentY, "+ Col", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#00aa00",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    addColumnButton.on("pointerdown", () => {
-      this.tilemapSystem.resizeMap(
-        this.tilemapSystem.mapWidth + 1,
-        this.tilemapSystem.mapHeight
-      );
-      this.updateMapAfterResize();
-      mapSizeText.setText(
-        `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-      );
-    });
-
-    // Remove column button
-    const removeColumnButton = this.add
-      .text(x + 50, currentY, "- Col", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#aa0000",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    removeColumnButton.on("pointerdown", () => {
-      if (this.tilemapSystem.mapWidth > 1) {
-        this.tilemapSystem.resizeMap(
-          this.tilemapSystem.mapWidth - 1,
-          this.tilemapSystem.mapHeight
-        );
-        this.updateMapAfterResize();
-        mapSizeText.setText(
-          `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-        );
-      }
-    });
-    currentY += 22;
-
+    // No on-panel resize button; use the Resize tool instead
     return currentY + 10;
   }
 
   private setupCamera(): void {
-    this.cameras.main.setBounds(0, 0, 4100, 800);
+    // Center the camera on the current map within the editor viewport
+    const worldW = this.tilemapSystem
+      ? this.tilemapSystem.getWorldWidth()
+      : 4100;
+    const worldH = this.tilemapSystem
+      ? this.tilemapSystem.getWorldHeight()
+      : 800;
 
     // Set camera viewport to only use the left 80% of the screen
     (this.cameras.main as any).setViewport(
@@ -917,15 +1361,26 @@ export class MapEditorScene extends Phaser.Scene {
       this.viewportHeight
     );
 
-    // Calculate zoom to fit the viewport properly
-    const zoomX = this.viewportWidth / 1200; // Original width was 1200
-    const zoomY = this.viewportHeight / 800; // Original height was 800
-    const zoom = Math.min(zoomX, zoomY) * 0.8; // Keep the original 0.8 factor
-
+    // Keep existing zoom behavior
+    const zoomX = this.viewportWidth / 1200;
+    const zoomY = this.viewportHeight / 800;
+    const zoom = Math.min(zoomX, zoomY) * 0.8;
     this.cameras.main.setZoom(zoom);
 
-    // Center the camera initially
-    this.cameras.main.centerOn(2050, 400);
+    // Pad bounds to allow centering small maps within the viewport
+    const viewWorldW = this.viewportWidth / zoom;
+    const viewWorldH = this.viewportHeight / zoom;
+    const offsetX = Math.max(0, (viewWorldW - worldW) / 2);
+    const offsetY = Math.max(0, (viewWorldH - worldH) / 2);
+    this.cameras.main.setBounds(
+      -offsetX,
+      -offsetY,
+      worldW + offsetX * 2,
+      worldH + offsetY * 2
+    );
+
+    // Center camera on the map
+    this.cameras.main.centerOn(worldW / 2, worldH / 2);
   }
 
   private setupInput(): void {
@@ -946,10 +1401,10 @@ export class MapEditorScene extends Phaser.Scene {
         this.removeObjectAt(worldX, worldY);
       } else {
         this.placeObject(worldX, worldY);
-        // Start dragging for tile tools
+        // Start dragging for tile tools and remove tool
         if (
           this.selectedTool &&
-          ["ground", "platform", "wall", "solid", "erase"].includes(
+          ["ground", "platform", "wall", "solid", "erase", "remove"].includes(
             this.selectedTool
           )
         ) {
@@ -986,6 +1441,11 @@ export class MapEditorScene extends Phaser.Scene {
       this.toggleGrid();
     });
 
+    // Add A key handler for autotile toggle
+    this.input.keyboard.on("keydown-A", () => {
+      this.toggleAutotile();
+    });
+
     // Camera controls
     this.cameraSpeed = 10; // Increased speed for better navigation
   }
@@ -993,7 +1453,16 @@ export class MapEditorScene extends Phaser.Scene {
   private isClickOnUI(pointer: Phaser.Input.Pointer): boolean {
     // Check if click is on the right panel (where all UI is located)
     // Right panel starts at viewportWidth (80% of screen width)
-    return pointer.x >= this.viewportWidth;
+    if (pointer.x >= this.viewportWidth) {
+      return true;
+    }
+
+    // Check if any modal is open
+    if (this.spritePicker || this.mapSelector || this.spawnPointSelector) {
+      return true; // Block all map interactions when a modal is open
+    }
+
+    return false;
   }
 
   private createPreviewObjects(): void {
@@ -1013,8 +1482,17 @@ export class MapEditorScene extends Phaser.Scene {
     }
 
     switch (this.selectedTool) {
-      case "player":
-        this.updatePlayerPosition(x, y);
+      case "exit_left":
+        this.placeExitTile(x, y, TilemapSystem.TILE_TYPES.EXIT_LEFT);
+        break;
+      case "exit_right":
+        this.placeExitTile(x, y, TilemapSystem.TILE_TYPES.EXIT_RIGHT);
+        break;
+      case "exit_top":
+        this.placeExitTile(x, y, TilemapSystem.TILE_TYPES.EXIT_TOP);
+        break;
+      case "exit_bottom":
+        this.placeExitTile(x, y, TilemapSystem.TILE_TYPES.EXIT_BOTTOM);
         break;
       case "portal":
         this.updatePortalPosition(x, y);
@@ -1038,24 +1516,97 @@ export class MapEditorScene extends Phaser.Scene {
       case "erase":
         this.eraseTile(x, y);
         break;
+      case "remove":
+        this.removeObjectAt(x, y);
+        break;
+      case "resize":
+        this.openResizeModal();
+        break;
     }
 
     this.updateObjectInfo();
   }
 
+  private placeExitTile(x: number, y: number, tileType: number): void {
+    // Convert world coordinates to tile coordinates
+    const tilePos = this.tilemapSystem.worldToTile(x, y);
+
+    // Check if coordinates are within bounds
+    if (
+      tilePos.x >= 0 &&
+      tilePos.x < this.tilemapSystem.mapWidth &&
+      tilePos.y >= 0 &&
+      tilePos.y < this.tilemapSystem.mapHeight
+    ) {
+      this.tilemapSystem.setTile(tilePos.x, tilePos.y, tileType);
+      console.log(
+        `Placed exit tile type ${tileType} at (${tilePos.x}, ${tilePos.y})`
+      );
+    }
+  }
+
   private removeObjectAt(x: number, y: number): void {
-    // Remove enemies near the click position
-    this.mapData.enemies = this.mapData.enemies.filter((enemy) => {
+    // Try to find and remove the closest object to the click position
+    // Only remove one object per click
+
+    let closestObject: {
+      type: string;
+      distance: number;
+      index: number;
+    } | null = null;
+
+    // Check enemies
+    this.mapData.enemies.forEach((enemy, index) => {
       const distance = Phaser.Math.Distance.Between(
         x,
         y,
         enemy.position.x,
         enemy.position.y
       );
-      return distance > 50; // Keep enemies that are more than 50 pixels away
+      if (distance <= 50) {
+        if (!closestObject || distance < closestObject.distance) {
+          closestObject = { type: "enemy", distance, index };
+        }
+      }
     });
 
-    this.updatePreviewObjects();
+    // Spawn points no longer exist in edge-based system
+
+    // Check exit zones
+    this.mapData.exits.forEach((exit, index) => {
+      // Check if click is within the exit zone bounds
+      const isInside =
+        x >= exit.x &&
+        x <= exit.x + exit.width &&
+        y >= exit.y &&
+        y <= exit.y + exit.height;
+      // Also check distance from center for easier selection
+      const centerX = exit.x + exit.width / 2;
+      const centerY = exit.y + exit.height / 2;
+      const distance = Phaser.Math.Distance.Between(x, y, centerX, centerY);
+
+      if (isInside || distance <= 75) {
+        if (!closestObject || distance < closestObject.distance) {
+          closestObject = { type: "exit", distance, index };
+        }
+      }
+    });
+
+    // Remove only the closest object
+    if (closestObject) {
+      switch (closestObject.type) {
+        case "enemy":
+          this.mapData.enemies.splice(closestObject.index, 1);
+          console.log("Removed enemy");
+          break;
+        // Spawn points no longer exist in edge-based system
+        case "exit":
+          this.mapData.exits.splice(closestObject.index, 1);
+          console.log("Removed exit zone");
+          break;
+      }
+      this.updatePreviewObjects();
+    }
   }
 
   private updatePlayerPosition(x: number, y: number): void {
@@ -1087,6 +1638,40 @@ export class MapEditorScene extends Phaser.Scene {
 
     this.mapData.enemies.push(enemy as any);
     this.updatePreviewObjects();
+  }
+
+  // Spawn points no longer exist in edge-based system
+
+  private addExitZone(x: number, y: number): void {
+    // Auto-generate sequential exit ID
+    const nextIndex = this.mapData.exits.length + 1;
+    const exitId = `exit_${nextIndex}`;
+
+    // Step 1: Select target map
+    this.openMapSelector((targetMapId) => {
+      if (!targetMapId) {
+        return; // User cancelled
+      }
+
+      // Create new exit with selected values (no spawn point needed)
+      this.mapData.exits.push({
+        id: exitId,
+        x: Math.round(x),
+        y: Math.round(y),
+        width: 100,
+        height: 100,
+        edge: "right", // Default edge, will be updated by tile detection
+        edgePosition: 0.5,
+        edgeStart: 0.4,
+        edgeEnd: 0.6,
+        tileStart: 0,
+        tileEnd: 1,
+        targetMapId: targetMapId,
+      });
+
+      console.log(`✅ Created exit "${exitId}" → map "${targetMapId}"`);
+      this.updatePreviewObjects();
+    });
   }
 
   private placeTile(
@@ -1133,29 +1718,55 @@ export class MapEditorScene extends Phaser.Scene {
     this.previewObjects.forEach((obj) => obj.destroy());
     this.previewObjects = [];
 
-    // Create player preview
-    const playerPos = this.mapData.player.startPosition;
-    const playerPreview = this.add.circle(
-      playerPos.x,
-      playerPos.y,
-      20,
-      0x00ff00,
-      0.7
-    );
-    playerPreview.setDepth(50);
-    this.previewObjects.push(playerPreview);
+    // Clear existing exit zones
+    this.exitZones.forEach((exit) => exit.destroy());
+    this.exitZones = [];
 
-    // Create portal preview
-    const portalPos = this.mapData.portal.position;
-    const portalPreview = this.add.circle(
-      portalPos.x,
-      portalPos.y,
-      30,
-      0xff00ff,
-      0.7
+    // Spawn points no longer exist in edge-based system
+
+    console.log(
+      `🎨 Updating preview objects. Exit zones to create: ${this.mapData.exits.length}`
     );
-    portalPreview.setDepth(50);
-    this.previewObjects.push(portalPreview);
+
+    // Create exit zone previews
+    this.mapData.exits.forEach((exitData) => {
+      console.log(
+        `  Creating ExitZone visual for ${exitData.edge} at (${exitData.x}, ${exitData.y}) size ${exitData.width}x${exitData.height}`
+      );
+      const exitZone = new ExitZone(this, exitData);
+      console.log(
+        `  ExitZone created at position: (${exitZone.x}, ${exitZone.y})`
+      );
+      this.exitZones.push(exitZone);
+    });
+
+    // Create player preview if it exists
+    if (this.mapData.player) {
+      const playerPos = this.mapData.player.startPosition;
+      const playerPreview = this.add.circle(
+        playerPos.x,
+        playerPos.y,
+        20,
+        0x00ff00,
+        0.7
+      );
+      playerPreview.setDepth(50);
+      this.previewObjects.push(playerPreview);
+    }
+
+    // Create portal preview if it exists
+    if (this.mapData.portal) {
+      const portalPos = this.mapData.portal.position;
+      const portalPreview = this.add.circle(
+        portalPos.x,
+        portalPos.y,
+        30,
+        0xff00ff,
+        0.7
+      );
+      portalPreview.setDepth(50);
+      this.previewObjects.push(portalPreview);
+    }
 
     // Create enemy previews
     this.mapData.enemies.forEach((enemy) => {
@@ -1171,9 +1782,14 @@ export class MapEditorScene extends Phaser.Scene {
       this.previewObjects.push(enemyPreview);
     });
 
-    // Make sure UI camera ignores all preview objects
-    if (this.uiCamera && this.previewObjects.length > 0) {
-      (this.uiCamera as any).ignore(this.previewObjects);
+    // Make sure UI camera ignores all preview objects and exit zones
+    if (this.uiCamera) {
+      if (this.previewObjects.length > 0) {
+        (this.uiCamera as any).ignore(this.previewObjects);
+      }
+      if (this.exitZones.length > 0) {
+        (this.uiCamera as any).ignore(this.exitZones);
+      }
     }
   }
 
@@ -1182,14 +1798,18 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   public async saveMap(): Promise<void> {
-    // Save tile data to map
+    // Save tile data to current map
     this.saveTileDataToMap();
 
-    const success = await this.mapSystem.saveMap(this.mapData as any);
+    // Update current map in world system
+    this.worldSystem.updateCurrentMap(this.mapData);
+
+    // Save entire world
+    const success = await this.worldSystem.saveWorld();
     if (success) {
-      console.log("Map saved successfully");
+      console.log("World saved successfully");
     } else {
-      console.log("Map save cancelled or failed");
+      console.log("World save cancelled or failed");
     }
   }
 
@@ -1235,19 +1855,26 @@ export class MapEditorScene extends Phaser.Scene {
     fileInput.addEventListener("change", (event: Event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (file) {
-        this.isLoadingCustomMap = true; // Set flag to prevent default map override
+        this.isLoadingCustomMap = true; // Set flag to prevent default world override
 
-        this.mapSystem
-          .loadMap(file)
-          .then((mapData: any) => {
-            this.mapData = mapData;
-            this.loadTileDataFromMap();
-            this.updatePreviewObjects();
+        this.worldSystem
+          .loadWorld(file)
+          .then((worldData) => {
+            // Update world view renderer with loaded world data
+            this.worldViewRenderer.setWorldData(worldData);
+
+            const currentMap = this.worldSystem.getCurrentMap();
+            if (currentMap) {
+              this.mapData = currentMap;
+              this.loadTileDataFromMap();
+              this.updatePreviewObjects();
+              this.updateMapList();
+            }
             this.isLoadingCustomMap = false; // Clear flag
           })
           .catch((error: Error) => {
-            console.error("Error loading map:", error);
-            alert("Error loading map: " + error.message);
+            console.error("Error loading world:", error);
+            alert("Error loading world: " + error.message);
             this.isLoadingCustomMap = false; // Clear flag on error
           });
       }
@@ -1255,26 +1882,6 @@ export class MapEditorScene extends Phaser.Scene {
     });
 
     fileInput.click();
-  }
-
-  // Method to load a specific map file programmatically (for testing)
-  public async loadMapFromURL(url: string): Promise<MapEditorData> {
-    console.log(`🔄 Loading map from URL: ${url}`);
-    this.isLoadingCustomMap = true;
-
-    try {
-      const mapData = await this.mapSystem.loadMapFromURL(url);
-      this.mapData = mapData as any;
-      this.loadTileDataFromMap();
-      this.updatePreviewObjects();
-      this.isLoadingCustomMap = false;
-      console.log(`✅ Map loaded successfully from URL: ${url}`);
-      return mapData as any;
-    } catch (error) {
-      console.error("Error loading map from URL:", error);
-      this.isLoadingCustomMap = false;
-      throw error;
-    }
   }
 
   private loadTileDataFromMap(): void {
@@ -1379,22 +1986,39 @@ export class MapEditorScene extends Phaser.Scene {
       this.tilemapSystem.getWorldHeight()
     );
 
-    // Update camera bounds
+    // Update camera bounds and recentre on the map with padding so small maps center
+    const zoom = (this.cameras.main as any).zoom || 1;
+    const viewWorldW = this.viewportWidth / zoom;
+    const viewWorldH = this.viewportHeight / zoom;
+    const worldW = this.tilemapSystem.getWorldWidth();
+    const worldH = this.tilemapSystem.getWorldHeight();
+    const offsetX = Math.max(0, (viewWorldW - worldW) / 2);
+    const offsetY = Math.max(0, (viewWorldH - worldH) / 2);
     this.cameras.main.setBounds(
-      0,
-      0,
-      this.tilemapSystem.getWorldWidth(),
-      this.tilemapSystem.getWorldHeight()
+      -offsetX,
+      -offsetY,
+      worldW + offsetX * 2,
+      worldH + offsetY * 2
     );
+    this.cameras.main.centerOn(worldW / 2, worldH / 2);
 
     // Update background
     this.backgroundImage.destroy();
-    this.darkOverlay.destroy();
     this.createBackground();
 
     // Update grid
     this.gridGraphics.destroy();
     this.createGridOverlay();
+
+    // Make sure UI camera ignores the new grid and background
+    if (this.uiCamera) {
+      if (this.gridGraphics) {
+        (this.uiCamera as any).ignore(this.gridGraphics);
+      }
+      if (this.backgroundImage) {
+        (this.uiCamera as any).ignore(this.backgroundImage);
+      }
+    }
 
     // Update map data world dimensions
     if (this.mapData) {
@@ -1416,6 +2040,11 @@ export class MapEditorScene extends Phaser.Scene {
     }
     if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
       this.cameras.main.scrollY += this.cameraSpeed;
+    }
+
+    // Handle world view toggle
+    if (Phaser.Input.Keyboard.JustDown(this.wasdKeys.W)) {
+      this.worldViewRenderer.toggle();
     }
 
     // Update coordinate display
@@ -1455,8 +2084,434 @@ export class MapEditorScene extends Phaser.Scene {
         return "Empty";
       case TilemapSystem.TILE_TYPES.SOLID:
         return "Solid";
+      case TilemapSystem.TILE_TYPES.EXIT_LEFT:
+        return "Left Exit";
+      case TilemapSystem.TILE_TYPES.EXIT_RIGHT:
+        return "Right Exit";
+      case TilemapSystem.TILE_TYPES.EXIT_TOP:
+        return "Top Exit";
+      case TilemapSystem.TILE_TYPES.EXIT_BOTTOM:
+        return "Bottom Exit";
       default:
         return `Unknown(${tileType})`;
     }
+  }
+
+  // Update map list in the right panel
+  private updateMapList(): void {
+    // Clear existing map list
+    this.mapListButtons.forEach((button) => button.destroy());
+    this.mapListButtons = [];
+
+    if (this.createMapButton) {
+      this.createMapButton.destroy();
+    }
+
+    // Position and render only the "New Map" button
+    const panelPadding = 10;
+    const yOffset = this.viewportHeight - 60;
+
+    this.createMapButton = this.add
+      .text(panelPadding, yOffset, "+ New Map", {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#0066aa",
+        padding: { x: 8, y: 4 },
+      })
+      .setInteractive();
+    this.createMapButton.setScrollFactor(0);
+
+    this.createMapButton.on("pointerdown", () => {
+      this.createNewMap();
+    });
+
+    this.mapListButtons.push(this.createMapButton);
+
+    // Ensure these UI elements are only rendered by the UI camera
+    if (this.uiCamera) {
+      this.setupCameraIgnoreLists();
+    }
+  }
+
+  // Switch to a different map
+  private switchToMap(mapId: string): void {
+    // Close any open modals/selectors to prevent stray UI (map picker, sprite picker, etc.)
+    if (this.mapSelector) {
+      this.closeMapSelector();
+    }
+    if (this.spawnPointSelector) {
+      this.closeSpawnPointSelector();
+    }
+    // Exit config modal (if any)
+    try {
+      this.closeExitConfigModal();
+    } catch (e) {
+      // ignore if not open
+    }
+    // Sprite picker (if open)
+    if (this.spritePicker) {
+      this.closeSpritePicker();
+    }
+
+    // Save current map data before switching
+    this.saveTileDataToMap();
+    this.worldSystem.updateCurrentMap(this.mapData);
+
+    // Load new map
+    const newMap = this.worldSystem.getMap(mapId);
+    if (!newMap) {
+      console.error(`Map ${mapId} not found`);
+      return;
+    }
+
+    this.worldSystem.currentMapId = mapId;
+    this.mapData = newMap;
+
+    // Reload the map
+    this.loadTileDataFromMap();
+    this.updatePreviewObjects();
+    this.updateMapList();
+
+    // If world view is visible, refresh it to reflect the newly selected map
+    if (this.worldViewRenderer) {
+      this.worldViewRenderer.setVisitedMaps(this.worldSystem.visitedMaps);
+      if (this.worldViewRenderer.getIsVisible()) {
+        this.worldViewRenderer.update();
+      }
+    }
+  }
+
+  // Create a new map
+  private createNewMap(): void {
+    // Auto-generate map name based on number of maps
+    const mapCount = this.worldSystem.getAllMapIds().length;
+    const mapName = `Map ${mapCount + 1}`;
+
+    // Create new map in world
+    const newMap = this.worldSystem.createNewMap(mapName);
+
+    // Set initial size to 9x9 tiles
+    const tileSize = this.tilemapSystem?.tileSize ?? 32;
+    newMap.world.tileSize = tileSize;
+    newMap.world.width = 9 * tileSize;
+    newMap.world.height = 9 * tileSize;
+
+    console.log(`✅ Created new map: ${newMap.id} (${mapName})`);
+
+    // Switch to the new map
+    this.switchToMap(newMap.id);
+  }
+
+  // Exit detection from tiles
+  detectExitZonesFromTiles(): DetectedExit[] {
+    const detected: DetectedExit[] = [];
+    const tileSize = this.tilemapSystem.tileSize;
+    const mapWidth = this.tilemapSystem.mapWidth;
+    const mapHeight = this.tilemapSystem.mapHeight;
+
+    console.log(`🔍 Detecting exits on map ${mapWidth}x${mapHeight}`);
+
+    const edges = [
+      { name: "left", tileType: 100, x: 0 },
+      { name: "right", tileType: 101, x: mapWidth - 1 },
+      { name: "top", tileType: 102, y: 0 },
+      { name: "bottom", tileType: 103, y: mapHeight - 1 },
+    ];
+
+    edges.forEach((edge) => {
+      let inExit = false;
+      let exitStart = -1;
+      let exitTilesFound = 0;
+      const isHorizontal = edge.name === "top" || edge.name === "bottom";
+      const length = isHorizontal ? mapWidth : mapHeight;
+
+      for (let i = 0; i < length; i++) {
+        const [x, y] = isHorizontal ? [i, edge.y!] : [edge.x!, i];
+        const tile = this.tilemapSystem.getTile(x, y);
+
+        if (tile === edge.tileType) {
+          exitTilesFound++;
+          if (!inExit) {
+            inExit = true;
+            exitStart = i;
+            console.log(`  Found ${edge.name} exit starting at tile ${i}`);
+          }
+        } else if (inExit) {
+          const exit = this.createDetectedExit(
+            edge.name,
+            exitStart,
+            i - 1,
+            tileSize
+          );
+          detected.push(exit);
+          console.log(
+            `  Created ${edge.name} exit from tile ${exitStart} to ${i - 1}`
+          );
+          inExit = false;
+        }
+      }
+
+      if (inExit) {
+        const exit = this.createDetectedExit(
+          edge.name,
+          exitStart,
+          length - 1,
+          tileSize
+        );
+        detected.push(exit);
+        console.log(
+          `  Created ${edge.name} exit from tile ${exitStart} to ${length - 1}`
+        );
+      }
+
+      if (exitTilesFound > 0) {
+        console.log(`  Total ${edge.name} exit tiles found: ${exitTilesFound}`);
+      }
+    });
+
+    console.log(`✅ Total exits detected: ${detected.length}`);
+    return detected;
+  }
+
+  private createDetectedExit(
+    edgeName: string,
+    tileStart: number,
+    tileEnd: number,
+    tileSize: number
+  ): DetectedExit {
+    const mapWidthTiles = this.tilemapSystem.mapWidth;
+    const mapHeightTiles = this.tilemapSystem.mapHeight;
+    const mapWidth = mapWidthTiles * tileSize;
+    const mapHeight = mapHeightTiles * tileSize;
+    const isHorizontal = edgeName === "top" || edgeName === "bottom";
+
+    let x: number, y: number, width: number, height: number;
+    let edgeStart: number, edgeEnd: number, edgePosition: number;
+
+    if (isHorizontal) {
+      // Top or bottom edge
+      x = tileStart * tileSize;
+      y = edgeName === "top" ? 0 : (mapHeightTiles - 1) * tileSize;
+      width = (tileEnd - tileStart + 1) * tileSize;
+      height = tileSize;
+      edgeStart = tileStart / mapWidthTiles;
+      edgeEnd = (tileEnd + 1) / mapWidthTiles;
+      edgePosition = (edgeStart + edgeEnd) / 2;
+    } else {
+      // Left or right edge
+      x = edgeName === "left" ? 0 : (mapWidthTiles - 1) * tileSize;
+      y = tileStart * tileSize;
+      width = tileSize;
+      height = (tileEnd - tileStart + 1) * tileSize;
+      edgeStart = tileStart / mapHeightTiles;
+      edgeEnd = (tileEnd + 1) / mapHeightTiles;
+      edgePosition = (edgeStart + edgeEnd) / 2;
+    }
+
+    console.log(`  📍 Exit position: (${x}, ${y}) size: ${width}x${height}`);
+
+    return {
+      edge: edgeName,
+      x,
+      y,
+      width,
+      height,
+      tileStart,
+      tileEnd,
+      edgeStart,
+      edgeEnd,
+      edgePosition,
+    };
+  }
+
+  // Configure exits from detected tiles
+  private configureExits(): void {
+    const detectedExits = this.detectExitZonesFromTiles();
+
+    if (detectedExits.length === 0) {
+      alert("No exit tiles detected. Paint exit tiles on map edges first.");
+      return;
+    }
+
+    // Create configuration modal
+    this.createExitConfigModal(detectedExits);
+  }
+
+  private createExitConfigModal(detectedExits: DetectedExit[]): void {
+    // Center the modal in the left viewport
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    // Create modal background
+    const modalBg = this.add.rectangle(
+      centerX,
+      centerY,
+      500,
+      600,
+      0x000000,
+      0.9
+    );
+    modalBg.setScrollFactor(0);
+    modalBg.setDepth(1000);
+
+    // Create title
+    const title = this.add.text(centerX, centerY - 250, "Configure Exits", {
+      fontSize: "20px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+    });
+    title.setScrollFactor(0);
+    title.setDepth(1001);
+    title.setOrigin(0.5);
+
+    // Create exit configuration items
+    const startY = centerY - 200;
+    const itemHeight = 60;
+    const mapIds = this.worldSystem.getAllMapIds();
+
+    detectedExits.forEach((exit, index) => {
+      const yPos = startY + index * itemHeight;
+
+      // Exit info
+      const exitInfo = this.add.text(
+        centerX - 200,
+        yPos,
+        `${exit.edge.toUpperCase()} Exit (Tiles ${exit.tileStart}-${
+          exit.tileEnd
+        })`,
+        {
+          fontSize: "14px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+        }
+      );
+      exitInfo.setScrollFactor(0);
+      exitInfo.setDepth(1001);
+      exitInfo.setOrigin(0.5);
+
+      // Target map selector
+      const mapSelector = this.add.text(centerX, yPos, "Select Target Map", {
+        fontSize: "12px",
+        fill: "#ffffff",
+        backgroundColor: "#444444",
+        padding: { x: 10, y: 5 },
+      });
+      mapSelector.setScrollFactor(0);
+      mapSelector.setDepth(1001);
+      mapSelector.setOrigin(0.5);
+      mapSelector.setInteractive();
+
+      // Store exit data for later use
+      (mapSelector as any).exitData = exit;
+      (mapSelector as any).targetMapId = null;
+
+      mapSelector.on("pointerdown", () => {
+        this.openMapSelectorForExit(mapSelector, exit);
+      });
+    });
+
+    // Apply button
+    const applyButton = this.add.text(centerX - 50, centerY + 250, "Apply", {
+      fontSize: "16px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      backgroundColor: "#00aa00",
+      padding: { x: 15, y: 8 },
+    });
+    applyButton.setScrollFactor(0);
+    applyButton.setDepth(1001);
+    applyButton.setOrigin(0.5);
+    applyButton.setInteractive();
+
+    applyButton.on("pointerdown", () => {
+      this.applyExitConfigurations(detectedExits);
+      this.closeExitConfigModal();
+    });
+
+    // Cancel button
+    const cancelButton = this.add.text(centerX + 50, centerY + 250, "Cancel", {
+      fontSize: "16px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      backgroundColor: "#aa0000",
+      padding: { x: 15, y: 8 },
+    });
+    cancelButton.setScrollFactor(0);
+    cancelButton.setDepth(1001);
+    cancelButton.setOrigin(0.5);
+    cancelButton.setInteractive();
+
+    cancelButton.on("pointerdown", () => {
+      this.closeExitConfigModal();
+    });
+  }
+
+  private openMapSelectorForExit(
+    mapSelector: Phaser.GameObjects.Text,
+    exit: DetectedExit
+  ): void {
+    const mapIds = this.worldSystem.getAllMapIds();
+
+    // Simple map selection for now - just cycle through maps
+    const currentIndex = mapIds.indexOf((mapSelector as any).targetMapId || "");
+    const nextIndex = (currentIndex + 1) % mapIds.length;
+    const selectedMapId = mapIds[nextIndex];
+
+    (mapSelector as any).targetMapId = selectedMapId;
+    mapSelector.setText(`Target: ${selectedMapId}`);
+  }
+
+  private applyExitConfigurations(detectedExits: DetectedExit[]): void {
+    // Convert detected exits to ExitZone objects
+    const exitZones: ExitZoneData[] = [];
+
+    console.log(`🔧 Applying ${detectedExits.length} exit configurations`);
+
+    detectedExits.forEach((detected, index) => {
+      // Find the target map for this exit (stored in the UI)
+      const targetMapId = `map_${index + 2}`; // Simple assignment for now
+
+      const exitZone: ExitZoneData = {
+        id: `exit_${index + 1}`,
+        x: detected.x,
+        y: detected.y,
+        width: detected.width,
+        height: detected.height,
+        edge: detected.edge as "left" | "right" | "top" | "bottom",
+        edgePosition: detected.edgePosition,
+        edgeStart: detected.edgeStart,
+        edgeEnd: detected.edgeEnd,
+        tileStart: detected.tileStart,
+        tileEnd: detected.tileEnd,
+        targetMapId: targetMapId,
+      };
+
+      console.log(
+        `  Creating ExitZoneData: ${detected.edge} at (${exitZone.x}, ${exitZone.y}) size ${exitZone.width}x${exitZone.height}`
+      );
+      exitZones.push(exitZone);
+    });
+
+    // Update map data
+    this.mapData.exits = exitZones;
+    this.updatePreviewObjects();
+
+    console.log(`✅ Configured ${exitZones.length} exits`);
+  }
+
+  private closeExitConfigModal(): void {
+    // Find and destroy all modal elements
+    const modalElements = (this.children as any).list.filter(
+      (child: any) => child.depth === 1000 || child.depth === 1001
+    );
+
+    modalElements.forEach((element: any) => {
+      if (element.destroy) {
+        element.destroy();
+      }
+    });
   }
 }

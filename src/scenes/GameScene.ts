@@ -2,12 +2,15 @@ import { ASSET_PATHS, GAME_CONSTANTS } from "../data/config";
 import { characters } from "../data/characters";
 import { DEFAULT_MAP } from "../data/levels";
 
-import { MapSystem } from "../systems/MapSystem";
+import { WorldSystem } from "../systems/WorldSystem";
 import { TilemapSystem } from "../systems/TilemapSystem";
+import { WorldViewRenderer } from "../systems/WorldViewRenderer";
 import { Player } from "../entities/Player";
 import { Enemy } from "../entities/Enemy";
 import { Platform } from "../entities/Platform";
+import { ExitZone } from "../entities/ExitZone";
 import { gameData } from "../data/characters";
+import { WorldMapData } from "../types/map";
 
 // GameScene interfaces
 interface MapData {
@@ -60,15 +63,16 @@ interface PortalArea {
 }
 
 export class GameScene extends Phaser.Scene {
-  public mapSystem!: MapSystem;
+  public worldSystem!: WorldSystem;
   public tilemapSystem!: TilemapSystem;
   public player!: Player;
   public enemies: Enemy[] = [];
   public enemyGroup!: Phaser.Physics.Arcade.Group;
   public playerGroup!: Phaser.Physics.Arcade.Group;
+  public exitZones: ExitZone[] = [];
   public portalSprite!: Phaser.GameObjects.Sprite;
   public portalArea!: PortalArea;
-  public mapData!: MapData;
+  public mapData!: WorldMapData;
   public backgroundImage!: Phaser.GameObjects.Image;
   public darkOverlay!: Phaser.GameObjects.Rectangle;
   public characterNameText!: Phaser.GameObjects.Text;
@@ -83,6 +87,12 @@ export class GameScene extends Phaser.Scene {
   public backgroundMusic!: Phaser.Sound.BaseSound;
   public wilhelmScream!: Phaser.Sound.BaseSound;
   public frameCount: number = 0;
+  public upKey!: Phaser.Input.Keyboard.Key;
+  public wKey!: Phaser.Input.Keyboard.Key;
+  public transitionCooldown: number = 0;
+  public readonly TRANSITION_COOLDOWN_MS = 1000; // 1 second grace period
+  public worldViewRenderer!: WorldViewRenderer;
+  private activeColliders: Phaser.Physics.Arcade.Collider[] = [];
 
   constructor() {
     super({ key: "GameScene" });
@@ -224,8 +234,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
-    // Initialize map system
-    this.mapSystem = new MapSystem(this as any);
+    // Initialize world system
+    this.worldSystem = new WorldSystem(this as any);
+
+    // Initialize world view renderer
+    this.worldViewRenderer = new WorldViewRenderer(
+      this as any,
+      this.worldSystem.worldData,
+      this.worldSystem.visitedMaps,
+      () => this.worldSystem.currentMapId
+    );
 
     // Create character animations
     this.createCharacterAnimations();
@@ -240,14 +258,15 @@ export class GameScene extends Phaser.Scene {
     this.createBackground();
     this.createDarkOverlay();
 
-    // Load map data if available, otherwise use default
-    this.loadMapData();
+    // Load world data if available, otherwise use default
+    this.loadWorldData();
 
     // Create player immediately (will be repositioned when map loads)
     this.createPlayer();
 
-    // Initialize enemies array to prevent race condition
+    // Initialize enemies and exit zones arrays to prevent race condition
     this.enemies = [];
+    this.exitZones = [];
 
     // Set up camera
     this.setupCamera();
@@ -265,40 +284,72 @@ export class GameScene extends Phaser.Scene {
     this.frameCount = 0;
   }
 
-  private loadMapData(): void {
-    // Load default.json map file
-    this.mapSystem
-      .loadMapFromURL(`${ASSET_PATHS.maps}/default.json?v=${Date.now()}`)
-      .then((mapData: any) => {
+  private loadWorldData(): void {
+    // Load default world file
+    this.worldSystem
+      .loadWorldFromURL(
+        `${ASSET_PATHS.maps}/default_world.json?v=${Date.now()}`
+      )
+      .then((worldData) => {
         console.log(
-          "🎯 GameScene: Map data loaded:",
-          mapData.metadata?.name,
-          mapData.world?.width,
-          "x",
-          mapData.world?.height
+          "🎯 GameScene: World data loaded:",
+          worldData.metadata?.name
         );
-        this.mapData = mapData;
+
+        // Update world view renderer with loaded world data
+        this.worldViewRenderer.setWorldData(worldData);
+
+        // Load the starting map
+        const currentMap = this.worldSystem.getCurrentMap();
+        if (!currentMap) {
+          throw new Error("Starting map not found in world");
+        }
+
+        console.log(
+          "🗺️ Loading map:",
+          currentMap.metadata?.name,
+          currentMap.world?.width,
+          "x",
+          currentMap.world?.height
+        );
+
+        this.mapData = currentMap;
+
+        // Get the starting spawn point
+        const startingSpawn = this.worldSystem.getSpawnPoint(
+          worldData.startingSpawn
+        );
+        if (startingSpawn) {
+          console.log(
+            "📍 Starting at spawn point:",
+            startingSpawn.id,
+            `(${startingSpawn.x}, ${startingSpawn.y})`
+          );
+        }
+
         // Load tile data immediately after map data is loaded
         this.loadTileDataFromMap();
         // Create collision bodies AFTER tile data is loaded
         this.tilemapSystem.createCollisionBodies();
         // Create enemies AFTER map data is loaded
         this.createEnemies();
+        // Create exit zones AFTER map data is loaded
+        this.createExitZones();
         // Create portal AFTER map data is loaded
         this.createPortal();
         // Setup collisions AFTER collision bodies are created
         this.setupCollisions();
-        // Reposition objects based on map data
-        this.updateObjectsFromMapData();
+        // Reposition objects based on map data (including spawn point)
+        this.updateObjectsFromMapData(startingSpawn);
       })
       .catch((error: Error) => {
-        console.error("Failed to load default.json map file:", error.message);
+        console.error("Failed to load world file:", error.message);
         console.error(
-          "Game cannot start without a valid map file. Please ensure default.json exists in the maps directory."
+          "Game cannot start without a valid world file. Please ensure default_world.json exists in the maps directory."
         );
         // Show error message to user
         this.add
-          .text(600, 400, "Map Loading Error", {
+          .text(600, 400, "World Loading Error", {
             fontSize: "32px",
             fill: "#ff4444",
             fontStyle: "bold",
@@ -306,14 +357,14 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5);
 
         this.add
-          .text(600, 450, "Failed to load default map", {
+          .text(600, 450, "Failed to load default world", {
             fontSize: "18px",
             fill: "#ffffff",
           })
           .setOrigin(0.5);
 
         this.add
-          .text(600, 480, "Please ensure the map file exists and is valid", {
+          .text(600, 480, "Please ensure the world file exists and is valid", {
             fontSize: "16px",
             fill: "#cccccc",
           })
@@ -456,9 +507,14 @@ export class GameScene extends Phaser.Scene {
       // Use the larger scale to ensure full coverage of world width
       const scale = Math.max(scaleX, scaleY);
 
-      // Position the background to start from the left edge of the world
+      // Background images have empty space in first 6 columns (at 32px per tile = 192px)
+      // Shift the background left to hide the empty space
+      const emptySpaceWidth = 192; // 6 tiles * 32px
+      const offsetX = -(emptySpaceWidth * scale) / 2;
+
+      // Position the background to start from the left edge of the world, adjusted for empty space
       this.backgroundImage = this.add.image(
-        (imageWidth * scale) / 2,
+        (imageWidth * scale) / 2 + offsetX,
         worldHeight / 2,
         selectedBackground
       );
@@ -476,18 +532,48 @@ export class GameScene extends Phaser.Scene {
 
   private createDarkOverlay(): void {
     // Create a dark overlay to make the background darker
-    const worldWidth = 4100;
-    const worldHeight = 800;
+    const worldWidth = this.tilemapSystem
+      ? this.tilemapSystem.getWorldWidth()
+      : GAME_CONSTANTS.WORLD_WIDTH;
+    const worldHeight = this.tilemapSystem
+      ? this.tilemapSystem.getWorldHeight()
+      : GAME_CONSTANTS.WORLD_HEIGHT;
 
-    // Create a semi-transparent dark rectangle covering the entire world
-    this.darkOverlay = this.add.rectangle(
-      worldWidth / 2,
-      worldHeight / 2,
-      worldWidth,
-      worldHeight,
-      0x000000,
-      0.4
-    );
+    // Calculate the same offset as the background to align with it
+    const selectedBackground = "background1"; // Assume any background for scale calculation
+    if (this.textures.exists(selectedBackground)) {
+      const imageWidth = this.textures.get(selectedBackground).source[0].width;
+      const imageHeight =
+        this.textures.get(selectedBackground).source[0].height;
+      const scaleX = worldWidth / imageWidth;
+      const scaleY = worldHeight / imageHeight;
+      const scale = Math.max(scaleX, scaleY);
+
+      // Background images have empty space in first 6 columns (at 32px per tile = 192px)
+      const emptySpaceWidth = 192; // 6 tiles * 32px
+      const offsetX = -(emptySpaceWidth * scale) / 2;
+
+      // Create a semi-transparent dark rectangle covering the entire world, shifted to match background
+      this.darkOverlay = this.add.rectangle(
+        worldWidth / 2 + offsetX,
+        worldHeight / 2,
+        worldWidth,
+        worldHeight,
+        0x000000,
+        0.4
+      );
+    } else {
+      // Fallback if textures not available
+      this.darkOverlay = this.add.rectangle(
+        worldWidth / 2,
+        worldHeight / 2,
+        worldWidth,
+        worldHeight,
+        0x000000,
+        0.4
+      );
+    }
+
     this.darkOverlay.setScrollFactor(0.2); // Slight parallax effect
     this.darkOverlay.setDepth(1); // Above background but below game elements
   }
@@ -561,29 +647,51 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createPlayer(): void {
-    // Create player with default position (will be repositioned when map loads)
-    let startX = 100; // Default starting position
-    let startY = 688; // Default starting position
-
-    // Paladin starts near the portal, other characters start at the beginning
-    if (gameData.selectedCharacter === "D") {
-      startX = 3800; // Paladin starts close to portal (portal is at x=4000)
-    }
-
-    // Calculate ground level from tilemap (bottom 3 rows)
-    const groundTileY = this.tilemapSystem.mapHeight - 3; // Ground starts at row 22
-    const groundWorldY = groundTileY * this.tilemapSystem.tileSize; // Convert to world coordinates
-    startY = groundWorldY - 66; // Spawn at yellow circle position (50px above ground + 16px offset)
+    // Get starting position from world data or use default
+    const startingPos = this.getStartingPlayerPosition();
 
     this.player = new Player(
       this as any,
-      startX,
-      startY,
+      startingPos.x,
+      startingPos.y,
       gameData.selectedCharacter ?? 0
     );
 
     // Add player to physics groups for collision detection
     this.playerGroup = this.physics.add.group([this.player]);
+  }
+
+  private getStartingPlayerPosition(): { x: number; y: number } {
+    // Check if world data is loaded
+    if (!this.worldSystem.worldData) {
+      // Fallback to center if world data not loaded yet
+      return {
+        x: 400, // Default center position
+        y: 300,
+      };
+    }
+
+    // Check if world has a default starting position
+    if (this.worldSystem.worldData.startingPosition) {
+      return this.worldSystem.worldData.startingPosition;
+    }
+
+    // Otherwise use first exit on left edge, or center
+    if (this.mapData && this.mapData.exits) {
+      const leftExit = this.mapData.exits.find((e) => e.edge === "left");
+      if (leftExit) {
+        return {
+          x: leftExit.x + leftExit.width / 2 + 64,
+          y: leftExit.y + leftExit.height / 2,
+        };
+      }
+    }
+
+    // Fallback to center
+    return {
+      x: this.mapData?.world?.width ? this.mapData.world.width / 2 : 400,
+      y: this.mapData?.world?.height ? this.mapData.world.height / 2 : 300,
+    };
   }
 
   private repositionPlayer(): void {
@@ -596,9 +704,17 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private updateObjectsFromMapData(): void {
-    // Update player position
-    this.repositionPlayer();
+  private updateObjectsFromMapData(spawnPoint?: {
+    x: number;
+    y: number;
+  }): void {
+    // Update player position (use spawn point if provided)
+    if (spawnPoint && this.player) {
+      this.player.setPosition(spawnPoint.x, spawnPoint.y);
+      console.log(`Player spawned at (${spawnPoint.x}, ${spawnPoint.y})`);
+    } else {
+      this.repositionPlayer();
+    }
 
     // Update portal position
     if (this.mapData && this.mapData.portal && this.portalSprite) {
@@ -608,7 +724,7 @@ export class GameScene extends Phaser.Scene {
       this.portalSprite.setPosition(portalX, portalY);
     }
 
-    // Note: Enemies are now created at correct positions, no need to reposition
+    // Note: Enemies and exit zones are now created at correct positions, no need to reposition
   }
 
   // Helper function to find appropriate spawn position using tilemap
@@ -687,6 +803,23 @@ export class GameScene extends Phaser.Scene {
     this.enemyGroup = this.physics.add.group(this.enemies);
   }
 
+  private createExitZones(): void {
+    // Clear existing exit zones
+    this.exitZones.forEach((exit) => exit.destroy());
+    this.exitZones = [];
+
+    if (this.mapData && this.mapData.exits) {
+      // Create exit zones from map data
+      this.mapData.exits.forEach((exitData) => {
+        const exitZone = new ExitZone(this, exitData);
+        this.exitZones.push(exitZone);
+      });
+      console.log(`Created ${this.exitZones.length} exit zones`);
+    } else {
+      console.warn("No exit data found in map. No exit zones will be created.");
+    }
+  }
+
   private createPortal(): void {
     // Get portal position from map data
     let portalX = 4000;
@@ -748,29 +881,39 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupCollisions(): void {
+    // Clean up any existing colliders first
+    this.cleanupColliders();
+
     // Player vs Tilemap
-    this.physics.add.collider(this.player, this.tilemapSystem.collisionGroup);
+    const playerTilemapCollider = this.physics.add.collider(
+      this.player,
+      this.tilemapSystem.collisionGroup
+    );
+    this.activeColliders.push(playerTilemapCollider);
 
     // Also try individual collision bodies as backup
     this.tilemapSystem.collisionBodies.forEach((body: any, index: number) => {
-      this.physics.add.collider(this.player, body);
+      const collider = this.physics.add.collider(this.player, body);
+      this.activeColliders.push(collider);
     });
 
     // Player vs Enemies
-    this.physics.add.overlap(
+    const playerEnemyOverlap = this.physics.add.overlap(
       this.player,
       this.enemies,
       (player: Player, enemy: Enemy) => {
         // Collision handling is done in Enemy class
       }
     );
+    this.activeColliders.push(playerEnemyOverlap);
 
     // Enemies vs Tilemap - use individual collision bodies
     console.log(
       `Setting up enemy collisions with ${this.tilemapSystem.collisionBodies.length} collision bodies`
     );
     this.tilemapSystem.collisionBodies.forEach((body: any, index: number) => {
-      this.physics.add.collider(this.enemies, body);
+      const collider = this.physics.add.collider(this.enemies, body);
+      this.activeColliders.push(collider);
       console.log(`Added collision for enemies with body ${index}:`, {
         x: body.x,
         y: body.y,
@@ -780,7 +923,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Player vs Portal - only the animated portal sprite
-    this.physics.add.overlap(
+    const portalOverlap = this.physics.add.overlap(
       this.player,
       this.portalSprite,
       (player: Player, portal: Phaser.GameObjects.Sprite) => {
@@ -789,6 +932,19 @@ export class GameScene extends Phaser.Scene {
         this.scene.start("VictoryScene");
       }
     );
+    this.activeColliders.push(portalOverlap);
+  }
+
+  private cleanupColliders(): void {
+    // Remove all active colliders from the physics world
+    this.activeColliders.forEach((collider) => {
+      if (collider) {
+        // Disable the collider using type assertion
+        (collider as any).active = false;
+        // Phaser will automatically clean up disabled colliders
+      }
+    });
+    this.activeColliders = [];
   }
 
   private createUI(): void {
@@ -853,7 +1009,7 @@ export class GameScene extends Phaser.Scene {
 
     // Instructions
     this.add
-      .text(500, 5, "Arrow Keys: Move | Space: Jump", {
+      .text(500, 5, "Arrow Keys: Move | Space: Jump | W: World View", {
         fontSize: "14px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -982,7 +1138,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupCamera(): void {
-    // Set camera bounds for extended world with maximized playable area
+    // Set camera bounds and center small maps within the viewport
     const worldWidth = this.tilemapSystem
       ? this.tilemapSystem.getWorldWidth()
       : 4128;
@@ -990,10 +1146,30 @@ export class GameScene extends Phaser.Scene {
       ? this.tilemapSystem.getWorldHeight()
       : 800;
 
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    const viewW = (this.cameras.main as any).width;
+    const viewH = (this.cameras.main as any).height;
 
-    // Start camera following player
-    this.cameras.main.startFollow(this.player);
+    const fitX = worldWidth <= viewW;
+    const fitY = worldHeight <= viewH;
+    const offsetX = fitX ? (viewW - worldWidth) / 2 : 0;
+    const offsetY = fitY ? (viewH - worldHeight) / 2 : 0;
+
+    // Use negative origin so we can scroll into padding and visually center small maps
+    this.cameras.main.setBounds(
+      -offsetX,
+      -offsetY,
+      worldWidth + offsetX * 2,
+      worldHeight + offsetY * 2
+    );
+
+    if (fitX && fitY) {
+      // Center map and keep it centered (no follow needed)
+      this.cameras.main.stopFollow();
+      this.cameras.main.setScroll(-offsetX, -offsetY);
+    } else {
+      // Follow player if the map is larger on any axis
+      this.cameras.main.startFollow(this.player);
+    }
 
     // Set camera deadzone for smoother following
     this.cameras.main.setDeadzone(100, 50);
@@ -1024,6 +1200,10 @@ export class GameScene extends Phaser.Scene {
     this.mapLoadKey = this.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.L
     );
+
+    // Exit zone interaction keys
+    this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
   }
 
   private updateHealthBar(health: number): void {
@@ -1057,6 +1237,11 @@ export class GameScene extends Phaser.Scene {
       this.loadMapFromFile();
     }
 
+    // Handle world view toggle
+    if (Phaser.Input.Keyboard.JustDown(this.wKey)) {
+      this.worldViewRenderer.toggle();
+    }
+
     // Update player
     if (this.player) {
       this.player.update();
@@ -1078,6 +1263,9 @@ export class GameScene extends Phaser.Scene {
       this.updateHealthBar(this.player.health);
     }
 
+    // Check for automatic edge transitions
+    this.checkEdgeTransition();
+
     // Manual portal collision check (backup) - only checks animated portal sprite
     if (this.player && this.portalSprite) {
       const distance = Phaser.Math.Distance.Between(
@@ -1091,6 +1279,188 @@ export class GameScene extends Phaser.Scene {
         this.stopBackgroundMusic();
         this.scene.start("VictoryScene");
       }
+    }
+  }
+
+  private checkEdgeTransition(): void {
+    if ((this as any).isTransitioning) return;
+
+    // Check if map data is loaded
+    if (!this.mapData || !this.mapData.world) {
+      return;
+    }
+
+    // Check cooldown (prevents immediate re-transition after spawning)
+    if (this.transitionCooldown > 0) {
+      this.transitionCooldown -= this.game.loop.delta;
+      return;
+    }
+
+    const px = this.player.x;
+    const py = this.player.y;
+    const threshold = 32;
+
+    // Detect edge
+    let edge: string | null = null;
+    if (px < threshold) edge = "left";
+    else if (px > this.mapData.world.width - threshold) edge = "right";
+    else if (py < threshold) edge = "top";
+    else if (py > this.mapData.world.height - threshold) edge = "bottom";
+
+    if (!edge) return;
+
+    // Find matching exit zone
+    const exit = this.findExitAtPlayerPosition(edge, px, py);
+
+    if (exit) {
+      console.log(
+        `🚪 Exit found at ${edge} edge, transitioning to ${exit.targetMapId}`
+      );
+      this.transitionToMap(exit.targetMapId, exit);
+    } else {
+      console.log(`⚠️ Player at ${edge} edge (${px}, ${py}) but no exit found`);
+    }
+  }
+
+  private findExitAtPlayerPosition(
+    edge: string,
+    px: number,
+    py: number
+  ): any | null {
+    console.log(
+      `🔍 Looking for ${edge} exit at player pos (${px}, ${py}), total exits:`,
+      this.mapData.exits.length
+    );
+    return this.mapData.exits.find((e: any) => {
+      if (e.edge !== edge) return false;
+
+      const isHorizontal = edge === "top" || edge === "bottom";
+      const playerPos = isHorizontal ? px : py;
+      const mapSize = isHorizontal
+        ? this.mapData.world.width
+        : this.mapData.world.height;
+      const playerNormalized = playerPos / mapSize;
+
+      return playerNormalized >= e.edgeStart && playerNormalized <= e.edgeEnd;
+    });
+  }
+
+  private transitionToMap(targetMapId: string, fromExit: any): void {
+    if ((this as any).isTransitioning) return;
+    (this as any).isTransitioning = true;
+
+    const playerHealth = this.player?.health || gameData.maxHealth;
+
+    console.log(
+      `🌀 Transitioning to map ${targetMapId}, health: ${playerHealth}`
+    );
+
+    // Switch map
+    const success = this.worldSystem.switchMap(targetMapId, null); // No spawn ID needed
+
+    if (!success) {
+      console.error(`Failed to switch to map ${targetMapId}`);
+      (this as any).isTransitioning = false;
+      return;
+    }
+
+    // Get new map
+    const newMapData = this.worldSystem.getCurrentMap();
+    if (!newMapData) {
+      console.error(`Failed to get map data for ${targetMapId}`);
+      (this as any).isTransitioning = false;
+      return;
+    }
+
+    // Calculate spawn position on opposite edge
+    const spawnPos = this.calculateOppositeEdgeSpawn(fromExit, newMapData);
+
+    this.mapData = newMapData;
+
+    // Reload map content
+    this.cleanupMapContent();
+    this.loadTileDataFromMap();
+    this.tilemapSystem.createCollisionBodies();
+    this.createEnemies();
+    this.createExitZones();
+    this.createPortal();
+
+    // Spawn player at calculated position
+    this.player.setPosition(spawnPos.x, spawnPos.y);
+    this.player.health = playerHealth;
+
+    this.setupCollisions();
+    this.setupWorldBounds();
+    this.setupCamera();
+
+    // Set transition cooldown to prevent immediate re-transition
+    this.transitionCooldown = this.TRANSITION_COOLDOWN_MS;
+
+    // Update world view if it's currently visible
+    if (this.worldViewRenderer.getIsVisible()) {
+      this.worldViewRenderer.update();
+    }
+
+    (this as any).isTransitioning = false;
+    console.log(`✅ Transition to map ${targetMapId} complete`);
+  }
+
+  private calculateOppositeEdgeSpawn(
+    fromExit: any,
+    targetMap: any
+  ): { x: number; y: number } {
+    // Map edge to opposite edge
+    const oppositeEdge = {
+      left: "right",
+      right: "left",
+      top: "bottom",
+      bottom: "top",
+    }[fromExit.edge];
+
+    // Find matching exit on opposite edge with similar position
+    const targetExit = targetMap.exits.find((e: any) => {
+      if (e.edge !== oppositeEdge) return false;
+
+      // Check if exit ranges overlap (allows some flexibility)
+      const overlap = !(
+        e.edgeEnd < fromExit.edgeStart || e.edgeStart > fromExit.edgeEnd
+      );
+      return overlap;
+    });
+
+    if (!targetExit) {
+      console.warn(
+        `No matching exit found on ${oppositeEdge} edge of ${targetMap.id}`
+      );
+      // Fallback: spawn at map center
+      return {
+        x: targetMap.world.width / 2,
+        y: targetMap.world.height / 2,
+      };
+    }
+
+    // Calculate spawn position at center of target exit
+    const spawnX = targetExit.x + targetExit.width / 2;
+    const spawnY = targetExit.y + targetExit.height / 2;
+
+    // Offset slightly inward from edge
+    const offset = 64; // 2 tiles
+    if (targetExit.edge === "left") return { x: spawnX + offset, y: spawnY };
+    if (targetExit.edge === "right") return { x: spawnX - offset, y: spawnY };
+    if (targetExit.edge === "top") return { x: spawnX, y: spawnY + offset };
+    if (targetExit.edge === "bottom") return { x: spawnX, y: spawnY - offset };
+
+    return { x: spawnX, y: spawnY };
+  }
+
+  private cleanupMapContent(): void {
+    // Clean up old objects
+    this.enemies.forEach((enemy) => enemy.destroy());
+    this.enemies = [];
+    this.exitZones.forEach((exit) => exit.destroy());
+    this.exitZones = [];
+    if (this.portalSprite) {
+      this.portalSprite.destroy();
     }
   }
 
@@ -1149,6 +1519,9 @@ export class GameScene extends Phaser.Scene {
   public shutdown(): void {
     // Clean up background music when scene is destroyed
     this.stopBackgroundMusic();
+
+    // Clean up colliders
+    this.cleanupColliders();
 
     // Clean up map file input
     if (this.mapFileInput && this.mapFileInput.parentNode) {

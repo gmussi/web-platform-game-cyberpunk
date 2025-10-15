@@ -1,5 +1,6 @@
 import { GAME_CONSTANTS } from "../data/config";
 import { MapTile } from "../types/map";
+import { AutotileSystem } from "./AutotileSystem";
 
 export class TilemapSystem {
   public scene: Phaser.Scene;
@@ -13,6 +14,7 @@ export class TilemapSystem {
   public collisionGroup!: Phaser.Physics.Arcade.StaticGroup;
   public tileSpriteIndices: (number | null)[][];
   public tileSprites: Phaser.GameObjects.Image[];
+  public autoTileSystem!: AutotileSystem;
 
   constructor(
     scene: Phaser.Scene,
@@ -52,12 +54,24 @@ export class TilemapSystem {
     // Initialize sprite indices storage
     this.tileSpriteIndices = [];
     this.tileSprites = [];
+
+    // Initialize autotile system
+    this.autoTileSystem = new AutotileSystem(
+      this.scene,
+      (x: number, y: number) => this.getTile(x, y),
+      this.mapWidth,
+      this.mapHeight
+    );
   }
 
-  // Tile types - simplified to only EMPTY and SOLID for now
+  // Tile types - including exit tiles for edge-based transitions
   static TILE_TYPES = {
     EMPTY: 0,
     SOLID: 1, // All non-zero values are treated as SOLID tiles
+    EXIT_LEFT: 100,
+    EXIT_RIGHT: 101,
+    EXIT_TOP: 102,
+    EXIT_BOTTOM: 103,
   };
 
   // Tile image mapping - maps tile types to specific tileset indices
@@ -79,16 +93,31 @@ export class TilemapSystem {
     if (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight) {
       this.tiles[y][x] = tileType;
 
-      // Store sprite index for solid tiles
-      if (tileType === TilemapSystem.TILE_TYPES.SOLID && spriteIndex !== null) {
+      // Handle sprite index storage based on autotiling state
+      if (tileType === TilemapSystem.TILE_TYPES.SOLID) {
         if (!this.tileSpriteIndices) {
           this.tileSpriteIndices = [];
         }
         this.tileSpriteIndices[y] = this.tileSpriteIndices[y] || [];
-        this.tileSpriteIndices[y][x] = spriteIndex;
+
+        if (this.autoTileSystem?.isEnabled()) {
+          // Autotiling enabled: clear manual sprite index, let autotile system handle it
+          this.tileSpriteIndices[y][x] = null;
+        } else {
+          // Autotiling disabled: store the provided sprite index (manual mode)
+          this.tileSpriteIndices[y][x] = spriteIndex;
+        }
       }
 
-      this.updateTileVisual(x, y);
+      // Update this tile and all neighbors
+      if (this.autoTileSystem?.isEnabled()) {
+        const tilesToUpdate = this.autoTileSystem.getTilesToUpdate(x, y);
+        tilesToUpdate.forEach((tile) => {
+          this.updateTileVisual(tile.x, tile.y);
+        });
+      } else {
+        this.updateTileVisual(x, y);
+      }
     } else {
       console.warn(
         `⚠️ setTile: Coordinates (${x}, ${y}) out of bounds (${this.mapWidth}, ${this.mapHeight})`
@@ -142,15 +171,22 @@ export class TilemapSystem {
     // Clear existing visual for this tile
     this.clearTileVisual(x, y);
 
-    if (tileType !== TilemapSystem.TILE_TYPES.EMPTY) {
-      // Get stored sprite index if available
+    // Only render solid tiles (empty tiles and special tiles like exits don't get visuals)
+    if (this.isSolidTile(tileType)) {
       let spriteIndex: number | null = null;
-      if (
-        this.tileSpriteIndices &&
-        this.tileSpriteIndices[y] &&
-        this.tileSpriteIndices[y][x] !== undefined
-      ) {
-        spriteIndex = this.tileSpriteIndices[y][x];
+
+      // Use autotile system if enabled, otherwise use stored sprite index
+      if (this.autoTileSystem?.isEnabled()) {
+        spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
+      } else {
+        // Get stored sprite index if available (manual mode)
+        if (
+          this.tileSpriteIndices &&
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          spriteIndex = this.tileSpriteIndices[y][x];
+        }
       }
 
       // Determine tile image based on context (fallback if no sprite index)
@@ -210,6 +246,15 @@ export class TilemapSystem {
       return;
     }
 
+    // Skip exit tiles in GameScene (invisible in gameplay)
+    if (
+      this.scene.scene.key === "GameScene" &&
+      tileType >= 100 &&
+      tileType <= 103
+    ) {
+      return;
+    }
+
     // Check if tileset textures are ready
     if (!this.scene.textures.exists("tileset_sprites")) {
       console.warn("Tileset textures not ready yet, skipping tile visual");
@@ -248,6 +293,37 @@ export class TilemapSystem {
     tileSprite.setDisplaySize(this.tileSize, this.tileSize);
     tileSprite.setDepth(4); // Same depth as visual layer
 
+    // Add colored overlay for exit tiles in MapEditorScene
+    if (
+      this.scene.scene.key === "MapEditorScene" &&
+      tileType >= 100 &&
+      tileType <= 103
+    ) {
+      const exitColors = {
+        [TilemapSystem.TILE_TYPES.EXIT_LEFT]: 0x00ffff, // Cyan
+        [TilemapSystem.TILE_TYPES.EXIT_RIGHT]: 0xff00ff, // Magenta
+        [TilemapSystem.TILE_TYPES.EXIT_TOP]: 0xffff00, // Yellow
+        [TilemapSystem.TILE_TYPES.EXIT_BOTTOM]: 0xff8800, // Orange
+      };
+
+      const overlay = this.scene.add.rectangle(
+        worldX + this.tileSize / 2,
+        worldY + this.tileSize / 2,
+        this.tileSize,
+        this.tileSize,
+        exitColors[tileType],
+        0.5
+      );
+      overlay.setDepth(5); // Above the tile sprite
+      overlay.setStrokeStyle(2, 0xffffff, 0.8); // White border
+
+      // Store overlay reference for cleanup
+      if (!this.tileSprites) {
+        this.tileSprites = [];
+      }
+      this.tileSprites.push(overlay);
+    }
+
     // Store reference for cleanup
     if (!this.tileSprites) {
       this.tileSprites = [];
@@ -281,6 +357,14 @@ export class TilemapSystem {
             this.tileSpriteIndices[y][x] !== undefined
           ) {
             spriteIndex = this.tileSpriteIndices[y][x];
+          }
+
+          // If autotiling is disabled and we have a stored sprite index, use it
+          if (!this.autoTileSystem?.isEnabled() && spriteIndex !== null) {
+            // Use the stored sprite index for manual tiles
+          } else if (this.autoTileSystem?.isEnabled()) {
+            // Use autotile system to calculate sprite index
+            spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
           }
 
           // Determine tile image based on context (fallback if no sprite index)
@@ -359,7 +443,13 @@ export class TilemapSystem {
 
   // Check if a tile type is solid
   private isSolidTile(tileType: number): boolean {
-    return tileType !== TilemapSystem.TILE_TYPES.EMPTY; // All non-zero values are solid
+    const isSolid = tileType === TilemapSystem.TILE_TYPES.SOLID;
+    if (tileType >= 100 && tileType <= 103) {
+      console.log(
+        `🔍 isSolidTile check: exit tile type ${tileType} -> ${isSolid}`
+      );
+    }
+    return isSolid;
   }
 
   // Create collision body for a tile
@@ -468,6 +558,11 @@ export class TilemapSystem {
     this.mapHeight = newHeight;
     this.tiles = newTiles;
     this.tileSpriteIndices = newTileSpriteIndices;
+
+    // Update autotile system dimensions
+    if (this.autoTileSystem) {
+      this.autoTileSystem.updateDimensions(newWidth, newHeight);
+    }
 
     // Clear existing visuals and collision bodies
     this.clearAllVisuals();
