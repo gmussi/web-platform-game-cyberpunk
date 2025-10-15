@@ -99,13 +99,10 @@ export class WorldLayoutSystem {
       const topStack = stackOrMax(widthsTop, widthsTop.length);
       const bottomStack = stackOrMax(widthsBottom, widthsBottom.length);
 
-      // Parent size must accommodate children stacks, and also cover rows/columns
-      // attached on both sides: sum stacks when both sides exist to visually span them.
+      // Height should not sum left+right; take the max so the parent isn't taller than necessary
       const requiredHeight = Math.max(
         own.height,
-        heightsLeft.length > 0 && heightsRight.length > 0
-          ? leftStack + rightStack
-          : Math.max(leftStack, rightStack)
+        Math.max(leftStack, rightStack)
       );
       const requiredWidth = Math.max(
         own.width,
