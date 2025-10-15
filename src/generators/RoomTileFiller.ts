@@ -259,6 +259,7 @@ function algorithmCave(map: WorldMapData, seed: string): Grid {
   smoothCave(grid, 1);
 
   ensureNoSingleEmptyGaps(grid);
+  ensureConnectivity(grid, map.exits || []);
   return grid;
 }
 
@@ -316,6 +317,7 @@ function algorithmOutside(map: WorldMapData, seed: string): Grid {
     }
   }
   ensureNoSingleEmptyGaps(grid);
+  ensureConnectivity(grid, map.exits || []);
   return grid;
 }
 
@@ -366,6 +368,7 @@ function algorithmCorridor(map: WorldMapData, seed: string): Grid {
     fillRect(grid, px, py, px + len, py);
   }
   ensureNoSingleEmptyGaps(grid);
+  ensureConnectivity(grid, map.exits || []);
   return grid;
 }
 
@@ -427,5 +430,75 @@ function ensureNoSingleEmptyGaps(grid: Grid): void {
     }
 
     if (!changed) break;
+  }
+}
+
+// Ensure all empty spaces are connected to the playable region (exits/hub)
+function ensureConnectivity(grid: Grid, exits: ExitZone[] = []): void {
+  const w = grid[0].length;
+  const h = grid.length;
+
+  const visited: boolean[][] = new Array(h);
+  for (let y = 0; y < h; y++) visited[y] = new Array(w).fill(false);
+
+  const queue: Array<{ x: number; y: number }> = [];
+
+  function pushSeed(x: number, y: number): void {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    if (grid[y][x] !== 0) return;
+    if (visited[y][x]) return;
+    visited[y][x] = true;
+    queue.push({ x, y });
+  }
+
+  // Center hub
+  const cx = Math.floor(w / 2);
+  const cy = Math.floor(h / 2);
+  pushSeed(cx, cy);
+
+  // Exit midpoints and one step inward
+  for (const e of exits) {
+    const m = exitMidCell(e, w, h);
+    pushSeed(m.x, m.y);
+    const ix =
+      e.edge === "left"
+        ? Math.min(m.x + 1, w - 1)
+        : e.edge === "right"
+        ? Math.max(m.x - 1, 0)
+        : m.x;
+    const iy =
+      e.edge === "top"
+        ? Math.min(m.y + 1, h - 1)
+        : e.edge === "bottom"
+        ? Math.max(m.y - 1, 0)
+        : m.y;
+    pushSeed(ix, iy);
+  }
+
+  // Flood fill over empty cells (4-neighborhood)
+  while (queue.length > 0) {
+    const { x, y } = queue.shift()!;
+    const neighbors = [
+      { x: x + 1, y },
+      { x: x - 1, y },
+      { x, y: y + 1 },
+      { x, y: y - 1 },
+    ];
+    for (const n of neighbors) {
+      if (n.x < 0 || n.y < 0 || n.x >= w || n.y >= h) continue;
+      if (visited[n.y][n.x]) continue;
+      if (grid[n.y][n.x] !== 0) continue;
+      visited[n.y][n.x] = true;
+      queue.push(n);
+    }
+  }
+
+  // Convert unreachable empties into solid to remove inaccessible pockets
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y][x] === 0 && !visited[y][x]) {
+        grid[y][x] = 1;
+      }
+    }
   }
 }
