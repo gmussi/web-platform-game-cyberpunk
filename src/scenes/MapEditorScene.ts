@@ -185,7 +185,12 @@ export class MapEditorScene extends Phaser.Scene {
       this.worldSystem.worldData,
       this.worldSystem.visitedMaps,
       () => this.worldSystem.currentMapId,
-      true // showAllMaps = true for map editor
+      true, // showAllMaps = true for map editor
+      (mapId: string) => {
+        if (mapId && mapId !== this.worldSystem.currentMapId) {
+          this.switchToMap(mapId);
+        }
+      }
     );
 
     // Set world bounds (adjusted for viewport)
@@ -510,6 +515,7 @@ export class MapEditorScene extends Phaser.Scene {
       { name: "Solid", key: "solid", color: "#8B4513" },
       { name: "Erase", key: "erase", color: "#000000" },
       { name: "Remove", key: "remove", color: "#ff0000" },
+      { name: "Resize", key: "resize", color: "#0066aa" },
     ];
 
     this.selectedTool = null; // Start with no tool selected
@@ -546,6 +552,8 @@ export class MapEditorScene extends Phaser.Scene {
       button.on("pointerdown", () => {
         if (tool.key === "solid") {
           this.openSpritePicker();
+        } else if (tool.key === "resize") {
+          this.openResizeModal();
         } else {
           this.selectedTool = tool.key;
           this.selectedSpriteIndex = null;
@@ -1003,6 +1011,138 @@ export class MapEditorScene extends Phaser.Scene {
     console.log("Spawn point selector closed");
   }
 
+  private openResizeModal(afterResize?: () => void): void {
+    // Prevent multiple modals
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    const modalBg = this.add.rectangle(
+      centerX,
+      centerY,
+      360,
+      200,
+      0x000000,
+      0.9
+    );
+    modalBg.setScrollFactor(0);
+    modalBg.setDepth(1000);
+
+    const title = this.add
+      .text(centerX, centerY - 70, "Resize Map (tiles)", {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(1001);
+
+    const labelW = this.add
+      .text(centerX - 120, centerY - 25, "Width:", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelW.setScrollFactor(0);
+    labelW.setDepth(1001);
+
+    const labelH = this.add
+      .text(centerX - 120, centerY + 15, "Height:", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelH.setScrollFactor(0);
+    labelH.setDepth(1001);
+
+    // Simple HTML inputs overlay for ease
+    const inputWidth = document.createElement("input");
+    inputWidth.type = "number";
+    inputWidth.min = "1";
+    inputWidth.value = String(this.tilemapSystem.mapWidth);
+    const inputHeight = document.createElement("input");
+    inputHeight.type = "number";
+    inputHeight.min = "1";
+    inputHeight.value = String(this.tilemapSystem.mapHeight);
+
+    const positionInput = (el: HTMLInputElement, x: number, y: number) => {
+      el.style.position = "fixed";
+      el.style.left = `${x - 40}px`;
+      el.style.top = `${y - 10}px`;
+      el.style.width = "80px";
+      el.style.zIndex = "10000";
+      document.body.appendChild(el);
+    };
+
+    // Convert scene coords to page coords approximately
+    const canvasBounds = (
+      this.sys.game.canvas as unknown as HTMLCanvasElement
+    ).getBoundingClientRect();
+    positionInput(
+      inputWidth,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY - 25
+    );
+    positionInput(
+      inputHeight,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY + 15
+    );
+
+    const applyBtn = this.add
+      .text(centerX - 40, centerY + 60, "Apply", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#00aa00",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+    applyBtn.setScrollFactor(0);
+    applyBtn.setDepth(1001);
+
+    const cancelBtn = this.add
+      .text(centerX + 40, centerY + 60, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+    cancelBtn.setScrollFactor(0);
+    cancelBtn.setDepth(1001);
+
+    const cleanup = () => {
+      [modalBg, title, labelW, labelH, applyBtn, cancelBtn].forEach((o) =>
+        o.destroy()
+      );
+      document.body.contains(inputWidth) &&
+        document.body.removeChild(inputWidth);
+      document.body.contains(inputHeight) &&
+        document.body.removeChild(inputHeight);
+    };
+
+    applyBtn.on("pointerdown", () => {
+      const newW = Math.max(1, parseInt(inputWidth.value || "1", 10));
+      const newH = Math.max(1, parseInt(inputHeight.value || "1", 10));
+      if (
+        newW !== this.tilemapSystem.mapWidth ||
+        newH !== this.tilemapSystem.mapHeight
+      ) {
+        this.tilemapSystem.resizeMap(newW, newH);
+        this.updateMapAfterResize();
+      }
+      cleanup();
+      afterResize && afterResize();
+    });
+
+    cancelBtn.on("pointerdown", () => {
+      cleanup();
+    });
+  }
   public toggleGrid(): void {
     this.gridVisible = !this.gridVisible;
     this.gridGraphics.setVisible(this.gridVisible);
@@ -1198,110 +1338,9 @@ export class MapEditorScene extends Phaser.Scene {
         strokeThickness: 1,
       }
     );
-    currentY += 20;
+    currentY += 12;
 
-    // Add row button
-    const addRowButton = this.add
-      .text(x, currentY, "+ Row", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#00aa00",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    addRowButton.on("pointerdown", () => {
-      this.tilemapSystem.resizeMap(
-        this.tilemapSystem.mapWidth,
-        this.tilemapSystem.mapHeight + 1
-      );
-      this.updateMapAfterResize();
-      mapSizeText.setText(
-        `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-      );
-    });
-
-    // Remove row button
-    const removeRowButton = this.add
-      .text(x + 50, currentY, "- Row", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#aa0000",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    removeRowButton.on("pointerdown", () => {
-      if (this.tilemapSystem.mapHeight > 1) {
-        this.tilemapSystem.resizeMap(
-          this.tilemapSystem.mapWidth,
-          this.tilemapSystem.mapHeight - 1
-        );
-        this.updateMapAfterResize();
-        mapSizeText.setText(
-          `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-        );
-      }
-    });
-    currentY += 22;
-
-    // Add column button
-    const addColumnButton = this.add
-      .text(x, currentY, "+ Col", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#00aa00",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    addColumnButton.on("pointerdown", () => {
-      this.tilemapSystem.resizeMap(
-        this.tilemapSystem.mapWidth + 1,
-        this.tilemapSystem.mapHeight
-      );
-      this.updateMapAfterResize();
-      mapSizeText.setText(
-        `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-      );
-    });
-
-    // Remove column button
-    const removeColumnButton = this.add
-      .text(x + 50, currentY, "- Col", {
-        fontSize: "10px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2,
-        backgroundColor: "#aa0000",
-        padding: { x: 6, y: 3 },
-      })
-      .setInteractive();
-
-    removeColumnButton.on("pointerdown", () => {
-      if (this.tilemapSystem.mapWidth > 1) {
-        this.tilemapSystem.resizeMap(
-          this.tilemapSystem.mapWidth - 1,
-          this.tilemapSystem.mapHeight
-        );
-        this.updateMapAfterResize();
-        mapSizeText.setText(
-          `Map: ${this.tilemapSystem.mapWidth}×${this.tilemapSystem.mapHeight}`
-        );
-      }
-    });
-    currentY += 22;
-
+    // No on-panel resize button; use the Resize tool instead
     return currentY + 10;
   }
 
@@ -1462,6 +1501,9 @@ export class MapEditorScene extends Phaser.Scene {
         break;
       case "remove":
         this.removeObjectAt(x, y);
+        break;
+      case "resize":
+        this.openResizeModal();
         break;
     }
 
@@ -2032,59 +2074,10 @@ export class MapEditorScene extends Phaser.Scene {
       this.createMapButton.destroy();
     }
 
-    // Position for map list in right panel
+    // Position and render only the "New Map" button
     const panelPadding = 10;
-    let yOffset = this.viewportHeight - 250; // Start from bottom of panel
+    const yOffset = this.viewportHeight - 60;
 
-    // Title
-    const title = this.add.text(panelPadding, yOffset, "Maps", {
-      fontSize: "14px",
-      fill: "#ffffff",
-      fontStyle: "bold",
-      stroke: "#000000",
-      strokeThickness: 2,
-    });
-    title.setScrollFactor(0);
-    this.mapListButtons.push(title);
-    yOffset += 20;
-
-    // Get all maps from world
-    const mapIds = this.worldSystem.getAllMapIds();
-    const currentMapId = this.worldSystem.currentMapId;
-
-    // Create button for each map
-    mapIds.forEach((mapId) => {
-      const map = this.worldSystem.getMap(mapId);
-      if (!map) return;
-
-      const isActive = mapId === currentMapId;
-      const button = this.add
-        .text(
-          panelPadding,
-          yOffset,
-          `${isActive ? "● " : "  "}${mapId}\n  ${map.metadata.name}`,
-          {
-            fontSize: "10px",
-            fill: isActive ? "#00ff00" : "#ffffff",
-            fontStyle: isActive ? "bold" : "normal",
-            stroke: "#000000",
-            strokeThickness: 1,
-            backgroundColor: isActive ? "#00330044" : "#44444444",
-            padding: { x: 4, y: 2 },
-          }
-        )
-        .setInteractive();
-      button.setScrollFactor(0);
-
-      button.on("pointerdown", () => {
-        this.switchToMap(mapId);
-      });
-
-      this.mapListButtons.push(button);
-      yOffset += 30;
-    });
-
-    // Create "New Map" button
     this.createMapButton = this.add
       .text(panelPadding, yOffset, "+ New Map", {
         fontSize: "11px",
@@ -2148,6 +2141,14 @@ export class MapEditorScene extends Phaser.Scene {
     this.loadTileDataFromMap();
     this.updatePreviewObjects();
     this.updateMapList();
+
+    // If world view is visible, refresh it to reflect the newly selected map
+    if (this.worldViewRenderer) {
+      this.worldViewRenderer.setVisitedMaps(this.worldSystem.visitedMaps);
+      if (this.worldViewRenderer.getIsVisible()) {
+        this.worldViewRenderer.update();
+      }
+    }
   }
 
   // Create a new map

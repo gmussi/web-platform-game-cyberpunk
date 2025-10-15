@@ -11,6 +11,7 @@ export class WorldViewRenderer {
   private visitedMaps: Set<string>; // Track which maps to display
   private getCurrentMapId: () => string | null; // Function to get current map ID
   private showAllMaps: boolean; // Whether to show all maps regardless of visited status
+  private onMapClick?: (mapId: string) => void; // Optional click handler
 
   // Rendering settings
   private readonly BOX_SIZE = 80;
@@ -26,7 +27,8 @@ export class WorldViewRenderer {
     worldData: WorldData | null,
     visitedMaps?: Set<string>,
     getCurrentMapId?: () => string | null,
-    showAllMaps: boolean = false
+    showAllMaps: boolean = false,
+    onMapClick?: (mapId: string) => void
   ) {
     this.scene = scene;
     this.worldData = worldData;
@@ -34,6 +36,7 @@ export class WorldViewRenderer {
     this.getCurrentMapId =
       getCurrentMapId || (() => worldData?.startingMap || null);
     this.showAllMaps = showAllMaps;
+    this.onMapClick = onMapClick;
     // Lazy initialize layoutSystem when worldData is available
   }
 
@@ -323,6 +326,10 @@ export class WorldViewRenderer {
       box.setStrokeStyle(2, 0xffffff, 1);
       box.setScrollFactor(0);
       box.setDepth(1002);
+      if (this.onMapClick) {
+        box.setInteractive();
+        box.on("pointerdown", () => this.onMapClick!(mapId));
+      }
 
       // Add map name
       const mapName = mapData.metadata.name;
@@ -339,6 +346,10 @@ export class WorldViewRenderer {
       nameText.setOrigin(0.5);
       nameText.setScrollFactor(0);
       nameText.setDepth(1003);
+      if (this.onMapClick) {
+        nameText.setInteractive();
+        nameText.on("pointerdown", () => this.onMapClick!(mapId));
+      }
 
       this.worldViewGroup!.add(box);
       this.worldViewGroup!.add(nameText);
