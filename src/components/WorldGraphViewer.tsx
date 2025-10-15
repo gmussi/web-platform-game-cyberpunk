@@ -99,30 +99,33 @@ function calculateLayoutFromWorld(world: any): {
         const sourceSize = mapSizes[mapId] || { width: 1, height: 1 };
         const targetSize = mapSizes[targetId] || { width: 1, height: 1 };
 
+        // Align exits along the same axis by matching edgePosition centers
+        // Find back exit on target and its edgePosition; fallback to 0.5
+        const targetMap = world.maps[targetId];
+        const targetBackExit = targetMap?.exits?.find((e: any) => e.targetMapId === mapId);
+        const backEdgePos = targetBackExit?.edgePosition ?? 0.5;
+        const srcEdgePos = exit.edgePosition ?? 0.5;
+
         let desiredX = gridX;
         let desiredY = gridY;
         let dir: "vertical" | "horizontal" = "horizontal";
-        switch (edge) {
-          case "right":
-            desiredX = gridX + sourceSize.width + idx; // shift further right for multiple exits
-            desiredY = gridY; // keep same row
-            dir = "horizontal"; // search along x-axis
-            break;
-          case "left":
-            desiredX = gridX - targetSize.width - idx; // shift further left for multiple exits
-            desiredY = gridY; // keep same row
-            dir = "horizontal"; // search along x-axis
-            break;
-          case "bottom":
-            desiredX = gridX; // keep same column
-            desiredY = gridY + sourceSize.height + idx; // shift further down for multiple exits
-            dir = "vertical"; // search along y-axis
-            break;
-          case "top":
-            desiredX = gridX; // keep same column
-            desiredY = gridY - targetSize.height - idx; // shift further up for multiple exits
-            dir = "vertical"; // search along y-axis
-            break;
+        if (edge === "right") {
+          desiredX = gridX + sourceSize.width; // immediately to the right (can extend further if needed)
+          // align vertical center of exit pips
+          desiredY = Math.round(gridY + srcEdgePos * sourceSize.height - backEdgePos * targetSize.height);
+          dir = "horizontal"; // search along x only to preserve y alignment
+        } else if (edge === "left") {
+          desiredX = gridX - targetSize.width; // to the left
+          desiredY = Math.round(gridY + srcEdgePos * sourceSize.height - backEdgePos * targetSize.height);
+          dir = "horizontal";
+        } else if (edge === "bottom") {
+          desiredY = gridY + sourceSize.height; // below
+          desiredX = Math.round(gridX + srcEdgePos * sourceSize.width - backEdgePos * targetSize.width);
+          dir = "vertical"; // search along y only to preserve x alignment
+        } else if (edge === "top") {
+          desiredY = gridY - targetSize.height; // above
+          desiredX = Math.round(gridX + srcEdgePos * sourceSize.width - backEdgePos * targetSize.width);
+          dir = "vertical";
         }
 
         const placed = placeNear(desiredX, desiredY, dir, targetSize.width, targetSize.height);
