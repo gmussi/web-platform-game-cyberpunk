@@ -2044,6 +2044,7 @@ export class MapEditorScene extends Phaser.Scene {
       stroke: "#000000",
       strokeThickness: 2,
     });
+    title.setScrollFactor(0);
     this.mapListButtons.push(title);
     yOffset += 20;
 
@@ -2073,6 +2074,7 @@ export class MapEditorScene extends Phaser.Scene {
           }
         )
         .setInteractive();
+      button.setScrollFactor(0);
 
       button.on("pointerdown", () => {
         this.switchToMap(mapId);
@@ -2094,16 +2096,40 @@ export class MapEditorScene extends Phaser.Scene {
         padding: { x: 8, y: 4 },
       })
       .setInteractive();
+    this.createMapButton.setScrollFactor(0);
 
     this.createMapButton.on("pointerdown", () => {
       this.createNewMap();
     });
 
     this.mapListButtons.push(this.createMapButton);
+
+    // Ensure these UI elements are only rendered by the UI camera
+    if (this.uiCamera) {
+      this.setupCameraIgnoreLists();
+    }
   }
 
   // Switch to a different map
   private switchToMap(mapId: string): void {
+    // Close any open modals/selectors to prevent stray UI (map picker, sprite picker, etc.)
+    if (this.mapSelector) {
+      this.closeMapSelector();
+    }
+    if (this.spawnPointSelector) {
+      this.closeSpawnPointSelector();
+    }
+    // Exit config modal (if any)
+    try {
+      this.closeExitConfigModal();
+    } catch (e) {
+      // ignore if not open
+    }
+    // Sprite picker (if open)
+    if (this.spritePicker) {
+      this.closeSpritePicker();
+    }
+
     // Save current map data before switching
     this.saveTileDataToMap();
     this.worldSystem.updateCurrentMap(this.mapData);
