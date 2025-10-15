@@ -71,11 +71,21 @@ export class WorldLayoutSystem {
         (exits.right?.length || 0) +
         (exits.top?.length || 0) +
         (exits.bottom?.length || 0);
-      // Leaf-like rooms (0 or 1 exits) stay minimal; only parents expand
+      // Leaf-like rooms (0 or 1 exits) stay minimal; parents expand just enough
+      // to accommodate stacked children on each side, not the full world size.
       const own =
         exitCount <= 1
           ? { width: 1, height: 1 }
-          : baseSizes[mapId] || { width: 1, height: 1 };
+          : {
+              width: Math.max(
+                1,
+                Math.max(exits.top?.length || 0, exits.bottom?.length || 0)
+              ),
+              height: Math.max(
+                1,
+                Math.max(exits.left?.length || 0, exits.right?.length || 0)
+              ),
+            };
 
       // Sum of stacks along each edge using descendant sizes
       const sumHeights = (list: ExitZone[]) =>
@@ -186,7 +196,7 @@ export class WorldLayoutSystem {
         const exits = exitsByEdge[edge];
         if (!exits || exits.length === 0) return;
 
-        // Build list of targets with sizes
+        // Build list of targets with sizes (sorted to keep vertical/horizontal alignment stable)
         const targets = exits
           .map((e) => ({ id: e.targetMapId, size: mapSizes[e.targetMapId] }))
           .filter(
@@ -195,6 +205,13 @@ export class WorldLayoutSystem {
           id: string;
           size: { width: number; height: number };
         }>;
+        // For right/left edges, sort by descending height so tallest go nearest to parent anchor
+        // For top/bottom edges, sort by descending width for symmetry
+        if (edge === "right" || edge === "left") {
+          targets.sort((a, b) => b.size.height - a.size.height);
+        } else {
+          targets.sort((a, b) => b.size.width - a.size.width);
+        }
         if (targets.length === 0) return;
 
         // Compute starting anchor and total span required for this edge
@@ -234,7 +251,8 @@ export class WorldLayoutSystem {
           return true;
         };
 
-        // Determine initial desired group origin per edge
+        // Determine initial desired group origin per edge (align group so that
+        // tallest/ widest stacks share the parent’s anchor reference line)
         let desiredGroupX = anchorX;
         let desiredGroupY = anchorY;
         if (edge === "right") {

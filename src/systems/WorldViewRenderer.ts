@@ -472,7 +472,7 @@ export class WorldViewRenderer {
       // Use a distinctive prefix for easy grepping in console
       console.log(
         "🧭 WorldView layout boxes JSON:",
-        JSON.stringify(debugLayout, null, 2)
+        JSON.stringify(debugLayout)
       );
     } catch (e) {
       // no-op if JSON serialization fails
