@@ -399,8 +399,12 @@ export class WorldViewRenderer {
       const boxX = startX + pos.x * (boxSize + spacing);
       const boxY = startY + pos.y * (boxSize + spacing);
 
-      const boxWidth = boxSize * size.width;
-      const boxHeight = boxSize * size.height;
+      // Include intra-unit spacing inside the box size so parents visually cover
+      // their stacked children (e.g., a width of 2 spans one spacing unit between them)
+      const boxWidth =
+        boxSize * size.width + spacing * Math.max(0, size.width - 1);
+      const boxHeight =
+        boxSize * size.height + spacing * Math.max(0, size.height - 1);
 
       // Collect debug info
       debugLayout.push({

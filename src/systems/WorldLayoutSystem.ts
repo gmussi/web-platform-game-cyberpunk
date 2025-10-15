@@ -99,9 +99,20 @@ export class WorldLayoutSystem {
       const topStack = stackOrMax(widthsTop, widthsTop.length);
       const bottomStack = stackOrMax(widthsBottom, widthsBottom.length);
 
-      // Parent size must accommodate the largest stack on either side in that axis
-      const requiredHeight = Math.max(own.height, leftStack, rightStack);
-      const requiredWidth = Math.max(own.width, topStack, bottomStack);
+      // Parent size must accommodate children stacks, and also cover rows/columns
+      // attached on both sides: sum stacks when both sides exist to visually span them.
+      const requiredHeight = Math.max(
+        own.height,
+        heightsLeft.length > 0 && heightsRight.length > 0
+          ? leftStack + rightStack
+          : Math.max(leftStack, rightStack)
+      );
+      const requiredWidth = Math.max(
+        own.width,
+        widthsTop.length > 0 && widthsBottom.length > 0
+          ? topStack + bottomStack
+          : Math.max(topStack, bottomStack)
+      );
 
       const size = { width: requiredWidth, height: requiredHeight };
       memo[mapId] = size;
