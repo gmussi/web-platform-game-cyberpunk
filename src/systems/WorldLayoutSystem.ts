@@ -77,16 +77,20 @@ export class WorldLayoutSystem {
 
       // Adaptive stacking logic: if an edge has multiple exits, stack (sum) children on that edge;
       // if it has 0 or 1 exit, only the tallest/widest child impacts size (no unnecessary sum).
-      const heightsLeft = (exits.left || []).map(
-        (e) => dfs(e.targetMapId).height
-      );
-      const heightsRight = (exits.right || []).map(
-        (e) => dfs(e.targetMapId).height
-      );
-      const widthsTop = (exits.top || []).map((e) => dfs(e.targetMapId).width);
-      const widthsBottom = (exits.bottom || []).map(
-        (e) => dfs(e.targetMapId).width
-      );
+      // Ignore back-edges to any ancestor currently in the recursion stack to
+      // avoid cycle fallback to baseSizes inflating dimensions.
+      const heightsLeft = (exits.left || [])
+        .filter((e) => !visiting.has(e.targetMapId))
+        .map((e) => dfs(e.targetMapId).height);
+      const heightsRight = (exits.right || [])
+        .filter((e) => !visiting.has(e.targetMapId))
+        .map((e) => dfs(e.targetMapId).height);
+      const widthsTop = (exits.top || [])
+        .filter((e) => !visiting.has(e.targetMapId))
+        .map((e) => dfs(e.targetMapId).width);
+      const widthsBottom = (exits.bottom || [])
+        .filter((e) => !visiting.has(e.targetMapId))
+        .map((e) => dfs(e.targetMapId).width);
 
       const stackOrMax = (vals: number[], count: number) => {
         if (count <= 0) return 0;
@@ -96,8 +100,29 @@ export class WorldLayoutSystem {
 
       const leftStack = stackOrMax(heightsLeft, heightsLeft.length);
       const rightStack = stackOrMax(heightsRight, heightsRight.length);
-      const topStack = stackOrMax(widthsTop, widthsTop.length);
-      const bottomStack = stackOrMax(widthsBottom, widthsBottom.length);
+
+      // Only let a single top/bottom child dictate width if there is also
+      // at least one horizontal neighbor (left or right). This avoids
+      // propagating very wide widths through simple vertical chains.
+      const hasHorizontalNeighbor =
+        heightsLeft.length + heightsRight.length > 0;
+
+      const topStack =
+        widthsTop.length === 0
+          ? 0
+          : widthsTop.length === 1
+          ? hasHorizontalNeighbor
+            ? widthsTop[0]
+            : 1
+          : widthsTop.reduce((a, b) => a + b, 0);
+      const bottomStack =
+        widthsBottom.length === 0
+          ? 0
+          : widthsBottom.length === 1
+          ? hasHorizontalNeighbor
+            ? widthsBottom[0]
+            : 1
+          : widthsBottom.reduce((a, b) => a + b, 0);
 
       // Height should not sum left+right; take the max so the parent isn't taller than necessary
       const requiredHeight = Math.max(
@@ -106,10 +131,19 @@ export class WorldLayoutSystem {
       );
       // Width should mirror height logic: do not add top and bottom stacks together.
       // Taking the max avoids unnecessarily wide parents when there are exits on both edges.
-      const requiredWidth = Math.max(
-        own.width,
-        Math.max(topStack, bottomStack)
-      );
+      let requiredWidth = Math.max(own.width, Math.max(topStack, bottomStack));
+
+      // Bridge rule: if this map has a vertical relation (top or bottom) AND also
+      // at least one horizontal neighbor, widen by +1 to span over/under the child stack.
+      // This lets a parent (e.g., room_4) extend to sit above/below its child (e.g., room_14).
+      const hasTop = widthsTop.length > 0;
+      const hasBottom = widthsBottom.length > 0;
+      const hasLeft = heightsLeft.length > 0;
+      const hasRight = heightsRight.length > 0;
+      if (hasLeft || hasRight) {
+        if (hasTop) requiredWidth = Math.max(requiredWidth, 1 + topStack);
+        if (hasBottom) requiredWidth = Math.max(requiredWidth, 1 + bottomStack);
+      }
 
       const size = { width: requiredWidth, height: requiredHeight };
       memo[mapId] = size;

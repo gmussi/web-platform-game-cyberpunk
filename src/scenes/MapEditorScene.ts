@@ -526,6 +526,11 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private openWorldGenModal(): void {
+    // Ensure the world viewer is closed before showing the modal
+    if (this.worldViewRenderer && this.worldViewRenderer.getIsVisible()) {
+      this.worldViewRenderer.hide();
+    }
+
     const centerX = this.viewportWidth / 2;
     const centerY = this.viewportHeight / 2;
 
@@ -579,7 +584,7 @@ export class MapEditorScene extends Phaser.Scene {
 
     const seedInput = document.createElement("input");
     seedInput.type = "text";
-    seedInput.value = String(Date.now());
+    seedInput.value = "1760562930795";
     const roomsInput = document.createElement("input");
     roomsInput.type = "number";
     roomsInput.min = "4";
