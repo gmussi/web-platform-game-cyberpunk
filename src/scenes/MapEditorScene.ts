@@ -476,6 +476,9 @@ export class MapEditorScene extends Phaser.Scene {
     // Generate World button
     yOffset = this.createGenerateWorldButton(panelPadding, yOffset);
 
+    // Regenerate room buttons (algorithms)
+    yOffset = this.createRegenerateButtons(panelPadding, yOffset, panelWidth);
+
     // Object info display
     yOffset = this.createObjectInfo(panelPadding, yOffset, panelWidth);
 
@@ -797,6 +800,88 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Return the Y position after the grid
     return y + rows * (buttonHeight + spacingY) + 10;
+  }
+
+  private createRegenerateButtons(
+    x: number,
+    y: number,
+    panelWidth: number
+  ): number {
+    const btn = (label: string, onClick: () => void) => {
+      const t = this.add
+        .text(x, y, label, {
+          fontSize: "11px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          stroke: "#000000",
+          strokeThickness: 2,
+          backgroundColor: "#1e88e5",
+          padding: { x: 8, y: 4 },
+        })
+        .setInteractive();
+      t.on("pointerdown", onClick);
+      y += 25 + 6;
+    };
+
+    // Lazy import inside handlers to avoid editor load overhead
+    const handler = (algorithm: "cave" | "outside" | "corridor") => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const mod: any = require("../generators/RoomTileFiller");
+        const fillRoom: any =
+          (mod && (mod.fillRoom || (mod.default && mod.default.fillRoom))) ||
+          mod.default ||
+          mod.fillRoom;
+        if (typeof fillRoom !== "function") {
+          console.error("RoomTileFiller.fillRoom not found in module:", mod);
+          return;
+        }
+
+        if (!this.mapData) return;
+        const tileSize = this.mapData.world.tileSize || 32;
+        const w = Math.floor(this.mapData.world.width / tileSize);
+        const h = Math.floor(this.mapData.world.height / tileSize);
+
+        // Clear tiles to empty
+        this.mapData.tiles = Array.from({ length: h }, () =>
+          Array.from({ length: w }, () => 0)
+        );
+
+        const worldSeed = (this.worldSystem as any).worldData?.seed || "seed";
+        (this as any).regenCount = ((this as any).regenCount || 0) + 1;
+        const seed = `${worldSeed}-${this.mapData.id}-${algorithm}-$${
+          (this as any).regenCount
+        }`;
+
+        // Fill using chosen algorithm
+        this.mapData.tiles = fillRoom(this.mapData, { algorithm, seed });
+
+        // Refresh visuals and collisions
+        this.loadTileDataFromMap();
+        this.tilemapSystem.createCollisionBodies();
+        if ((this as any).updatePreviewObjects) {
+          (this as any).updatePreviewObjects();
+        }
+      } catch (e) {
+        console.error("Regeneration failed: ", e);
+      }
+    };
+
+    // Section title
+    this.add.text(x, y, "Regenerate Tiles", {
+      fontSize: "12px",
+      fill: "#ffffaa",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 2,
+    });
+    y += 20;
+
+    btn("Regenerate: Cave/Basement", () => handler("cave"));
+    btn("Regenerate: Outside", () => handler("outside"));
+    btn("Regenerate: Corridor", () => handler("corridor"));
+
+    return y;
   }
 
   private updateToolSelection(): void {
