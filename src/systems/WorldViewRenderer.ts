@@ -12,6 +12,18 @@ export class WorldViewRenderer {
   private getCurrentMapId: () => string | null; // Function to get current map ID
   private showAllMaps: boolean; // Whether to show all maps regardless of visited status
   private onMapClick?: (mapId: string) => void; // Optional click handler
+  private zoomScale: number = 1; // Zoom factor for rendering
+  private readonly MIN_ZOOM = 0.25;
+  private readonly MAX_ZOOM = 3;
+  private wheelHandler?: (
+    pointer: any,
+    gameObjects: any,
+    deltaX: number,
+    deltaY: number,
+    deltaZ: number
+  ) => void;
+  private panX: number = 0; // pan offset in pixels (render space)
+  private panY: number = 0;
 
   // Rendering settings
   private readonly BOX_SIZE = 80;
@@ -40,6 +52,37 @@ export class WorldViewRenderer {
     // Lazy initialize layoutSystem when worldData is available
   }
 
+  private setZoom(next: number): void {
+    const clamped = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, next));
+    if (Math.abs(clamped - this.zoomScale) < 0.0001) return;
+    this.zoomScale = clamped;
+    this.update();
+  }
+
+  private computeInitialZoom(): void {
+    if (!this.layoutResult) return;
+    const cam = this.scene.cameras.main as any;
+    const viewW = cam.width;
+    const viewH = cam.height;
+
+    const totalUnitsW = this.layoutResult.totalWidth;
+    const totalUnitsH = this.layoutResult.totalHeight;
+    const baseBox = this.BOX_SIZE;
+    const baseSpace = this.BOX_SPACING;
+
+    const neededW = totalUnitsW * (baseBox + baseSpace);
+    const neededH = totalUnitsH * (baseBox + baseSpace);
+
+    const scaleW = viewW / Math.max(neededW, 1);
+    const scaleH = viewH / Math.max(neededH, 1);
+    const fit = Math.min(scaleW, scaleH);
+    // Start slightly smaller than fit to add padding; clamp to range
+    this.zoomScale = Math.max(
+      this.MIN_ZOOM,
+      Math.min(this.MAX_ZOOM, fit * 0.9)
+    );
+  }
+
   /**
    * Show the world view overlay
    */
@@ -58,8 +101,23 @@ export class WorldViewRenderer {
     }
 
     this.calculateLayout();
+    this.computeInitialZoom();
     this.createWorldView();
     this.isVisible = true;
+
+    // Enable mouse wheel zoom when visible
+    this.wheelHandler = (
+      _pointer: any,
+      _objects: any,
+      _dx: number,
+      dy: number
+    ) => {
+      if (!this.isVisible) return;
+      const factor = dy > 0 ? 0.9 : 1.1; // scroll down = zoom out
+      this.setZoom(this.zoomScale * factor);
+    };
+    // Phaser input emits (pointer, gameObjects, deltaX, deltaY, deltaZ)
+    (this.scene.input as any).on("wheel", this.wheelHandler);
   }
 
   /**
@@ -76,6 +134,12 @@ export class WorldViewRenderer {
       this.worldViewGroup = null;
     }
     this.isVisible = false;
+
+    // Disable wheel handler
+    if (this.wheelHandler) {
+      (this.scene.input as any).off("wheel", this.wheelHandler);
+      this.wheelHandler = undefined;
+    }
   }
 
   /**
@@ -95,8 +159,16 @@ export class WorldViewRenderer {
   public update(): void {
     if (!this.isVisible) return;
 
-    this.hide();
-    this.show();
+    // Re-render without resetting zoom or handlers
+    if (this.worldViewGroup) {
+      (this.worldViewGroup as any).children.each((child: any) =>
+        child.destroy()
+      );
+      (this.worldViewGroup as any).destroy(true);
+      this.worldViewGroup = null;
+    }
+    this.calculateLayout();
+    this.createWorldView();
   }
 
   /**
@@ -119,27 +191,53 @@ export class WorldViewRenderer {
     // Create group for all world view elements
     this.worldViewGroup = this.scene.add.group();
 
-    // Calculate viewport center
-    const centerX = (this.scene.cameras.main as any).width / 2;
-    const centerY = (this.scene.cameras.main as any).height / 2;
+    // Render only in the main (left) camera viewport
+    const mainCam = this.scene.cameras.main as Phaser.Cameras.Scene2D.Camera;
 
-    // Calculate total world dimensions
-    const totalWidth =
-      this.layoutResult.totalWidth * (this.BOX_SIZE + this.BOX_SPACING);
-    const totalHeight =
-      this.layoutResult.totalHeight * (this.BOX_SIZE + this.BOX_SPACING);
+    // Calculate viewport center within the main camera
+    const centerX = (mainCam as any).width / 2;
+    const centerY = (mainCam as any).height / 2;
+
+    // Calculate total world dimensions with zoom
+    const sBox = this.BOX_SIZE * this.zoomScale;
+    const sSpace = this.BOX_SPACING * this.zoomScale;
+    const totalWidth = this.layoutResult.totalWidth * (sBox + sSpace);
+    const totalHeight = this.layoutResult.totalHeight * (sBox + sSpace);
 
     // Start position (top-left of world view)
-    const startX = centerX - totalWidth / 2;
-    const startY = centerY - totalHeight / 2;
+    const startX = centerX - totalWidth / 2 + this.panX;
+    const startY = centerY - totalHeight / 2 + this.panY;
 
     // Connections disabled per request
 
     // Render map boxes
-    this.renderMapBoxes(startX, startY);
+    this.renderMapBoxesScaled(startX, startY, sBox, sSpace);
 
     // Add title
     this.addTitle(centerX, startY - 40);
+
+    // Ensure the right UI camera ignores these elements so they don't render in the panel
+    const uiCam = (this.scene as any).uiCamera as
+      | Phaser.Cameras.Scene2D.Camera
+      | undefined;
+    if (uiCam && this.worldViewGroup) {
+      const children = (this.worldViewGroup as any).getChildren
+        ? (this.worldViewGroup as any).getChildren()
+        : [];
+      if (children.length > 0) {
+        (uiCam as any).ignore(children);
+      }
+    }
+  }
+
+  /**
+   * Pan the world view by the specified pixel offsets.
+   */
+  public panBy(dx: number, dy: number): void {
+    if (!this.isVisible) return;
+    this.panX += dx;
+    this.panY += dy;
+    this.update();
   }
 
   /**
@@ -263,6 +361,17 @@ export class WorldViewRenderer {
    * Render map boxes
    */
   private renderMapBoxes(startX: number, startY: number): void {
+    const sBox = this.BOX_SIZE * this.zoomScale;
+    const sSpace = this.BOX_SPACING * this.zoomScale;
+    this.renderMapBoxesScaled(startX, startY, sBox, sSpace);
+  }
+
+  private renderMapBoxesScaled(
+    startX: number,
+    startY: number,
+    boxSize: number,
+    spacing: number
+  ): void {
     if (!this.layoutResult || !this.worldData) return;
     const debugLayout: Array<{
       id: string;
@@ -287,11 +396,11 @@ export class WorldViewRenderer {
       const pos = this.layoutResult!.mapPositions[mapId];
       const size = this.layoutResult!.mapSizes[mapId];
 
-      const boxX = startX + pos.x * (this.BOX_SIZE + this.BOX_SPACING);
-      const boxY = startY + pos.y * (this.BOX_SIZE + this.BOX_SPACING);
+      const boxX = startX + pos.x * (boxSize + spacing);
+      const boxY = startY + pos.y * (boxSize + spacing);
 
-      const boxWidth = this.BOX_SIZE * size.width;
-      const boxHeight = this.BOX_SIZE * size.height;
+      const boxWidth = boxSize * size.width;
+      const boxHeight = boxSize * size.height;
 
       // Collect debug info
       debugLayout.push({
@@ -441,13 +550,18 @@ export class WorldViewRenderer {
    * Add title to the world view
    */
   private addTitle(centerX: number, y: number): void {
-    const title = this.scene.add.text(centerX, y, "World View", {
-      fontSize: "16px",
-      fill: "#ffffff",
-      fontStyle: "bold",
-      stroke: "#000000",
-      strokeThickness: 2,
-    });
+    const title = this.scene.add.text(
+      centerX,
+      y,
+      "World View  (Scroll to zoom)",
+      {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+      }
+    );
     title.setOrigin(0.5);
     title.setScrollFactor(0);
     title.setDepth(1004);

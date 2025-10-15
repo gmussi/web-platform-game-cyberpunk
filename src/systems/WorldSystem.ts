@@ -225,7 +225,6 @@ export class WorldSystem {
       "version",
       "metadata",
       "world",
-      "spawnPoints",
       "exits",
       "enemies",
       "tiles",
@@ -238,11 +237,7 @@ export class WorldSystem {
       }
     }
 
-    // Validate spawn points
-    if (!Array.isArray(mapData.spawnPoints)) {
-      console.error("Spawn points must be an array");
-      return false;
-    }
+    // Spawn points optional in edge-based navigation; skip strict validation
 
     // Validate exits
     if (!Array.isArray(mapData.exits)) {
@@ -267,12 +262,17 @@ export class WorldSystem {
       return null;
     }
 
-    const currentMap = this.getCurrentMap();
-    if (!currentMap || !currentMap.spawnPoints) {
-      return null;
+    // Edge-based navigation: no explicit spawn points per map.
+    // Fall back to world's startingPosition if available.
+    if (this.worldData.startingPosition) {
+      return {
+        id: spawnId,
+        x: this.worldData.startingPosition.x,
+        y: this.worldData.startingPosition.y,
+      };
     }
 
-    return currentMap.spawnPoints.find((spawn) => spawn.id === spawnId) || null;
+    return null;
   }
 
   // Get map by ID
@@ -416,6 +416,7 @@ export class WorldSystem {
         created: new Date().toISOString(),
       },
       startingMap: "map_1",
+      startingSpawn: "default",
       startingPosition: { x: 100, y: 688 },
       maps: {
         map_1: {
