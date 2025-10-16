@@ -88,7 +88,7 @@ export class GameScene extends Phaser.Scene {
   public wilhelmScream!: Phaser.Sound.BaseSound;
   public frameCount: number = 0;
   public upKey!: Phaser.Input.Keyboard.Key;
-  public wKey!: Phaser.Input.Keyboard.Key;
+  public toggleWorldKey!: Phaser.Input.Keyboard.Key;
   public transitionCooldown: number = 0;
   public readonly TRANSITION_COOLDOWN_MS = 1000; // 1 second grace period
   public worldViewRenderer!: WorldViewRenderer;
@@ -1009,7 +1009,7 @@ export class GameScene extends Phaser.Scene {
 
     // Instructions
     this.add
-      .text(500, 5, "Arrow Keys: Move | Space: Jump | W: World View", {
+      .text(500, 5, "Arrow Keys: Move | Space: Jump | TAB: World View", {
         fontSize: "14px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -1203,7 +1203,12 @@ export class GameScene extends Phaser.Scene {
 
     // Exit zone interaction keys
     this.upKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
-    this.wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.toggleWorldKey = this.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.TAB
+    );
+    this.input.keyboard.on("keydown-TAB", (event: KeyboardEvent) => {
+      event.preventDefault();
+    });
   }
 
   private updateHealthBar(health: number): void {
@@ -1237,8 +1242,8 @@ export class GameScene extends Phaser.Scene {
       this.loadMapFromFile();
     }
 
-    // Handle world view toggle
-    if (Phaser.Input.Keyboard.JustDown(this.wKey)) {
+    // Handle world view toggle (Tab)
+    if (Phaser.Input.Keyboard.JustDown(this.toggleWorldKey)) {
       this.worldViewRenderer.toggle();
     }
 

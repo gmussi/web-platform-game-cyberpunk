@@ -100,14 +100,17 @@ export class MapEditorScene extends Phaser.Scene {
   public backButton!: Phaser.GameObjects.Text;
   public objectInfoText!: Phaser.GameObjects.Text;
   public coordinateText!: Phaser.GameObjects.Text;
+  public worldSeedText?: Phaser.GameObjects.Text;
   public gridToggleButton!: Phaser.GameObjects.Text;
   public autotileToggleButton!: Phaser.GameObjects.Text;
+  public generateWorldButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
   public exitZones: ExitZone[] = [];
   public mouseIndicator!: Phaser.GameObjects.Circle;
   public cursors!: any;
   public wasdKeys!: any;
+  public toggleKey!: Phaser.Input.Keyboard.Key;
   public cameraSpeed: number = 10;
   public isDragging: boolean = false;
 
@@ -471,6 +474,12 @@ export class MapEditorScene extends Phaser.Scene {
     // Map management buttons
     yOffset = this.createMapButtons(panelPadding, yOffset, panelWidth);
 
+    // Generate World button
+    yOffset = this.createGenerateWorldButton(panelPadding, yOffset);
+
+    // Regenerate room buttons (algorithms)
+    yOffset = this.createRegenerateButtons(panelPadding, yOffset, panelWidth);
+
     // Object info display
     yOffset = this.createObjectInfo(panelPadding, yOffset, panelWidth);
 
@@ -497,6 +506,241 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Create map resize controls
     this.createMapResizeControls(panelPadding, yOffset, panelWidth);
+  }
+
+  private createGenerateWorldButton(x: number, y: number): number {
+    this.generateWorldButton = this.add
+      .text(x, y, "Generate World", {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#4b0082",
+        padding: { x: 8, y: 4 },
+      })
+      .setInteractive();
+
+    this.generateWorldButton.on("pointerdown", () => this.openWorldGenModal());
+
+    return y + 25 + 10;
+  }
+
+  private openWorldGenModal(): void {
+    // Ensure the world viewer is closed before showing the modal
+    if (this.worldViewRenderer && this.worldViewRenderer.getIsVisible()) {
+      this.worldViewRenderer.hide();
+    }
+
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    const modalBg = this.add.rectangle(
+      centerX,
+      centerY,
+      420,
+      260,
+      0x000000,
+      0.9
+    );
+    modalBg.setScrollFactor(0);
+    modalBg.setDepth(1000);
+
+    const title = this.add
+      .text(centerX, centerY - 110, "Generate World", {
+        fontSize: "18px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(1001);
+
+    const labelSeed = this.add
+      .text(centerX - 160, centerY - 60, "Seed:", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelSeed.setScrollFactor(0);
+    labelSeed.setDepth(1001);
+
+    const labelRooms = this.add
+      .text(centerX - 160, centerY - 20, "Rooms:", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelRooms.setScrollFactor(0);
+    labelRooms.setDepth(1001);
+
+    const labelGates = this.add
+      .text(centerX - 160, centerY + 20, "Gate Freq (0-1):", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    labelGates.setScrollFactor(0);
+    labelGates.setDepth(1001);
+
+    const seedInput = document.createElement("input");
+    seedInput.type = "text";
+    seedInput.value = "1760562930795";
+    const roomsInput = document.createElement("input");
+    roomsInput.type = "number";
+    roomsInput.min = "4";
+    roomsInput.value = "16";
+    const gateInput = document.createElement("input");
+    gateInput.type = "number";
+    gateInput.step = "0.05";
+    gateInput.min = "0";
+    gateInput.max = "1";
+    gateInput.value = "0.25";
+
+    const positionInput = (
+      el: HTMLInputElement,
+      x: number,
+      y: number,
+      w = 160
+    ) => {
+      el.style.position = "fixed";
+      el.style.left = `${x - w / 2}px`;
+      el.style.top = `${y - 10}px`;
+      el.style.width = `${w}px`;
+      el.style.zIndex = "10000";
+      document.body.appendChild(el);
+    };
+
+    const canvasBounds = (
+      this.sys.game.canvas as unknown as HTMLCanvasElement
+    ).getBoundingClientRect();
+    positionInput(
+      seedInput,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY - 60
+    );
+    positionInput(
+      roomsInput,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY - 20
+    );
+    positionInput(
+      gateInput,
+      canvasBounds.left + centerX + 10,
+      canvasBounds.top + centerY + 20
+    );
+
+    const applyBtn = this.add
+      .text(centerX - 50, centerY + 90, "Generate", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#00aa00",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+    applyBtn.setScrollFactor(0);
+    applyBtn.setDepth(1001);
+
+    const cancelBtn = this.add
+      .text(centerX + 50, centerY + 90, "Cancel", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 12, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setInteractive();
+    cancelBtn.setScrollFactor(0);
+    cancelBtn.setDepth(1001);
+
+    const cleanup = () => {
+      [
+        modalBg,
+        title,
+        labelSeed,
+        labelRooms,
+        labelGates,
+        applyBtn,
+        cancelBtn,
+      ].forEach((o) => o.destroy());
+      document.body.contains(seedInput) && document.body.removeChild(seedInput);
+      document.body.contains(roomsInput) &&
+        document.body.removeChild(roomsInput);
+      document.body.contains(gateInput) && document.body.removeChild(gateInput);
+    };
+
+    applyBtn.on("pointerdown", () => {
+      const seed = seedInput.value || "metroidvania";
+      const rooms = Math.max(4, parseInt(roomsInput.value || "16", 10));
+      const gateFrequency = Math.min(
+        1,
+        Math.max(0, parseFloat(gateInput.value || "0.25"))
+      );
+      cleanup();
+      this.generateAndLoadWorld({ seed, rooms, gateFrequency });
+    });
+
+    cancelBtn.on("pointerdown", () => {
+      cleanup();
+    });
+  }
+
+  private generateAndLoadWorld(params: {
+    seed: string | number;
+    rooms: number;
+    gateFrequency: number;
+  }): void {
+    // Lazy import to avoid bundling cost in non-editor contexts
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { generateWorldGraph } = require("../generators/WorldGenerator");
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {
+        convertToWorldData,
+      } = require("../generators/WorldGraphToWorldData");
+
+      const graph = generateWorldGraph({
+        rooms: params.rooms,
+        seed: params.seed,
+        loopsRatio: 0.3,
+        branchFactor: 1.2,
+        gating: { mode: "keys", gateFrequency: params.gateFrequency },
+      });
+
+      const worldData = convertToWorldData(graph, {
+        tileSize: 32,
+        roomWidthTiles: 128,
+        roomHeightTiles: 25,
+        author: "Map Editor",
+      });
+
+      // Load into WorldSystem directly
+      (this.worldSystem as any).worldData = worldData;
+      (this.worldSystem as any).currentMapId = worldData.startingMap;
+      this.worldSystem.visitedMaps.clear();
+      this.worldSystem.visitedMaps.add(worldData.startingMap);
+
+      // Update renderer and current map
+      this.worldViewRenderer.setWorldData(worldData);
+      const currentMap = this.worldSystem.getCurrentMap();
+      if (currentMap) {
+        this.mapData = currentMap;
+        this.loadTileDataFromMap();
+        this.updatePreviewObjects();
+        this.updateMapList();
+        this.setupCameraIgnoreLists();
+        if (this.worldSeedText && (this.worldSystem as any).worldData?.seed) {
+          const seedStr = String((this.worldSystem as any).worldData.seed);
+          this.worldSeedText.setText(`Seed: ${seedStr}`);
+        }
+      }
+    } catch (e) {
+      console.error("World generation failed:", e);
+      alert("World generation failed. See console for details.");
+    }
   }
 
   private createToolSelection(
@@ -566,6 +810,129 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Return the Y position after the grid
     return y + rows * (buttonHeight + spacingY) + 10;
+  }
+
+  private createRegenerateButtons(
+    x: number,
+    y: number,
+    panelWidth: number
+  ): number {
+    const makeButton = (
+      label: string,
+      onClick: () => void,
+      bx: number,
+      by: number
+    ) => {
+      const t = this.add.text(bx, by, label, {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#1e88e5",
+        padding: { x: 8, y: 4 },
+      });
+      t.setInteractive();
+      t.on("pointerdown", onClick);
+      return t;
+    };
+
+    // Lazy import inside handlers to avoid editor load overhead
+    const handler = (
+      algorithm:
+        | "cave"
+        | "outside"
+        | "corridor"
+        | "bsp"
+        | "drunkard"
+        | "terrace"
+    ) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const mod: any = require("../generators/RoomTileFiller");
+        const fillRoom: any =
+          (mod && (mod.fillRoom || (mod.default && mod.default.fillRoom))) ||
+          mod.default ||
+          mod.fillRoom;
+        if (typeof fillRoom !== "function") {
+          console.error("RoomTileFiller.fillRoom not found in module:", mod);
+          return;
+        }
+
+        if (!this.mapData) return;
+        const tileSize = this.mapData.world.tileSize || 32;
+        const w = Math.floor(this.mapData.world.width / tileSize);
+        const h = Math.floor(this.mapData.world.height / tileSize);
+
+        // Clear tiles to empty
+        this.mapData.tiles = Array.from({ length: h }, () =>
+          Array.from({ length: w }, () => 0)
+        );
+
+        const worldSeed = (this.worldSystem as any).worldData?.seed || "seed";
+        (this as any).regenCount = ((this as any).regenCount || 0) + 1;
+        const seed = `${worldSeed}-${this.mapData.id}-${algorithm}-$${
+          (this as any).regenCount
+        }`;
+
+        // Fill using chosen algorithm
+        this.mapData.tiles = fillRoom(this.mapData, { algorithm, seed });
+
+        // Refresh visuals and collisions
+        this.loadTileDataFromMap();
+        this.tilemapSystem.createCollisionBodies();
+        if ((this as any).updatePreviewObjects) {
+          (this as any).updatePreviewObjects();
+        }
+      } catch (e) {
+        console.error("Regeneration failed: ", e);
+      }
+    };
+
+    // Section title + seed label (if available)
+    this.add.text(x, y, "Regenerate Tiles", {
+      fontSize: "12px",
+      fill: "#ffffaa",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 2,
+    });
+    y += 20;
+
+    const seed = String((this.worldSystem as any).worldData?.seed || "-");
+    this.worldSeedText = this.add.text(x, y, `Seed: ${seed}`, {
+      fontSize: "10px",
+      fill: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 1,
+    });
+    y += 16;
+
+    // 3x2 grid (3 rows x 2 columns)
+    const buttons: Array<{ label: string; algo: any }> = [
+      { label: "Cave/Basement", algo: "cave" },
+      { label: "Outside", algo: "outside" },
+      { label: "Corridor", algo: "corridor" },
+      { label: "BSP", algo: "bsp" },
+      { label: "Drunkard Walk", algo: "drunkard" },
+      { label: "Terraced", algo: "terrace" },
+    ];
+    const cols = 2;
+    const rows = 3;
+    const buttonWidth = Math.max(100, Math.floor(panelWidth / cols) - 6);
+    const buttonHeight = 25;
+    const spacingX = 6;
+    const spacingY = 6;
+
+    buttons.forEach((b, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const bx = x + col * (buttonWidth + spacingX);
+      const by = y + row * (buttonHeight + spacingY);
+      makeButton(b.label, () => handler(b.algo), bx, by);
+    });
+
+    return y + rows * (buttonHeight + spacingY);
   }
 
   private updateToolSelection(): void {
@@ -1431,6 +1798,14 @@ export class MapEditorScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasdKeys = this.input.keyboard.addKeys("W,S,A,D");
 
+    // Toggle key (Tab) and prevent browser focus change
+    this.toggleKey = this.input.keyboard.addKey(
+      (Phaser.Input.Keyboard as any).KeyCodes.TAB
+    );
+    this.input.keyboard.on("keydown-TAB", (event: KeyboardEvent) => {
+      event.preventDefault();
+    });
+
     // Add T key handler for tile selector
     this.input.keyboard.on("keydown-T", () => {
       this.openSpritePicker();
@@ -1803,13 +2178,24 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Update current map in world system
     this.worldSystem.updateCurrentMap(this.mapData);
-
-    // Save entire world
-    const success = await this.worldSystem.saveWorld();
-    if (success) {
-      console.log("World saved successfully");
-    } else {
-      console.log("World save cancelled or failed");
+    try {
+      const worldData = (this.worldSystem as any).worldData;
+      if (!worldData) throw new Error("No world data to save");
+      const seed = String(worldData.seed || "world");
+      const res = await fetch("/api/worlds/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed, world: worldData }),
+      });
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      const data = await res.json();
+      console.log(`World saved as ${data.file}`);
+      // Update seed label if needed
+      if (this.worldSeedText) this.worldSeedText.setText(`Seed: ${seed}`);
+      alert(`Saved: ${data.file}`);
+    } catch (e: any) {
+      console.error("Save error:", e);
+      alert(`Save failed: ${e?.message || e}`);
     }
   }
 
@@ -1845,43 +2231,113 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private loadMap(): void {
-    // Create file input for loading
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = ".json";
-    fileInput.style.display = "none";
-    document.body.appendChild(fileInput);
+    this.openWorldPicker();
+  }
 
-    fileInput.addEventListener("change", (event: Event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) {
-        this.isLoadingCustomMap = true; // Set flag to prevent default world override
+  private async openWorldPicker(): Promise<void> {
+    try {
+      const res = await fetch("/api/worlds/list");
+      if (!res.ok) throw new Error(`List failed: ${res.status}`);
+      const data = await res.json();
+      const files: string[] = (data?.files || []).filter((f: string) =>
+        f.endsWith(".json")
+      );
 
-        this.worldSystem
-          .loadWorld(file)
-          .then((worldData) => {
-            // Update world view renderer with loaded world data
-            this.worldViewRenderer.setWorldData(worldData);
+      // Modal UI
+      const centerX = this.viewportWidth / 2;
+      const centerY = this.viewportHeight / 2;
+      const modalBg = this.add.rectangle(
+        centerX,
+        centerY,
+        420,
+        520,
+        0x000000,
+        0.85
+      );
+      modalBg.setScrollFactor(0);
+      modalBg.setDepth(1000);
 
-            const currentMap = this.worldSystem.getCurrentMap();
-            if (currentMap) {
-              this.mapData = currentMap;
-              this.loadTileDataFromMap();
-              this.updatePreviewObjects();
-              this.updateMapList();
-            }
-            this.isLoadingCustomMap = false; // Clear flag
+      const title = this.add
+        .text(centerX, centerY - 230, "Load World", {
+          fontSize: "16px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setScrollFactor(0)
+        .setDepth(1001)
+        .setOrigin(0.5);
+
+      const buttons: Phaser.GameObjects.Text[] = [];
+      const listStartY = centerY - 190;
+      const lineHeight = 24;
+      files.slice(0, 16).forEach((file, idx) => {
+        const by = listStartY + idx * lineHeight;
+        const btn = this.add
+          .text(centerX, by, file, {
+            fontSize: "12px",
+            fill: "#ffffff",
+            backgroundColor: "#444444",
+            padding: { x: 6, y: 3 },
           })
-          .catch((error: Error) => {
-            console.error("Error loading world:", error);
-            alert("Error loading world: " + error.message);
-            this.isLoadingCustomMap = false; // Clear flag on error
-          });
-      }
-      document.body.removeChild(fileInput);
-    });
+          .setScrollFactor(0)
+          .setDepth(1001)
+          .setOrigin(0.5)
+          .setInteractive();
+        btn.on("pointerdown", async () => {
+          await this.loadWorldFromFile(file);
+          cleanup();
+        });
+        btn.on("pointerover", () => btn.setBackgroundColor("#666666"));
+        btn.on("pointerout", () => btn.setBackgroundColor("#444444"));
+        buttons.push(btn);
+      });
 
-    fileInput.click();
+      const cancelBtn = this.add
+        .text(centerX, centerY + 230, "Cancel", {
+          fontSize: "12px",
+          fill: "#ffffff",
+          backgroundColor: "#aa0000",
+          padding: { x: 10, y: 6 },
+        })
+        .setScrollFactor(0)
+        .setDepth(1001)
+        .setOrigin(0.5)
+        .setInteractive();
+      cancelBtn.on("pointerdown", () => cleanup());
+
+      const cleanup = () => {
+        modalBg.destroy();
+        title.destroy();
+        cancelBtn.destroy();
+        buttons.forEach((b) => b.destroy());
+      };
+    } catch (e: any) {
+      console.error("Failed to list worlds:", e);
+      alert(`Failed to list worlds: ${e?.message || e}`);
+    }
+  }
+
+  private async loadWorldFromFile(fileName: string): Promise<void> {
+    try {
+      const url = `${ASSET_PATHS.maps}/${fileName}?v=${Date.now()}`;
+      const worldData = await this.worldSystem.loadWorldFromURL(url);
+      this.worldViewRenderer.setWorldData(worldData);
+      const currentMap = this.worldSystem.getCurrentMap();
+      if (currentMap) {
+        this.mapData = currentMap;
+        this.loadTileDataFromMap();
+        this.updatePreviewObjects();
+        this.updateMapList();
+        this.setupCameraIgnoreLists();
+        if (this.worldSeedText && (this.worldSystem as any).worldData?.seed) {
+          const seedStr = String((this.worldSystem as any).worldData.seed);
+          this.worldSeedText.setText(`Seed: ${seedStr}`);
+        }
+      }
+    } catch (e: any) {
+      console.error("Error loading world:", e);
+      alert(`Error loading world: ${e?.message || e}`);
+    }
   }
 
   private loadTileDataFromMap(): void {
@@ -2028,22 +2484,36 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   public update(): void {
-    // Camera movement
-    if (this.cursors.left.isDown || this.wasdKeys.A.isDown) {
-      this.cameras.main.scrollX -= this.cameraSpeed;
-    }
-    if (this.cursors.right.isDown || this.wasdKeys.D.isDown) {
-      this.cameras.main.scrollX += this.cameraSpeed;
-    }
-    if (this.cursors.up.isDown || this.wasdKeys.W.isDown) {
-      this.cameras.main.scrollY -= this.cameraSpeed;
-    }
-    if (this.cursors.down.isDown || this.wasdKeys.S.isDown) {
-      this.cameras.main.scrollY += this.cameraSpeed;
+    // If world view is visible, use arrows to pan world view instead of moving map camera
+    if (this.worldViewRenderer && this.worldViewRenderer.getIsVisible()) {
+      const panStep = 20; // pixels per frame; independent from tilemap camera speed
+      let dx = 0;
+      let dy = 0;
+      if (this.cursors.left.isDown) dx += panStep;
+      if (this.cursors.right.isDown) dx -= panStep;
+      if (this.cursors.up.isDown) dy += panStep;
+      if (this.cursors.down.isDown) dy -= panStep;
+      if (dx !== 0 || dy !== 0) {
+        (this.worldViewRenderer as any).panBy(dx, dy);
+      }
+    } else {
+      // Camera movement (arrows only)
+      if (this.cursors.left.isDown) {
+        this.cameras.main.scrollX -= this.cameraSpeed;
+      }
+      if (this.cursors.right.isDown) {
+        this.cameras.main.scrollX += this.cameraSpeed;
+      }
+      if (this.cursors.up.isDown) {
+        this.cameras.main.scrollY -= this.cameraSpeed;
+      }
+      if (this.cursors.down.isDown) {
+        this.cameras.main.scrollY += this.cameraSpeed;
+      }
     }
 
-    // Handle world view toggle
-    if (Phaser.Input.Keyboard.JustDown(this.wasdKeys.W)) {
+    // Handle world view toggle (Tab)
+    if (Phaser.Input.Keyboard.JustDown(this.toggleKey)) {
       this.worldViewRenderer.toggle();
     }
 

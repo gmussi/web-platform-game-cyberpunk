@@ -126,6 +126,7 @@ export interface WorldData {
     author: string;
     created: string;
   };
+  seed?: string;
   startingMap: string;
   startingSpawn: string; // ID of the spawn point to use
   startingPosition?: { x: number; y: number }; // Optional starting position
