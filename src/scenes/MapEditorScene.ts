@@ -100,6 +100,7 @@ export class MapEditorScene extends Phaser.Scene {
   public backButton!: Phaser.GameObjects.Text;
   public objectInfoText!: Phaser.GameObjects.Text;
   public coordinateText!: Phaser.GameObjects.Text;
+  public worldSeedText?: Phaser.GameObjects.Text;
   public gridToggleButton!: Phaser.GameObjects.Text;
   public autotileToggleButton!: Phaser.GameObjects.Text;
   public generateWorldButton!: Phaser.GameObjects.Text;
@@ -731,6 +732,10 @@ export class MapEditorScene extends Phaser.Scene {
         this.updatePreviewObjects();
         this.updateMapList();
         this.setupCameraIgnoreLists();
+        if (this.worldSeedText && (this.worldSystem as any).worldData?.seed) {
+          const seedStr = String((this.worldSystem as any).worldData.seed);
+          this.worldSeedText.setText(`Seed: ${seedStr}`);
+        }
       }
     } catch (e) {
       console.error("World generation failed:", e);
@@ -884,7 +889,7 @@ export class MapEditorScene extends Phaser.Scene {
       }
     };
 
-    // Section title
+    // Section title + seed label (if available)
     this.add.text(x, y, "Regenerate Tiles", {
       fontSize: "12px",
       fill: "#ffffaa",
@@ -893,6 +898,15 @@ export class MapEditorScene extends Phaser.Scene {
       strokeThickness: 2,
     });
     y += 20;
+
+    const seed = String((this.worldSystem as any).worldData?.seed || "-");
+    this.worldSeedText = this.add.text(x, y, `Seed: ${seed}`, {
+      fontSize: "10px",
+      fill: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 1,
+    });
+    y += 16;
 
     // 3x2 grid (3 rows x 2 columns)
     const buttons: Array<{ label: string; algo: any }> = [

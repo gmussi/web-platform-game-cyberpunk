@@ -1,5 +1,6 @@
 import { WorldGraph } from "../types/worldgen";
 import { WorldData, WorldMapData, ExitZone } from "../types/map";
+import { createSeededRng, rngInt } from "../utils/seededRng";
 
 type RoomPos = { x: number; y: number };
 
@@ -209,14 +210,12 @@ export function convertToWorldData(
   graph: WorldGraph,
   opts?: {
     tileSize?: number;
-    roomWidthTiles?: number;
-    roomHeightTiles?: number;
+    roomWidthTiles?: number; // ignored in adaptive sizing; kept for backwards compat
+    roomHeightTiles?: number; // ignored in adaptive sizing; kept for backwards compat
     author?: string;
   }
 ): WorldData {
   const tileSize = opts?.tileSize ?? 32;
-  const roomWidthTiles = opts?.roomWidthTiles ?? 128; // 128 * 32 = 4096
-  const roomHeightTiles = opts?.roomHeightTiles ?? 25; // 25 * 32 = 800
   const author = opts?.author ?? "WorldGen";
 
   const layout = bfsLayout(graph);
@@ -232,11 +231,37 @@ export function convertToWorldData(
       edge: chooseEdge(pos, layout[t]),
     }));
 
+    // Adaptive room sizing based on exits
+    // Derive per-room RNG from world seed and room id for reproducible variety
+    const rng = createSeededRng(`${String(graph.seed)}-roomsize-${n.id}`);
+    let widthTiles = 25; // start size width (columns)
+    let heightTiles = 10; // start size height (rows)
+
+    const counts = { top: 0, bottom: 0, left: 0, right: 0 } as Record<
+      "top" | "bottom" | "left" | "right",
+      number
+    >;
+    for (const nb of neigh) counts[nb.edge]++;
+
+    // If at least one top and one bottom exit, add 25-50 rows (height)
+    if (counts.top > 0 && counts.bottom > 0) {
+      heightTiles += rngInt(rng, 10, 25);
+    }
+    if (counts.left > 0 && counts.right > 0) {
+      widthTiles += rngInt(rng, 10, 25);
+    }
+    // For each top and bottom exit, add 25-50 columns (width)
+    for (let i = 0; i < counts.top; i++) widthTiles += rngInt(rng, 10, 25);
+    for (let i = 0; i < counts.bottom; i++) widthTiles += rngInt(rng, 10, 25);
+    // For each left and right exit, add 25-50 rows (height)
+    for (let i = 0; i < counts.left; i++) heightTiles += rngInt(rng, 10, 25);
+    for (let i = 0; i < counts.right; i++) heightTiles += rngInt(rng, 10, 25);
+
     const exits = buildExitsForRoom(
       n.id,
       neigh,
-      roomWidthTiles,
-      roomHeightTiles,
+      widthTiles,
+      heightTiles,
       tileSize
     );
 
@@ -250,8 +275,8 @@ export function convertToWorldData(
         author,
       },
       world: {
-        width: roomWidthTiles * tileSize,
-        height: roomHeightTiles * tileSize,
+        width: widthTiles * tileSize,
+        height: heightTiles * tileSize,
         tileSize,
       },
       exits,
@@ -274,9 +299,13 @@ export function convertToWorldData(
       author,
       created: new Date().toISOString(),
     },
+    seed: String(graph.seed),
     startingMap: graph.start,
     startingSpawn: "default",
-    startingPosition: { x: 100, y: roomHeightTiles * tileSize - 112 },
+    startingPosition: {
+      x: 100,
+      y: (maps[graph.start]?.world?.height || 25 * tileSize) - 112,
+    },
     maps,
   };
 
