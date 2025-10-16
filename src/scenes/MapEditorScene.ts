@@ -2178,13 +2178,24 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Update current map in world system
     this.worldSystem.updateCurrentMap(this.mapData);
-
-    // Save entire world
-    const success = await this.worldSystem.saveWorld();
-    if (success) {
-      console.log("World saved successfully");
-    } else {
-      console.log("World save cancelled or failed");
+    try {
+      const worldData = (this.worldSystem as any).worldData;
+      if (!worldData) throw new Error("No world data to save");
+      const seed = String(worldData.seed || "world");
+      const res = await fetch("/api/worlds/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed, world: worldData }),
+      });
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      const data = await res.json();
+      console.log(`World saved as ${data.file}`);
+      // Update seed label if needed
+      if (this.worldSeedText) this.worldSeedText.setText(`Seed: ${seed}`);
+      alert(`Saved: ${data.file}`);
+    } catch (e: any) {
+      console.error("Save error:", e);
+      alert(`Save failed: ${e?.message || e}`);
     }
   }
 
@@ -2220,43 +2231,113 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private loadMap(): void {
-    // Create file input for loading
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = ".json";
-    fileInput.style.display = "none";
-    document.body.appendChild(fileInput);
+    this.openWorldPicker();
+  }
 
-    fileInput.addEventListener("change", (event: Event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) {
-        this.isLoadingCustomMap = true; // Set flag to prevent default world override
+  private async openWorldPicker(): Promise<void> {
+    try {
+      const res = await fetch("/api/worlds/list");
+      if (!res.ok) throw new Error(`List failed: ${res.status}`);
+      const data = await res.json();
+      const files: string[] = (data?.files || []).filter((f: string) =>
+        f.endsWith(".json")
+      );
 
-        this.worldSystem
-          .loadWorld(file)
-          .then((worldData) => {
-            // Update world view renderer with loaded world data
-            this.worldViewRenderer.setWorldData(worldData);
+      // Modal UI
+      const centerX = this.viewportWidth / 2;
+      const centerY = this.viewportHeight / 2;
+      const modalBg = this.add.rectangle(
+        centerX,
+        centerY,
+        420,
+        520,
+        0x000000,
+        0.85
+      );
+      modalBg.setScrollFactor(0);
+      modalBg.setDepth(1000);
 
-            const currentMap = this.worldSystem.getCurrentMap();
-            if (currentMap) {
-              this.mapData = currentMap;
-              this.loadTileDataFromMap();
-              this.updatePreviewObjects();
-              this.updateMapList();
-            }
-            this.isLoadingCustomMap = false; // Clear flag
+      const title = this.add
+        .text(centerX, centerY - 230, "Load World", {
+          fontSize: "16px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setScrollFactor(0)
+        .setDepth(1001)
+        .setOrigin(0.5);
+
+      const buttons: Phaser.GameObjects.Text[] = [];
+      const listStartY = centerY - 190;
+      const lineHeight = 24;
+      files.slice(0, 16).forEach((file, idx) => {
+        const by = listStartY + idx * lineHeight;
+        const btn = this.add
+          .text(centerX, by, file, {
+            fontSize: "12px",
+            fill: "#ffffff",
+            backgroundColor: "#444444",
+            padding: { x: 6, y: 3 },
           })
-          .catch((error: Error) => {
-            console.error("Error loading world:", error);
-            alert("Error loading world: " + error.message);
-            this.isLoadingCustomMap = false; // Clear flag on error
-          });
-      }
-      document.body.removeChild(fileInput);
-    });
+          .setScrollFactor(0)
+          .setDepth(1001)
+          .setOrigin(0.5)
+          .setInteractive();
+        btn.on("pointerdown", async () => {
+          await this.loadWorldFromFile(file);
+          cleanup();
+        });
+        btn.on("pointerover", () => btn.setBackgroundColor("#666666"));
+        btn.on("pointerout", () => btn.setBackgroundColor("#444444"));
+        buttons.push(btn);
+      });
 
-    fileInput.click();
+      const cancelBtn = this.add
+        .text(centerX, centerY + 230, "Cancel", {
+          fontSize: "12px",
+          fill: "#ffffff",
+          backgroundColor: "#aa0000",
+          padding: { x: 10, y: 6 },
+        })
+        .setScrollFactor(0)
+        .setDepth(1001)
+        .setOrigin(0.5)
+        .setInteractive();
+      cancelBtn.on("pointerdown", () => cleanup());
+
+      const cleanup = () => {
+        modalBg.destroy();
+        title.destroy();
+        cancelBtn.destroy();
+        buttons.forEach((b) => b.destroy());
+      };
+    } catch (e: any) {
+      console.error("Failed to list worlds:", e);
+      alert(`Failed to list worlds: ${e?.message || e}`);
+    }
+  }
+
+  private async loadWorldFromFile(fileName: string): Promise<void> {
+    try {
+      const url = `${ASSET_PATHS.maps}/${fileName}?v=${Date.now()}`;
+      const worldData = await this.worldSystem.loadWorldFromURL(url);
+      this.worldViewRenderer.setWorldData(worldData);
+      const currentMap = this.worldSystem.getCurrentMap();
+      if (currentMap) {
+        this.mapData = currentMap;
+        this.loadTileDataFromMap();
+        this.updatePreviewObjects();
+        this.updateMapList();
+        this.setupCameraIgnoreLists();
+        if (this.worldSeedText && (this.worldSystem as any).worldData?.seed) {
+          const seedStr = String((this.worldSystem as any).worldData.seed);
+          this.worldSeedText.setText(`Seed: ${seedStr}`);
+        }
+      }
+    } catch (e: any) {
+      console.error("Error loading world:", e);
+      alert(`Error loading world: ${e?.message || e}`);
+    }
   }
 
   private loadTileDataFromMap(): void {
