@@ -103,6 +103,12 @@ export class MapEditorScene extends Phaser.Scene {
   public worldSeedText?: Phaser.GameObjects.Text;
   public gridToggleButton!: Phaser.GameObjects.Text;
   public autotileToggleButton!: Phaser.GameObjects.Text;
+  public layerToggleButtons: {
+    bg: Phaser.GameObjects.Text;
+    dec: Phaser.GameObjects.Text;
+    game: Phaser.GameObjects.Text;
+  } | null = null;
+  public selectedLayer: "background" | "decoration" | "game" = "game";
   public generateWorldButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
@@ -384,6 +390,24 @@ export class MapEditorScene extends Phaser.Scene {
       (this.uiCamera as any).ignore(this.tilemapSystem.tileSprites);
     }
 
+    // Also ignore background and decoration sprites
+    if (
+      (this.tilemapSystem as any).backgroundSprites &&
+      (this.tilemapSystem as any).backgroundSprites.length > 0
+    ) {
+      (this.uiCamera as any).ignore(
+        (this.tilemapSystem as any).backgroundSprites
+      );
+    }
+    if (
+      (this.tilemapSystem as any).decorationSprites &&
+      (this.tilemapSystem as any).decorationSprites.length > 0
+    ) {
+      (this.uiCamera as any).ignore(
+        (this.tilemapSystem as any).decorationSprites
+      );
+    }
+
     // Also ignore the tilemap visual layer
     if (this.tilemapSystem.visualLayer) {
       (this.uiCamera as any).ignore(this.tilemapSystem.visualLayer);
@@ -468,6 +492,9 @@ export class MapEditorScene extends Phaser.Scene {
     );
     yOffset += 45;
 
+    // Layer selector and visibility toggles
+    yOffset = this.createLayerControls(panelPadding, yOffset);
+
     // Tool selection
     yOffset = this.createToolSelection(panelPadding, yOffset, panelWidth);
 
@@ -506,6 +533,112 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Create map resize controls
     this.createMapResizeControls(panelPadding, yOffset, panelWidth);
+  }
+
+  private createLayerControls(x: number, y: number): number {
+    const label = this.add.text(x, y, "Layer:", {
+      fontSize: "11px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 2,
+    });
+    let currentY = y + 16;
+
+    const makeBtn = (txt: string, onClick: () => void, bg: string) => {
+      const t = this.add.text(x, currentY, txt, {
+        fontSize: "10px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: bg,
+        padding: { x: 6, y: 3 },
+      });
+      t.setInteractive();
+      t.on("pointerdown", onClick);
+      currentY += 22;
+      return t;
+    };
+
+    const selectColor = (layer: string) =>
+      this.selectedLayer === layer ? "#1e88e5" : "#444444";
+    const btnBg = makeBtn(
+      `Background (select)`,
+      () => {
+        this.selectedLayer = "background";
+        this.updateLayerButtons();
+      },
+      selectColor("background")
+    );
+    const btnDec = makeBtn(
+      `Decoration (select)`,
+      () => {
+        this.selectedLayer = "decoration";
+        this.updateLayerButtons();
+      },
+      selectColor("decoration")
+    );
+    const btnGame = makeBtn(
+      `Game (select)`,
+      () => {
+        this.selectedLayer = "game";
+        this.updateLayerButtons();
+      },
+      selectColor("game")
+    );
+
+    // Visibility toggles row
+    const makeVis = (
+      labelTxt: string,
+      layer: "background" | "decoration" | "game"
+    ) => {
+      const vis = this.add.text(
+        x + 140,
+        currentY -
+          66 +
+          (layer === "decoration" ? 22 : layer === "game" ? 44 : 0),
+        `${labelTxt}: ON`,
+        {
+          fontSize: "10px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          stroke: "#000000",
+          strokeThickness: 2,
+          backgroundColor: "#00aa00",
+          padding: { x: 6, y: 3 },
+        }
+      );
+      vis.setInteractive();
+      vis.on("pointerdown", () => {
+        // toggle
+        const current = (this.tilemapSystem as any)[`${layer}Visible`];
+        this.tilemapSystem.setLayerVisible(layer, !current);
+        vis.setText(`${labelTxt}: ${!current ? "ON" : "OFF"}`);
+        vis.setBackgroundColor(!current ? "#00aa00" : "#aa0000");
+      });
+      return vis;
+    };
+
+    const visBg = makeVis("BG", "background");
+    const visDec = makeVis("DEC", "decoration");
+    const visGame = makeVis("GAME", "game");
+    this.layerToggleButtons = { bg: visBg, dec: visDec, game: visGame };
+
+    return currentY;
+  }
+
+  private updateLayerButtons(): void {
+    // Update the background of the three selection buttons (search by text)
+    const setBg = (textVal: string, active: boolean) => {
+      const btn = (this.children as any).list.find(
+        (c: any) => c.text === textVal
+      );
+      if (btn) btn.setBackgroundColor(active ? "#1e88e5" : "#444444");
+    };
+    setBg("Background (select)", this.selectedLayer === "background");
+    setBg("Decoration (select)", this.selectedLayer === "decoration");
+    setBg("Game (select)", this.selectedLayer === "game");
   }
 
   private createGenerateWorldButton(x: number, y: number): number {
@@ -955,12 +1088,22 @@ export class MapEditorScene extends Phaser.Scene {
     const centerX = this.viewportWidth / 2;
     const centerY = this.viewportHeight / 2;
 
+    // Compute grid and modal sizing based on layer
+    const spriteSize = 32;
+    const spacing = 40;
+    const cols =
+      this.selectedLayer === "background" || this.selectedLayer === "decoration"
+        ? 19
+        : 8;
+    const modalWidth = (cols - 1) * spacing + spriteSize + 80; // padding
+    const modalHeight = 520;
+
     // Create sprite picker background
     this.spritePicker = this.add.rectangle(
       centerX,
       centerY,
-      400,
-      500,
+      modalWidth,
+      modalHeight,
       0x000000,
       0.8
     );
@@ -968,33 +1111,51 @@ export class MapEditorScene extends Phaser.Scene {
     this.spritePicker.setDepth(1000);
 
     // Create title
-    this.add
-      .text(centerX, centerY - 200, "Select Sprite", {
-        fontSize: "18px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-      })
-      .setScrollFactor(0)
-      .setDepth(1001)
-      .setOrigin(0.5);
+    const pickerTitle = this.add.text(centerX, centerY - 200, "Select Sprite", {
+      fontSize: "18px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+    });
+    pickerTitle.setScrollFactor(0);
+    pickerTitle.setDepth(1001);
+    pickerTitle.setOrigin(0.5);
 
-    // Create sprite grid (8x8 = 64 sprites)
+    // Create sprite grid (select source by selectedLayer)
     this.spriteButtons = [];
-    const spriteSize = 32;
-    const spacing = 40;
-    const startX = centerX - 4 * spacing;
+    const startX = centerX - Math.floor(cols / 2) * spacing;
     const startY = centerY - 150;
 
-    for (let i = 0; i < 64; i++) {
-      const x = startX + (i % 8) * spacing;
-      const y = startY + Math.floor(i / 8) * spacing;
+    let total = 64;
+    let textureKey = "tileset_sprites";
+    if (
+      this.selectedLayer === "background" &&
+      this.textures.exists("background_sprites")
+    ) {
+      textureKey = "background_sprites";
+      total = (this.textures.get(textureKey) as any).getFrameNames().length;
+    } else if (
+      this.selectedLayer === "decoration" &&
+      this.textures.exists("decoration_sprites")
+    ) {
+      textureKey = "decoration_sprites";
+      total = (this.textures.get(textureKey) as any).getFrameNames().length;
+    }
+
+    const toIgnore: Phaser.GameObjects.GameObject[] = [
+      this.spritePicker,
+      pickerTitle,
+    ];
+    for (let i = 0; i < total; i++) {
+      const x = startX + (i % cols) * spacing;
+      const y = startY + Math.floor(i / cols) * spacing;
 
       // Create sprite preview
-      const spriteButton = this.add.image(x, y, "tileset_sprites", i);
+      const spriteButton = this.add.image(x, y, textureKey, i);
       spriteButton.setScrollFactor(0);
       spriteButton.setDepth(1001);
       spriteButton.setDisplaySize(spriteSize, spriteSize);
       spriteButton.setInteractive();
+      toIgnore.push(spriteButton);
 
       // Add border
       const border = this.add.rectangle(
@@ -1007,6 +1168,7 @@ export class MapEditorScene extends Phaser.Scene {
       );
       border.setScrollFactor(0);
       border.setDepth(1000);
+      toIgnore.push(border as unknown as Phaser.GameObjects.GameObject);
 
       spriteButton.on("pointerdown", () => {
         // Delay close to let the click handler finish first
@@ -1042,6 +1204,12 @@ export class MapEditorScene extends Phaser.Scene {
       .setDepth(1001)
       .setOrigin(0.5)
       .setInteractive();
+    toIgnore.push(closeButton);
+
+    // Ensure the UI camera (right panel) ignores the picker elements
+    if (this.uiCamera) {
+      (this.uiCamera as any).ignore(toIgnore);
+    }
 
     closeButton.on("pointerdown", () => {
       // Delay close to let the click handler finish first
@@ -1880,13 +2048,29 @@ export class MapEditorScene extends Phaser.Scene {
       case "platform":
       case "wall":
       case "solid":
-        // All solid tiles now use the same SOLID type with selected sprite
-        this.placeTile(
-          x,
-          y,
-          TilemapSystem.TILE_TYPES.SOLID,
-          this.selectedSpriteIndex
-        );
+        // Route based on selected layer
+        if (this.selectedLayer === "game") {
+          this.placeTile(
+            x,
+            y,
+            TilemapSystem.TILE_TYPES.SOLID,
+            this.selectedSpriteIndex
+          );
+        } else if (this.selectedLayer === "background") {
+          const t = this.tilemapSystem.worldToTile(x, y);
+          this.tilemapSystem.setBackground(
+            t.x,
+            t.y,
+            this.selectedSpriteIndex ?? 0
+          );
+        } else if (this.selectedLayer === "decoration") {
+          const t = this.tilemapSystem.worldToTile(x, y);
+          this.tilemapSystem.setDecoration(
+            t.x,
+            t.y,
+            this.selectedSpriteIndex ?? 0
+          );
+        }
         break;
       case "erase":
         this.eraseTile(x, y);
@@ -2080,11 +2264,17 @@ export class MapEditorScene extends Phaser.Scene {
       tilePos.y >= 0 &&
       tilePos.y < this.tilemapSystem.mapHeight
     ) {
-      this.tilemapSystem.setTile(
-        tilePos.x,
-        tilePos.y,
-        TilemapSystem.TILE_TYPES.EMPTY
-      );
+      if (this.selectedLayer === "game") {
+        this.tilemapSystem.setTile(
+          tilePos.x,
+          tilePos.y,
+          TilemapSystem.TILE_TYPES.EMPTY
+        );
+      } else if (this.selectedLayer === "background") {
+        this.tilemapSystem.setBackground(tilePos.x, tilePos.y, null);
+      } else if (this.selectedLayer === "decoration") {
+        this.tilemapSystem.setDecoration(tilePos.x, tilePos.y, null);
+      }
     }
   }
 
@@ -2213,6 +2403,8 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Clear existing tile data
     this.mapData.tiles = [];
+    this.mapData.background = [] as any;
+    this.mapData.decoration = [] as any;
 
     // Save tile data with sprite indices
     for (let y = 0; y < this.tilemapSystem.mapHeight; y++) {
@@ -2226,6 +2418,15 @@ export class MapEditorScene extends Phaser.Scene {
           type: tileType,
           spriteIndex: spriteIndex,
         };
+        // Persist background and decoration frames
+        (this.mapData.background as any)[y] =
+          (this.mapData.background as any)[y] || [];
+        (this.mapData.decoration as any)[y] =
+          (this.mapData.decoration as any)[y] || [];
+        (this.mapData.background as any)[y][x] =
+          this.tilemapSystem.getBackground(x, y);
+        (this.mapData.decoration as any)[y][x] =
+          this.tilemapSystem.getDecoration(x, y);
       }
     }
   }
@@ -2405,6 +2606,11 @@ export class MapEditorScene extends Phaser.Scene {
               // Number format: just tile type
               this.tilemapSystem.setTile(x, y, tileData);
             }
+            // Apply background/decoration
+            const bg = (this.mapData.background as any)?.[y]?.[x] ?? null;
+            const dec = (this.mapData.decoration as any)?.[y]?.[x] ?? null;
+            this.tilemapSystem.setBackground(x, y, bg);
+            this.tilemapSystem.setDecoration(x, y, dec);
           }
         }
       }
@@ -2415,7 +2621,8 @@ export class MapEditorScene extends Phaser.Scene {
         } rows x ${this.mapData.tiles[0]?.length || 0} columns`
       );
 
-      // Create collision bodies AFTER tile data is loaded (same as GameScene)
+      // Redraw all layers and then create collision bodies
+      this.tilemapSystem.redrawAllLayers();
       this.tilemapSystem.createCollisionBodies();
     }
   }

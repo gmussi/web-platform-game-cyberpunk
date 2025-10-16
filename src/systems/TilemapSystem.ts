@@ -13,8 +13,16 @@ export class TilemapSystem {
   public collisionBodies: any[];
   public collisionGroup!: Phaser.Physics.Arcade.StaticGroup;
   public tileSpriteIndices: (number | null)[][];
-  public tileSprites: Phaser.GameObjects.Image[];
+  public tileSprites: Phaser.GameObjects.GameObject[];
   public autoTileSystem!: AutotileSystem;
+  // Additional layers
+  public backgroundIndices: (number | null)[][] = [];
+  public decorationIndices: (number | null)[][] = [];
+  public backgroundSprites: Phaser.GameObjects.Image[] = [];
+  public decorationSprites: Phaser.GameObjects.Image[] = [];
+  public backgroundVisible: boolean = true;
+  public decorationVisible: boolean = true;
+  public gameVisible: boolean = true;
 
   constructor(
     scene: Phaser.Scene,
@@ -55,6 +63,16 @@ export class TilemapSystem {
     this.tileSpriteIndices = [];
     this.tileSprites = [];
 
+    // Initialize extra layer storages
+    for (let y = 0; y < this.mapHeight; y++) {
+      this.backgroundIndices[y] = [];
+      this.decorationIndices[y] = [];
+      for (let x = 0; x < this.mapWidth; x++) {
+        this.backgroundIndices[y][x] = null;
+        this.decorationIndices[y][x] = null;
+      }
+    }
+
     // Initialize autotile system
     this.autoTileSystem = new AutotileSystem(
       this.scene,
@@ -62,6 +80,100 @@ export class TilemapSystem {
       this.mapWidth,
       this.mapHeight
     );
+  }
+
+  public setLayerVisible(
+    layer: "background" | "decoration" | "game",
+    visible: boolean
+  ): void {
+    if (layer === "background") {
+      this.backgroundVisible = visible;
+      this.backgroundSprites.forEach((s) => s.setVisible(visible));
+    } else if (layer === "decoration") {
+      this.decorationVisible = visible;
+      this.decorationSprites.forEach((s) => s.setVisible(visible));
+    } else if (layer === "game") {
+      this.gameVisible = visible;
+      this.tileSprites.forEach((s) => s.setVisible(visible));
+      this.visualLayer.setVisible(visible);
+    }
+  }
+
+  public setBackground(x: number, y: number, frame: number | null): void {
+    if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight) return;
+    this.backgroundIndices[y][x] = frame;
+    this.updateBackgroundVisual(x, y);
+  }
+
+  public getBackground(x: number, y: number): number | null {
+    if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight)
+      return null;
+    return this.backgroundIndices[y]?.[x] ?? null;
+  }
+
+  public setDecoration(x: number, y: number, frame: number | null): void {
+    if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight) return;
+    this.decorationIndices[y][x] = frame;
+    this.updateDecorationVisual(x, y);
+  }
+
+  public getDecoration(x: number, y: number): number | null {
+    if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight)
+      return null;
+    return this.decorationIndices[y]?.[x] ?? null;
+  }
+
+  private updateBackgroundVisual(x: number, y: number): void {
+    // Clear existing sprite at this cell
+    this.clearLayerSpriteAt(this.backgroundSprites, x, y);
+    const frame = this.backgroundIndices[y][x];
+    if (frame === null || !this.backgroundVisible) return;
+    if (!this.scene.textures.exists("background_sprites")) return;
+    const world = this.tileToWorld(x, y);
+    const sprite = this.scene.add.image(
+      world.x + this.tileSize / 2,
+      world.y + this.tileSize / 2,
+      "background_sprites",
+      frame
+    );
+    sprite.setDisplaySize(this.tileSize, this.tileSize);
+    sprite.setDepth(1);
+    this.backgroundSprites.push(sprite);
+  }
+
+  private updateDecorationVisual(x: number, y: number): void {
+    // Clear existing sprite at this cell
+    this.clearLayerSpriteAt(this.decorationSprites, x, y);
+    const frame = this.decorationIndices[y][x];
+    if (frame === null || !this.decorationVisible) return;
+    if (!this.scene.textures.exists("decoration_sprites")) return;
+    const world = this.tileToWorld(x, y);
+    const sprite = this.scene.add.image(
+      world.x + this.tileSize / 2,
+      world.y + this.tileSize / 2,
+      "decoration_sprites",
+      frame
+    );
+    sprite.setDisplaySize(this.tileSize, this.tileSize);
+    sprite.setDepth(3);
+    this.decorationSprites.push(sprite);
+  }
+
+  private clearLayerSpriteAt(
+    list: Phaser.GameObjects.Image[],
+    x: number,
+    y: number
+  ): void {
+    const world = this.tileToWorld(x, y);
+    const cx = world.x + this.tileSize / 2;
+    const cy = world.y + this.tileSize / 2;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const s = list[i];
+      if (s && s.x === cx && s.y === cy) {
+        s.destroy();
+        list.splice(i, 1);
+      }
+    }
   }
 
   // Tile types - including exit tiles for edge-based transitions
@@ -165,6 +277,9 @@ export class TilemapSystem {
 
   // Update visual representation of a single tile
   private updateTileVisual(x: number, y: number): void {
+    // ensure background and decoration are drawn beneath
+    this.updateBackgroundVisual(x, y);
+    this.updateDecorationVisual(x, y);
     const tileType = this.tiles[y][x];
     const worldPos = this.tileToWorld(x, y);
 
@@ -172,7 +287,7 @@ export class TilemapSystem {
     this.clearTileVisual(x, y);
 
     // Only render solid tiles (empty tiles and special tiles like exits don't get visuals)
-    if (this.isSolidTile(tileType)) {
+    if (this.isSolidTile(tileType) && this.gameVisible) {
       let spriteIndex: number | null = null;
 
       // Use autotile system if enabled, otherwise use stored sprite index
@@ -247,11 +362,8 @@ export class TilemapSystem {
     }
 
     // Skip exit tiles in GameScene (invisible in gameplay)
-    if (
-      this.scene.scene.key === "GameScene" &&
-      tileType >= 100 &&
-      tileType <= 103
-    ) {
+    const sceneKey = (this.scene as any).scene?.key;
+    if (sceneKey === "GameScene" && tileType >= 100 && tileType <= 103) {
       return;
     }
 
@@ -294,11 +406,7 @@ export class TilemapSystem {
     tileSprite.setDepth(4); // Same depth as visual layer
 
     // Add colored overlay for exit tiles in MapEditorScene
-    if (
-      this.scene.scene.key === "MapEditorScene" &&
-      tileType >= 100 &&
-      tileType <= 103
-    ) {
+    if (sceneKey === "MapEditorScene" && tileType >= 100 && tileType <= 103) {
       const exitColors = {
         [TilemapSystem.TILE_TYPES.EXIT_LEFT]: 0x00ffff, // Cyan
         [TilemapSystem.TILE_TYPES.EXIT_RIGHT]: 0xff00ff, // Magenta
@@ -318,9 +426,6 @@ export class TilemapSystem {
       overlay.setStrokeStyle(2, 0xffffff, 0.8); // White border
 
       // Store overlay reference for cleanup
-      if (!this.tileSprites) {
-        this.tileSprites = [];
-      }
       this.tileSprites.push(overlay);
     }
 
@@ -333,6 +438,11 @@ export class TilemapSystem {
 
   // Redraw the entire visual layer
   public redrawVisualLayer(): void {
+    // First clear background/decoration
+    this.backgroundSprites.forEach((s) => s.destroy());
+    this.backgroundSprites = [];
+    this.decorationSprites.forEach((s) => s.destroy());
+    this.decorationSprites = [];
     // Clear existing tile sprites
     if (this.tileSprites) {
       this.tileSprites.forEach((sprite) => sprite.destroy());
@@ -345,6 +455,9 @@ export class TilemapSystem {
     let tilesDrawn = 0;
     for (let y = 0; y < this.mapHeight; y++) {
       for (let x = 0; x < this.mapWidth; x++) {
+        // draw bg/dec first
+        this.updateBackgroundVisual(x, y);
+        this.updateDecorationVisual(x, y);
         const tileType = this.tiles[y][x];
         if (tileType !== TilemapSystem.TILE_TYPES.EMPTY) {
           const worldPos = this.tileToWorld(x, y);
@@ -394,6 +507,10 @@ export class TilemapSystem {
         }
       }
     }
+  }
+
+  public redrawAllLayers(): void {
+    this.redrawVisualLayer();
   }
 
   // Method to redraw tiles after textures are ready
@@ -529,14 +646,20 @@ export class TilemapSystem {
     // Create new tile arrays
     const newTiles: number[][] = [];
     const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
 
     // Initialize new arrays
     for (let y = 0; y < newHeight; y++) {
       newTiles[y] = [];
       newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
       for (let x = 0; x < newWidth; x++) {
         newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
         newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
       }
     }
 
@@ -550,6 +673,18 @@ export class TilemapSystem {
         ) {
           newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
         }
+        if (
+          this.backgroundIndices[y] &&
+          this.backgroundIndices[y][x] !== undefined
+        ) {
+          newBg[y][x] = this.backgroundIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x] = this.decorationIndices[y][x];
+        }
       }
     }
 
@@ -558,6 +693,8 @@ export class TilemapSystem {
     this.mapHeight = newHeight;
     this.tiles = newTiles;
     this.tileSpriteIndices = newTileSpriteIndices;
+    this.backgroundIndices = newBg;
+    this.decorationIndices = newDec;
 
     // Update autotile system dimensions
     if (this.autoTileSystem) {
@@ -566,6 +703,10 @@ export class TilemapSystem {
 
     // Clear existing visuals and collision bodies
     this.clearAllVisuals();
+    this.backgroundSprites.forEach((s) => s.destroy());
+    this.backgroundSprites = [];
+    this.decorationSprites.forEach((s) => s.destroy());
+    this.decorationSprites = [];
     this.clearCollisionBodies();
 
     // Redraw everything
@@ -587,7 +728,7 @@ export class TilemapSystem {
   // Clear collision bodies
   private clearCollisionBodies(): void {
     if (this.collisionGroup) {
-      this.collisionGroup.clear(false, true);
+      (this.collisionGroup as any).clear(true);
     }
     this.collisionBodies = [];
   }

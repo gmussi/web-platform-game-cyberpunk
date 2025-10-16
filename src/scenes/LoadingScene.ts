@@ -88,6 +88,24 @@ export class LoadingScene extends Phaser.Scene {
     // Load tileset (needed for GameScene)
     this.load.image("tileset", `${ASSET_PATHS.tiles}/Tileset.png`);
 
+    // Load tile layer spritesheets (background and decoration)
+    this.load.spritesheet(
+      "background_sprites",
+      `${ASSET_PATHS.tiles}/background.png`,
+      {
+        frameWidth: 32,
+        frameHeight: 32,
+      }
+    );
+    this.load.spritesheet(
+      "decoration_sprites",
+      `${ASSET_PATHS.tiles}/decoration.png`,
+      {
+        frameWidth: 32,
+        frameHeight: 32,
+      }
+    );
+
     // Load background images
     this.loadBackgrounds();
 

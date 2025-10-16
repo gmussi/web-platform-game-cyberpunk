@@ -114,6 +114,8 @@ export interface WorldMapData {
   collectibles?: any[];
   checkpoints?: any[];
   tiles: any[];
+  background: (number | null)[][];
+  decoration: (number | null)[][];
   gridPosition?: { x: number; y: number }; // Calculated by layout system
   gridHeight?: number; // Height in grid units
 }

@@ -451,10 +451,17 @@ export class GameScene extends Phaser.Scene {
               this.tilemapSystem.setTile(x, y, tileData);
               tilesLoaded++;
             }
+            // Apply background/decoration from map if present
+            const bg = (this.mapData as any).background?.[y]?.[x] ?? null;
+            const dec = (this.mapData as any).decoration?.[y]?.[x] ?? null;
+            if (bg !== undefined) this.tilemapSystem.setBackground(x, y, bg);
+            if (dec !== undefined) this.tilemapSystem.setDecoration(x, y, dec);
           }
         }
       }
       console.log(`🧱 Loaded ${tilesLoaded} tiles from map data`);
+      // Redraw layers to include bg/dec before physics
+      this.tilemapSystem.redrawAllLayers();
     } else {
       // No tile data found in map, using default tilemap
     }
