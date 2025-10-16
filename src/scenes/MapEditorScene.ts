@@ -2102,6 +2102,8 @@ export class MapEditorScene extends Phaser.Scene {
       console.log(
         `Placed exit tile type ${tileType} at (${tilePos.x}, ${tilePos.y})`
       );
+      // Refresh previews so provisional exit zones appear immediately
+      this.updatePreviewObjects();
     }
   }
 
@@ -2276,6 +2278,8 @@ export class MapEditorScene extends Phaser.Scene {
       } else if (this.selectedLayer === "decoration") {
         this.tilemapSystem.setDecoration(tilePos.x, tilePos.y, null);
       }
+      // Refresh previews to remove provisional exit zones if any were erased
+      this.updatePreviewObjects();
     }
   }
 
@@ -2305,6 +2309,49 @@ export class MapEditorScene extends Phaser.Scene {
       );
       this.exitZones.push(exitZone);
     });
+
+    // Provisional exit previews from tiles (no labels)
+    try {
+      const detected = this.detectExitZonesFromTiles();
+      const configured = this.mapData.exits || [];
+      const overlapsConfigured = (d: DetectedExit) =>
+        configured.some(
+          (e) =>
+            e.edge === (d.edge as any) &&
+            !(d.tileEnd < e.tileStart || d.tileStart > e.tileEnd)
+        );
+
+      const edgeColor: Record<string, number> = {
+        left: 0x00ffff, // cyan
+        right: 0xff00ff, // magenta
+        top: 0xffff00, // yellow
+        bottom: 0xff8800, // orange
+      };
+
+      detected.forEach((d) => {
+        if (overlapsConfigured(d)) return; // already configured -> handled above with ExitZone
+
+        const color = edgeColor[d.edge] ?? 0xffffff;
+        const fill = this.add.rectangle(
+          d.x,
+          d.y,
+          d.width,
+          d.height,
+          color,
+          0.25
+        );
+        fill.setOrigin(0, 0);
+        fill.setDepth(24);
+        const border = this.add.rectangle(d.x, d.y, d.width, d.height);
+        border.setOrigin(0, 0);
+        border.setStrokeStyle(2, color, 0.8);
+        border.setDepth(25);
+        this.previewObjects.push(fill);
+        this.previewObjects.push(border);
+      });
+    } catch (e) {
+      // Detection can fail if tilemap not initialized yet; ignore
+    }
 
     // Create player preview if it exists
     if (this.mapData.player) {
