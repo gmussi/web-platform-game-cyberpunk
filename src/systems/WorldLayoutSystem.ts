@@ -232,14 +232,19 @@ export class WorldLayoutSystem {
       // Process exits and place connected maps with size-aware offsets using precomputed sizes
       const exitsByEdge = this.groupExitsByEdge(mapData.exits || []);
       // Ensure parents with vertical child and horizontal neighbor extend one extra column
-      // so they visually sit above/below that child (e.g., room_5 above room_6)
+      // Only consider vertical exits that lead to not-yet-placed (child) maps to avoid
+      // widening leaf rooms that merely point back to their parent.
       {
-        const hasBottom = (exitsByEdge.bottom?.length || 0) > 0;
-        const hasTop = (exitsByEdge.top?.length || 0) > 0;
         const hasHorizontal =
           (exitsByEdge.left?.length || 0) + (exitsByEdge.right?.length || 0) >
           0;
-        if (hasHorizontal && (hasBottom || hasTop)) {
+        const hasTopChild = (exitsByEdge.top || []).some(
+          (e) => !visited.has(e.targetMapId) && !mapPositions[e.targetMapId]
+        );
+        const hasBottomChild = (exitsByEdge.bottom || []).some(
+          (e) => !visited.has(e.targetMapId) && !mapPositions[e.targetMapId]
+        );
+        if (hasHorizontal && (hasTopChild || hasBottomChild)) {
           const cur = mapSizes[mapId] || { width: 1, height: 1 };
           if (cur.width < 2) {
             mapSizes[mapId] = { width: 2, height: cur.height };

@@ -2940,10 +2940,18 @@ export class MapEditorScene extends Phaser.Scene {
     console.log(`🔍 Detecting exits on map ${mapWidth}x${mapHeight}`);
 
     const edges = [
-      { name: "left", tileType: 100, x: 0 },
-      { name: "right", tileType: 101, x: mapWidth - 1 },
-      { name: "top", tileType: 102, y: 0 },
-      { name: "bottom", tileType: 103, y: mapHeight - 1 },
+      { name: "left", tileType: TilemapSystem.TILE_TYPES.EXIT_LEFT, x: 0 },
+      {
+        name: "right",
+        tileType: TilemapSystem.TILE_TYPES.EXIT_RIGHT,
+        x: mapWidth - 1,
+      },
+      { name: "top", tileType: TilemapSystem.TILE_TYPES.EXIT_TOP, y: 0 },
+      {
+        name: "bottom",
+        tileType: TilemapSystem.TILE_TYPES.EXIT_BOTTOM,
+        y: mapHeight - 1,
+      },
     ];
 
     edges.forEach((edge) => {
@@ -2955,7 +2963,26 @@ export class MapEditorScene extends Phaser.Scene {
 
       for (let i = 0; i < length; i++) {
         const [x, y] = isHorizontal ? [i, edge.y!] : [edge.x!, i];
-        const tile = this.tilemapSystem.getTile(x, y);
+        let tile = this.tilemapSystem.getTile(x, y);
+        // Tolerate exits painted one tile inward: if outermost tile is empty and the
+        // next tile inward matches the exit type, treat it as an exit.
+        if (tile !== edge.tileType) {
+          const nx = isHorizontal ? x : edge.name === "left" ? 1 : mapWidth - 2;
+          const ny = isHorizontal
+            ? edge.name === "top"
+              ? 1
+              : mapHeight - 2
+            : y;
+          if (
+            nx >= 0 &&
+            nx < mapWidth &&
+            ny >= 0 &&
+            ny < mapHeight &&
+            this.tilemapSystem.getTile(nx, ny) === edge.tileType
+          ) {
+            tile = edge.tileType;
+          }
+        }
 
         if (tile === edge.tileType) {
           exitTilesFound++;
@@ -3054,14 +3081,35 @@ export class MapEditorScene extends Phaser.Scene {
 
   // Configure exits from detected tiles
   private configureExits(): void {
-    const detectedExits = this.detectExitZonesFromTiles();
+    let detectedExits = this.detectExitZonesFromTiles();
+
+    // Fallback: if no exit tiles detected, try using existing configured exits
+    if (detectedExits.length === 0 && (this.mapData?.exits?.length || 0) > 0) {
+      detectedExits = (this.mapData.exits as any[]).map((e) => ({
+        edge: e.edge,
+        x: e.x,
+        y: e.y,
+        width: e.width,
+        height: e.height,
+        tileStart: e.tileStart,
+        tileEnd: e.tileEnd,
+        edgeStart: e.edgeStart,
+        edgeEnd: e.edgeEnd,
+        edgePosition: e.edgePosition,
+      }));
+    }
 
     if (detectedExits.length === 0) {
-      alert("No exit tiles detected. Paint exit tiles on map edges first.");
+      alert(
+        "No exits detected on edges. Paint exit tiles or ensure exits exist."
+      );
       return;
     }
 
     // Create configuration modal
+    if (this.worldViewRenderer && this.worldViewRenderer.getIsVisible()) {
+      this.worldViewRenderer.hide();
+    }
     this.createExitConfigModal(detectedExits);
   }
 
