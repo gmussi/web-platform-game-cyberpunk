@@ -3118,6 +3118,14 @@ export class MapEditorScene extends Phaser.Scene {
       exitInfo.setDepth(1001);
       exitInfo.setOrigin(0.5);
 
+      // Check if this exit is already configured (overlapping existing exit)
+      const existingExit =
+        (this.mapData.exits || []).find(
+          (e) =>
+            e.edge === (exit.edge as any) &&
+            !(exit.tileEnd < e.tileStart || exit.tileStart > e.tileEnd)
+        ) || null;
+
       // Target map selector
       const mapSelector = this.add.text(centerX, yPos, "Select Target Map", {
         fontSize: "12px",
@@ -3132,28 +3140,50 @@ export class MapEditorScene extends Phaser.Scene {
 
       // Store exit data for later use
       (mapSelector as any).exitData = exit;
-      (mapSelector as any).targetMapId = null;
+      (mapSelector as any).targetMapId = existingExit
+        ? existingExit.targetMapId
+        : null;
       this.exitConfigSelectors!.push(mapSelector);
+
+      if (existingExit) {
+        mapSelector.setText(`Target: ${existingExit.targetMapId}`);
+      }
 
       mapSelector.on("pointerdown", () => {
         this.openMapSelectorForExit(mapSelector, exit);
       });
 
-      // Create button to auto-create a room and link back
-      const createBtn = this.add.text(centerX + 180, yPos, "Create", {
-        fontSize: "12px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        backgroundColor: "#1e88e5",
-        padding: { x: 10, y: 5 },
-      });
+      // Action button: Create (if not linked) or Remove (if linked)
+      const createBtn = this.add.text(
+        centerX + 180,
+        yPos,
+        existingExit ? "Remove" : "Create",
+        {
+          fontSize: "12px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          backgroundColor: existingExit ? "#aa0000" : "#1e88e5",
+          padding: { x: 10, y: 5 },
+        }
+      );
       createBtn.setScrollFactor(0);
       createBtn.setDepth(1001);
       createBtn.setOrigin(0.5);
       createBtn.setInteractive();
-      createBtn.on("pointerdown", () =>
-        this.handleCreateRoomForExit(exit, mapSelector)
-      );
+      if (existingExit) {
+        createBtn.on("pointerdown", () =>
+          this.handleRemoveLinkForExit(
+            exit,
+            existingExit,
+            createBtn,
+            mapSelector
+          )
+        );
+      } else {
+        createBtn.on("pointerdown", () =>
+          this.handleCreateRoomForExit(exit, mapSelector)
+        );
+      }
     });
 
     // Apply button
@@ -3410,5 +3440,53 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Close modal per spec
     this.closeExitConfigModal();
+  }
+
+  private handleRemoveLinkForExit(
+    detected: DetectedExit,
+    existing: ExitZoneData,
+    button: Phaser.GameObjects.Text,
+    mapSelector: Phaser.GameObjects.Text
+  ): void {
+    // Remove from current map
+    const before = (this.mapData.exits || []).length;
+    this.mapData.exits = (this.mapData.exits || []).filter(
+      (e) => e.id !== existing.id
+    );
+
+    // Remove reciprocal from target map if exists
+    const targetMap = this.worldSystem.getMap(existing.targetMapId);
+    if (targetMap) {
+      const reciprocalIdx = (targetMap.exits || []).findIndex(
+        (e) =>
+          e.targetMapId === this.worldSystem.currentMapId &&
+          e.edge ===
+            ({ left: "right", right: "left", top: "bottom", bottom: "top" }[
+              existing.edge
+            ] as any) &&
+          !(existing.tileEnd < e.tileStart || existing.tileStart > e.tileEnd)
+      );
+      if (reciprocalIdx >= 0) {
+        (targetMap.exits as any).splice(reciprocalIdx, 1);
+      }
+    }
+
+    this.worldSystem.updateCurrentMap(this.mapData);
+    this.updatePreviewObjects();
+    if (this.worldViewRenderer?.getIsVisible()) {
+      this.worldViewRenderer.setWorldData((this.worldSystem as any).worldData);
+      this.worldViewRenderer.update();
+    }
+
+    // Update UI: switch to Create state
+    (mapSelector as any).targetMapId = null;
+    mapSelector.setText("Select Target Map");
+    button.setText("Create");
+    button.setBackgroundColor("#1e88e5");
+    // Rebind handler by replacing the event listener via off("pointerdown")
+    (button as any).off && (button as any).off("pointerdown");
+    button.on("pointerdown", () =>
+      this.handleCreateRoomForExit(detected, mapSelector)
+    );
   }
 }

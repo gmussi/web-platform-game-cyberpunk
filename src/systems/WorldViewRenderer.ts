@@ -421,10 +421,13 @@ export class WorldViewRenderer {
         boxHeight,
       });
 
-      // Determine if this is the current map
+      // Determine if this is the current map and whether it has unconfigured exits
       const currentMapId = this.getCurrentMapId();
       const isCurrentMap = mapId === currentMapId;
-      const color = isCurrentMap
+      const hasUnconfigured = this.mapHasUnconfiguredExits(mapData);
+      const color = hasUnconfigured
+        ? 0xff0000 // red fill when map has unconfigured exits
+        : isCurrentMap
         ? this.CURRENT_MAP_COLOR
         : this.OTHER_MAP_COLOR;
 
@@ -493,6 +496,133 @@ export class WorldViewRenderer {
     } catch (e) {
       // no-op if JSON serialization fails
     }
+  }
+
+  // A map has an unconfigured exit if:
+  // 1) any configured exit references a missing/invalid target map, or
+  // 2) there are exit tiles on the map edges without a corresponding configured ExitZone
+  private mapHasUnconfiguredExits(mapData: WorldMapData): boolean {
+    if (!this.worldData) return false;
+    const maps = this.worldData.maps || {};
+    // Case 1: invalid target map
+    if (
+      (mapData.exits || []).some((e) => !e.targetMapId || !maps[e.targetMapId])
+    ) {
+      return true;
+    }
+    // Case 2: edge exit tiles without configured exit zones
+    return this.hasUnconfiguredExitTiles(mapData);
+  }
+
+  private hasUnconfiguredExitTiles(mapData: WorldMapData): boolean {
+    const tiles: any[] = (mapData as any).tiles || [];
+    if (!tiles || tiles.length === 0) return false;
+    const height = tiles.length;
+    const width = Array.isArray(tiles[0]) ? tiles[0].length : 0;
+    if (width === 0) return false;
+
+    const EXIT_LEFT = 100;
+    const EXIT_RIGHT = 101;
+    const EXIT_TOP = 102;
+    const EXIT_BOTTOM = 103;
+
+    type Seg = {
+      edge: "left" | "right" | "top" | "bottom";
+      start: number;
+      end: number;
+    };
+    const segments: Seg[] = [];
+
+    const valueAt = (x: number, y: number): number | null => {
+      const t = tiles[y]?.[x];
+      if (t == null) return null;
+      if (typeof t === "number") return t;
+      if (typeof t === "object" && t.type != null) return t.type;
+      return null;
+    };
+
+    // Top edge
+    let inRun = false,
+      runStart = 0;
+    for (let x = 0; x < width; x++) {
+      const v = valueAt(x, 0);
+      if (v === EXIT_TOP) {
+        if (!inRun) {
+          inRun = true;
+          runStart = x;
+        }
+      } else if (inRun) {
+        segments.push({ edge: "top", start: runStart, end: x - 1 });
+        inRun = false;
+      }
+    }
+    if (inRun) segments.push({ edge: "top", start: runStart, end: width - 1 });
+
+    // Bottom edge
+    inRun = false;
+    runStart = 0;
+    for (let x = 0; x < width; x++) {
+      const v = valueAt(x, height - 1);
+      if (v === EXIT_BOTTOM) {
+        if (!inRun) {
+          inRun = true;
+          runStart = x;
+        }
+      } else if (inRun) {
+        segments.push({ edge: "bottom", start: runStart, end: x - 1 });
+        inRun = false;
+      }
+    }
+    if (inRun)
+      segments.push({ edge: "bottom", start: runStart, end: width - 1 });
+
+    // Left edge
+    inRun = false;
+    runStart = 0;
+    for (let y = 0; y < height; y++) {
+      const v = valueAt(0, y);
+      if (v === EXIT_LEFT) {
+        if (!inRun) {
+          inRun = true;
+          runStart = y;
+        }
+      } else if (inRun) {
+        segments.push({ edge: "left", start: runStart, end: y - 1 });
+        inRun = false;
+      }
+    }
+    if (inRun)
+      segments.push({ edge: "left", start: runStart, end: height - 1 });
+
+    // Right edge
+    inRun = false;
+    runStart = 0;
+    for (let y = 0; y < height; y++) {
+      const v = valueAt(width - 1, y);
+      if (v === EXIT_RIGHT) {
+        if (!inRun) {
+          inRun = true;
+          runStart = y;
+        }
+      } else if (inRun) {
+        segments.push({ edge: "right", start: runStart, end: y - 1 });
+        inRun = false;
+      }
+    }
+    if (inRun)
+      segments.push({ edge: "right", start: runStart, end: height - 1 });
+
+    if (segments.length === 0) return false;
+
+    const configured = mapData.exits || [];
+    return segments.some(
+      (seg) =>
+        !configured.some(
+          (e) =>
+            e.edge === seg.edge &&
+            !(seg.end < e.tileStart || seg.start > e.tileEnd)
+        )
+    );
   }
 
   private renderExitIndicators(

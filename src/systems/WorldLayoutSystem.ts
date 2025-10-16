@@ -532,7 +532,39 @@ export class WorldLayoutSystem {
       });
     }
 
-    // Calculate total dimensions (bounds)
+    // Include any maps with no links yet: place as a vertical stack under all others,
+    // aligned to the left with the leftmost placed room
+    const placedIds = new Set(Object.keys(mapPositions));
+    const allIds = Object.keys(this.worldData.maps);
+    const unplaced = allIds.filter((id) => !placedIds.has(id));
+
+    if (unplaced.length > 0) {
+      // Find leftmost x and current bottom y of existing layout
+      let minLeft = 0;
+      let hasAny = false;
+      let currentBottom = 0;
+      Object.keys(mapPositions).forEach((id) => {
+        const pos = mapPositions[id];
+        const size = mapSizes[id] || { width: 1, height: 1 };
+        if (!hasAny) {
+          minLeft = pos.x;
+          currentBottom = pos.y + size.height;
+          hasAny = true;
+        } else {
+          minLeft = Math.min(minLeft, pos.x);
+          currentBottom = Math.max(currentBottom, pos.y + size.height);
+        }
+      });
+
+      // Stack unlinked maps vertically starting at currentBottom in the leftmost column
+      unplaced.forEach((id) => {
+        const size = mapSizes[id] || { width: 1, height: 1 };
+        mapPositions[id] = { x: minLeft, y: currentBottom };
+        currentBottom += size.height;
+      });
+    }
+
+    // Calculate total dimensions (bounds) including unlinked placements
     let maxRight = 0;
     let maxBottom = 0;
     Object.keys(mapPositions).forEach((id) => {
