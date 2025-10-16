@@ -108,6 +108,7 @@ export class MapEditorScene extends Phaser.Scene {
     dec: Phaser.GameObjects.Text;
     game: Phaser.GameObjects.Text;
   } | null = null;
+  public exitConfigSelectors: Phaser.GameObjects.Text[] | null = null;
   public selectedLayer: "background" | "decoration" | "game" = "game";
   public generateWorldButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
@@ -3045,6 +3046,7 @@ export class MapEditorScene extends Phaser.Scene {
     title.setOrigin(0.5);
 
     // Create exit configuration items
+    this.exitConfigSelectors = [];
     const startY = centerY - 200;
     const itemHeight = 60;
     const mapIds = this.worldSystem.getAllMapIds();
@@ -3084,10 +3086,27 @@ export class MapEditorScene extends Phaser.Scene {
       // Store exit data for later use
       (mapSelector as any).exitData = exit;
       (mapSelector as any).targetMapId = null;
+      this.exitConfigSelectors!.push(mapSelector);
 
       mapSelector.on("pointerdown", () => {
         this.openMapSelectorForExit(mapSelector, exit);
       });
+
+      // Create button to auto-create a room and link back
+      const createBtn = this.add.text(centerX + 180, yPos, "Create", {
+        fontSize: "12px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#1e88e5",
+        padding: { x: 10, y: 5 },
+      });
+      createBtn.setScrollFactor(0);
+      createBtn.setDepth(1001);
+      createBtn.setOrigin(0.5);
+      createBtn.setInteractive();
+      createBtn.on("pointerdown", () =>
+        this.handleCreateRoomForExit(exit, mapSelector)
+      );
     });
 
     // Apply button
@@ -3142,41 +3161,59 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   private applyExitConfigurations(detectedExits: DetectedExit[]): void {
-    // Convert detected exits to ExitZone objects
-    const exitZones: ExitZoneData[] = [];
+    console.log(`🔧 Applying exit configurations using UI selections`);
+    const selections = this.exitConfigSelectors || [];
 
-    console.log(`🔧 Applying ${detectedExits.length} exit configurations`);
+    const newOrUpdated: ExitZoneData[] = [...(this.mapData.exits || [])];
 
-    detectedExits.forEach((detected, index) => {
-      // Find the target map for this exit (stored in the UI)
-      const targetMapId = `map_${index + 2}`; // Simple assignment for now
-
-      const exitZone: ExitZoneData = {
-        id: `exit_${index + 1}`,
-        x: detected.x,
-        y: detected.y,
-        width: detected.width,
-        height: detected.height,
-        edge: detected.edge as "left" | "right" | "top" | "bottom",
-        edgePosition: detected.edgePosition,
-        edgeStart: detected.edgeStart,
-        edgeEnd: detected.edgeEnd,
-        tileStart: detected.tileStart,
-        tileEnd: detected.tileEnd,
-        targetMapId: targetMapId,
-      };
-
-      console.log(
-        `  Creating ExitZoneData: ${detected.edge} at (${exitZone.x}, ${exitZone.y}) size ${exitZone.width}x${exitZone.height}`
+    const upsertExit = (ez: ExitZoneData) => {
+      const overlapIdx = newOrUpdated.findIndex(
+        (e) =>
+          e.edge === ez.edge &&
+          !(ez.tileEnd < e.tileStart || ez.tileStart > e.tileEnd)
       );
-      exitZones.push(exitZone);
+      if (overlapIdx >= 0) {
+        // preserve id on replace
+        ez.id = newOrUpdated[overlapIdx].id;
+        newOrUpdated[overlapIdx] = ez;
+      } else {
+        ez.id = `exit_${newOrUpdated.length + 1}`;
+        newOrUpdated.push(ez);
+      }
+    };
+
+    selections.forEach((sel) => {
+      const exit = (sel as any).exitData as DetectedExit;
+      const targetMapId = (sel as any).targetMapId as string | null;
+      if (!exit || !targetMapId) return; // skip if no selection
+
+      const ez: ExitZoneData = {
+        id: "", // assigned in upsert
+        x: exit.x,
+        y: exit.y,
+        width: exit.width,
+        height: exit.height,
+        edge: exit.edge as any,
+        edgePosition: exit.edgePosition,
+        edgeStart: exit.edgeStart,
+        edgeEnd: exit.edgeEnd,
+        tileStart: exit.tileStart,
+        tileEnd: exit.tileEnd,
+        targetMapId,
+      };
+      upsertExit(ez);
     });
 
-    // Update map data
-    this.mapData.exits = exitZones;
+    this.mapData.exits = newOrUpdated;
     this.updatePreviewObjects();
+    this.worldSystem.updateCurrentMap(this.mapData);
 
-    console.log(`✅ Configured ${exitZones.length} exits`);
+    if (this.worldViewRenderer?.getIsVisible()) {
+      this.worldViewRenderer.setWorldData((this.worldSystem as any).worldData);
+      this.worldViewRenderer.update();
+    }
+
+    console.log(`✅ Configured ${this.mapData.exits.length} exits`);
   }
 
   private closeExitConfigModal(): void {
@@ -3190,5 +3227,141 @@ export class MapEditorScene extends Phaser.Scene {
         element.destroy();
       }
     });
+    this.exitConfigSelectors = null;
+  }
+
+  private applyExitConfigurationForSingleExit(
+    detected: DetectedExit,
+    targetMapId: string
+  ): void {
+    const ez: ExitZoneData = {
+      id: "",
+      x: detected.x,
+      y: detected.y,
+      width: detected.width,
+      height: detected.height,
+      edge: detected.edge as any,
+      edgePosition: detected.edgePosition,
+      edgeStart: detected.edgeStart,
+      edgeEnd: detected.edgeEnd,
+      tileStart: detected.tileStart,
+      tileEnd: detected.tileEnd,
+      targetMapId,
+    };
+
+    // Upsert into current map's exits
+    const exits = this.mapData.exits || [];
+    const overlapIdx = exits.findIndex(
+      (e) =>
+        e.edge === ez.edge &&
+        !(ez.tileEnd < e.tileStart || ez.tileStart > e.tileEnd)
+    );
+    if (overlapIdx >= 0) {
+      ez.id = exits[overlapIdx].id;
+      exits[overlapIdx] = ez;
+    } else {
+      ez.id = `exit_${exits.length + 1}`;
+      exits.push(ez);
+    }
+    this.mapData.exits = exits;
+
+    this.updatePreviewObjects();
+    this.worldSystem.updateCurrentMap(this.mapData);
+    if (this.worldViewRenderer?.getIsVisible()) {
+      this.worldViewRenderer.setWorldData((this.worldSystem as any).worldData);
+      this.worldViewRenderer.update();
+    }
+  }
+
+  private handleCreateRoomForExit(
+    exit: DetectedExit,
+    mapSelector: Phaser.GameObjects.Text
+  ): void {
+    // Create new map
+    const nextIndex = this.worldSystem.getAllMapIds().length + 1;
+    const name = `Map ${nextIndex}`;
+    const newMap = this.worldSystem.createNewMap(name);
+
+    // Size to 9x9 tiles using current tile size
+    const tileSize = this.tilemapSystem?.tileSize ?? 32;
+    newMap.world.tileSize = tileSize;
+    newMap.world.width = 9 * tileSize;
+    newMap.world.height = 9 * tileSize;
+
+    // Add reciprocal exit to new map
+    const mapWidthTiles = Math.floor(newMap.world.width / tileSize);
+    const mapHeightTiles = Math.floor(newMap.world.height / tileSize);
+    const opposite = {
+      left: "right",
+      right: "left",
+      top: "bottom",
+      bottom: "top",
+    }[exit.edge as any] as "left" | "right" | "top" | "bottom";
+
+    const alongTiles =
+      opposite === "left" || opposite === "right"
+        ? mapHeightTiles
+        : mapWidthTiles;
+    const tStart = Math.max(
+      0,
+      Math.min(alongTiles - 1, Math.floor(exit.edgeStart * alongTiles))
+    );
+    const tEnd = Math.max(
+      tStart,
+      Math.min(alongTiles - 1, Math.ceil(exit.edgeEnd * alongTiles) - 1)
+    );
+
+    let rx = 0,
+      ry = 0,
+      rwidth = tileSize,
+      rheight = tileSize;
+    if (opposite === "left") {
+      rx = 0;
+      ry = tStart * tileSize;
+      rwidth = tileSize;
+      rheight = (tEnd - tStart + 1) * tileSize;
+    } else if (opposite === "right") {
+      rx = (mapWidthTiles - 1) * tileSize;
+      ry = tStart * tileSize;
+      rwidth = tileSize;
+      rheight = (tEnd - tStart + 1) * tileSize;
+    } else if (opposite === "top") {
+      rx = tStart * tileSize;
+      ry = 0;
+      rwidth = (tEnd - tStart + 1) * tileSize;
+      rheight = tileSize;
+    } else {
+      // bottom
+      rx = tStart * tileSize;
+      ry = (mapHeightTiles - 1) * tileSize;
+      rwidth = (tEnd - tStart + 1) * tileSize;
+      rheight = tileSize;
+    }
+
+    const reciprocal: ExitZoneData = {
+      id: `exit_${(newMap.exits || []).length + 1}`,
+      x: rx,
+      y: ry,
+      width: rwidth,
+      height: rheight,
+      edge: opposite,
+      edgePosition: (tStart + tEnd + 1) / 2 / alongTiles,
+      edgeStart: tStart / alongTiles,
+      edgeEnd: (tEnd + 1) / alongTiles,
+      tileStart: tStart,
+      tileEnd: tEnd,
+      targetMapId: this.worldSystem.currentMapId!,
+    };
+
+    newMap.exits.push(reciprocal);
+
+    // Update selector and apply on current map
+    (mapSelector as any).targetMapId = newMap.id;
+    mapSelector.setText(`Target: ${newMap.id}`);
+
+    this.applyExitConfigurationForSingleExit(exit, newMap.id);
+
+    // Close modal per spec
+    this.closeExitConfigModal();
   }
 }
