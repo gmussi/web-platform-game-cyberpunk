@@ -258,6 +258,11 @@ function algorithmCave(map: WorldMapData, seed: string): Grid {
   // 5) Final smoothing pass to clean artifacts, keep borders
   smoothCave(grid, 1);
 
+  // 6) If the room is wide, carve a horizontal backbone to avoid large dead sides
+  if (w / Math.max(1, h) > 1.5) {
+    ensureHorizontalBackbone(grid);
+  }
+
   ensureNoSingleEmptyGaps(grid);
   ensureConnectivity(grid, map.exits || []);
   return grid;
@@ -431,6 +436,36 @@ function ensureNoSingleEmptyGaps(grid: Grid): void {
 
     if (!changed) break;
   }
+}
+
+// Carve a thin horizontal corridor across the room near mid-height
+function ensureHorizontalBackbone(grid: Grid): void {
+  const w = grid[0].length;
+  const h = grid.length;
+  if (w < 6 || h < 5) return;
+
+  // Pick a row with relatively fewer solids in a mid band to minimize disruption
+  const yStart = Math.max(2, Math.floor(h * 0.4));
+  const yEnd = Math.min(h - 3, Math.floor(h * 0.7));
+  let bestY = Math.floor(h * 0.55);
+  let bestSolid = Number.POSITIVE_INFINITY;
+  for (let y = yStart; y <= yEnd; y++) {
+    let solids = 0;
+    for (let x = 1; x < w - 1; x++) {
+      if (grid[y][x] === 1) solids++;
+    }
+    if (solids < bestSolid) {
+      bestSolid = solids;
+      bestY = y;
+    }
+  }
+
+  // Carve across inner width, leaving 1-tile borders intact
+  carveLine(grid, 1, bestY, w - 2, bestY, 1);
+
+  // Slight openings above/below the backbone to reduce single-tile chokepoints
+  if (bestY - 1 > 1) carveLine(grid, 2, bestY - 1, w - 3, bestY - 1, 0);
+  if (bestY + 1 < h - 2) carveLine(grid, 2, bestY + 1, w - 3, bestY + 1, 0);
 }
 
 // Ensure all empty spaces are connected to the playable region (exits/hub)

@@ -102,10 +102,10 @@ export class WorldLayoutSystem {
       const rightStack = stackOrMax(heightsRight, heightsRight.length);
 
       // Only let a single top/bottom child dictate width if there is also
-      // at least one horizontal neighbor (left or right). This avoids
-      // propagating very wide widths through simple vertical chains.
+      // at least one horizontal neighbor (left or right). Use RAW exits to detect
+      // presence so ancestors still count as neighbors, but keep size sums filtered.
       const hasHorizontalNeighbor =
-        heightsLeft.length + heightsRight.length > 0;
+        (exits.left?.length || 0) + (exits.right?.length || 0) > 0;
 
       const topStack =
         widthsTop.length === 0
@@ -168,6 +168,8 @@ export class WorldLayoutSystem {
    */
   public calculateLayout(): LayoutResult {
     const mapPositions: Record<string, GridPosition> = {};
+    // Global per-column (absolute grid X) baseline to avoid vertical overlaps across parents
+    const globalColumnBottom: Record<number, number> = {};
     // First pass: recursively compute required sizes so exits align on the grid
     const mapSizes: Record<string, { width: number; height: number }> =
       this.computeRequiredSizes();
@@ -229,7 +231,22 @@ export class WorldLayoutSystem {
 
       // Process exits and place connected maps with size-aware offsets using precomputed sizes
       const exitsByEdge = this.groupExitsByEdge(mapData.exits || []);
-      const currentSize = mapSizes[mapId] || { width: 1, height: 1 };
+      // Ensure parents with vertical child and horizontal neighbor extend one extra column
+      // so they visually sit above/below that child (e.g., room_5 above room_6)
+      {
+        const hasBottom = (exitsByEdge.bottom?.length || 0) > 0;
+        const hasTop = (exitsByEdge.top?.length || 0) > 0;
+        const hasHorizontal =
+          (exitsByEdge.left?.length || 0) + (exitsByEdge.right?.length || 0) >
+          0;
+        if (hasHorizontal && (hasBottom || hasTop)) {
+          const cur = mapSizes[mapId] || { width: 1, height: 1 };
+          if (cur.width < 2) {
+            mapSizes[mapId] = { width: 2, height: cur.height };
+          }
+        }
+      }
+      let currentSize = mapSizes[mapId] || { width: 1, height: 1 };
       // Reserve parent's precomputed area
       occupyRect(gridX, gridY, currentSize.width, currentSize.height);
 
@@ -292,106 +309,226 @@ export class WorldLayoutSystem {
           return true;
         };
 
-        // Determine initial desired group origin per edge (align group so that
-        // tallest/ widest stacks share the parent’s anchor reference line)
-        let desiredGroupX = anchorX;
-        let desiredGroupY = anchorY;
+        // Sibling ordering with spacing for right-edge groups
         if (edge === "right") {
-          desiredGroupX = anchorX + currentW;
-        } else if (edge === "left") {
-          // We'll compute px per target to abut parent; X anchor not used for fit
-          desiredGroupX = anchorX; // keep for interface
-        } else if (edge === "bottom") {
-          desiredGroupY = anchorY + currentH;
-        } else if (edge === "top") {
-          // We'll compute py per target to abut parent; Y anchor not used for fit
-          desiredGroupY = anchorY;
-        }
-
-        // Shift the entire group along the perpendicular direction until all fit
-        if (edge === "right" || edge === "left") {
-          // vertical stacking; scan Y to keep adjacency in X
-          let yUp = anchorY;
-          let yDown = anchorY;
-          let placed = false;
-          // Try current anchor first, then expand downward/upward alternately
-          if (groupFitsAt(desiredGroupX, anchorY)) {
-            desiredGroupY = anchorY;
-            placed = true;
-          } else {
-            for (let radius = 1; radius <= 100 && !placed; radius++) {
-              yDown = anchorY + radius;
-              if (groupFitsAt(desiredGroupX, yDown)) {
-                desiredGroupY = yDown;
-                placed = true;
-                break;
+          const childIds = new Set<string>(targets.map((t) => t.id));
+          // Build directional relation flags for pairs
+          const rightFlags: Record<string, { ab: boolean; ba: boolean }> = {};
+          const key = (a: string, b: string) => `${a}|${b}`;
+          const addRight = (a: string, b: string) => {
+            const k = key(a, b);
+            rightFlags[k] = rightFlags[k] || { ab: false, ba: false };
+            rightFlags[k].ab = true;
+          };
+          const addRightReverse = (a: string, b: string) => {
+            const k = key(b, a);
+            rightFlags[k] = rightFlags[k] || { ab: false, ba: false };
+            rightFlags[k].ba = true;
+          };
+          // Scan exits among children to infer A left of B constraints
+          targets.forEach((t) => {
+            const m = this.worldData.maps[t.id];
+            (m?.exits || []).forEach((e) => {
+              if (!e.targetMapId || !childIds.has(e.targetMapId)) return;
+              if (e.edge === "right") {
+                // t is left of target
+                addRight(t.id, e.targetMapId);
+              } else if (e.edge === "left") {
+                // target is left of t => t is right of target -> target left of t
+                addRightReverse(t.id, e.targetMapId);
               }
-              yUp = anchorY - radius;
-              if (groupFitsAt(desiredGroupX, yUp)) {
-                desiredGroupY = yUp;
-                placed = true;
-                break;
+            });
+          });
+          // Build weighted constraints
+          type Constraint = { from: string; to: string; w: number };
+          const constraints: Constraint[] = [];
+          Object.keys(rightFlags).forEach((k) => {
+            const [a, b] = k.split("|");
+            const flags = rightFlags[k];
+            const weight = 1 + (flags.ba ? 1 : 0); // mutual => add a spacer (gap)
+            if (flags.ab) constraints.push({ from: a, to: b, w: weight });
+          });
+          // Compute minimal non-negative integer offsets via relaxation
+          const ids = targets.map((t) => t.id);
+          const offset: Record<string, number> = {};
+          ids.forEach((id) => (offset[id] = 0));
+          const iterations = Math.max(1, ids.length - 1);
+          for (let i = 0; i < iterations; i++) {
+            let changed = false;
+            for (const c of constraints) {
+              const next = Math.max(offset[c.to], offset[c.from] + c.w);
+              if (next !== offset[c.to]) {
+                offset[c.to] = Math.min(next, 50); // clamp for safety
+                changed = true;
               }
             }
+            if (!changed) break;
           }
-          // If still not placed (extreme congestion), fallback to scanning X to the right
-          if (!placed) {
-            let x = desiredGroupX;
-            while (!groupFitsAt(x, anchorY)) x += 1;
-            desiredGroupX = x;
-            desiredGroupY = anchorY;
-          }
+
+          // Place children by column offset; for each child, scan vertically for a free slot
+          const baseX = anchorX + currentW;
+          // Stable order: by offset asc, then by height desc
+          const ordered = targets.slice().sort((a, b) => {
+            const da = offset[a.id] - offset[b.id];
+            if (da !== 0) return da;
+            return b.size.height - a.size.height;
+          });
+          ordered.forEach((t) => {
+            const planned = Math.max(0, offset[t.id] || 0);
+            const w = mapSizes[t.id]?.width || t.size.width;
+            const hInitial = mapSizes[t.id]?.height || t.size.height;
+            let placed = false;
+            // Try columns starting from planned, increasing until a vertical slot fits
+            for (let extra = 0; extra <= 50 && !placed; extra++) {
+              const off = planned + extra;
+              const px = baseX + off;
+              // Optional height bump when pushed >= 2 columns (to visually bridge)
+              if (off >= 2) {
+                const cur = mapSizes[t.id] || { width: w, height: hInitial };
+                cur.height = Math.max(cur.height, 2);
+                mapSizes[t.id] = cur;
+              }
+              const h = mapSizes[t.id]?.height || hInitial;
+              // Scan vertically from max(anchorY, global column baseline)
+              let py: number | null = null;
+              for (let radius = 0; radius <= 100 && py === null; radius++) {
+                const baseY = Math.max(
+                  anchorY,
+                  globalColumnBottom[px] ?? anchorY
+                );
+                const candidates =
+                  radius === 0 ? [baseY] : [baseY + radius, baseY - radius];
+                for (const testY of candidates) {
+                  if (isFreeRect(px, testY, w, h)) {
+                    py = testY;
+                    break;
+                  }
+                }
+              }
+              if (py !== null) {
+                mapPositions[t.id] = { x: px, y: py };
+                occupyRect(px, py, w, h);
+                globalColumnBottom[px] = Math.max(
+                  globalColumnBottom[px] || py,
+                  py + h
+                );
+                queue.push({ mapId: t.id, gridX: px, gridY: py });
+                placed = true;
+              }
+            }
+            if (!placed) {
+              // Fallback far-right placement at anchorY
+              const px = baseX + planned + 51;
+              const h = mapSizes[t.id]?.height || hInitial;
+              mapPositions[t.id] = { x: px, y: anchorY };
+              occupyRect(px, anchorY, w, h);
+              globalColumnBottom[px] = Math.max(
+                globalColumnBottom[px] || anchorY,
+                anchorY + h
+              );
+              queue.push({ mapId: t.id, gridX: px, gridY: anchorY });
+            }
+          });
         } else {
-          // horizontal stacking; scan X to keep adjacency in Y
-          let xRight = anchorX;
-          let xLeft = anchorX;
-          let placed = false;
-          if (groupFitsAt(anchorX, desiredGroupY)) {
-            desiredGroupX = anchorX;
-            placed = true;
-          } else {
-            for (let radius = 1; radius <= 100 && !placed; radius++) {
-              xRight = anchorX + radius;
-              if (groupFitsAt(xRight, desiredGroupY)) {
-                desiredGroupX = xRight;
-                placed = true;
-                break;
-              }
-              xLeft = anchorX - radius;
-              if (groupFitsAt(xLeft, desiredGroupY)) {
-                desiredGroupX = xLeft;
-                placed = true;
-                break;
+          // Default placement using group-level scanning to keep stacks aligned
+          // Determine initial desired group origin per edge
+          let desiredGroupX = anchorX;
+          let desiredGroupY = anchorY;
+          if (edge === "right") {
+            desiredGroupX = anchorX + currentW;
+          } else if (edge === "left") {
+            desiredGroupX = anchorX; // abut per target
+          } else if (edge === "bottom") {
+            desiredGroupY = anchorY + currentH;
+          } else if (edge === "top") {
+            desiredGroupY = anchorY;
+          }
+
+          // Shift the entire group along the perpendicular direction until all fit
+          if (edge === "right" || edge === "left") {
+            // vertical stacking; scan Y to keep adjacency in X
+            let yUp = anchorY;
+            let yDown = anchorY;
+            let placedGroup = false;
+            if (groupFitsAt(desiredGroupX, anchorY)) {
+              desiredGroupY = anchorY;
+              placedGroup = true;
+            } else {
+              for (let radius = 1; radius <= 100 && !placedGroup; radius++) {
+                yDown = anchorY + radius;
+                if (groupFitsAt(desiredGroupX, yDown)) {
+                  desiredGroupY = yDown;
+                  placedGroup = true;
+                  break;
+                }
+                yUp = anchorY - radius;
+                if (groupFitsAt(desiredGroupX, yUp)) {
+                  desiredGroupY = yUp;
+                  placedGroup = true;
+                  break;
+                }
               }
             }
-          }
-          if (!placed) {
-            let y = desiredGroupY;
-            while (!groupFitsAt(anchorX, y)) y += 1;
-            desiredGroupY = y;
-            desiredGroupX = anchorX;
-          }
-        }
-
-        // Place and occupy each target sequentially
-        let placeX = desiredGroupX;
-        let placeY = desiredGroupY;
-        targets.forEach((t) => {
-          const w = t.size.width;
-          const h = t.size.height;
-          // Compute per-target position, abutting parent for left/top
-          const px = edge === "left" ? anchorX - w : placeX;
-          const py = edge === "top" ? anchorY - h : placeY;
-          mapPositions[t.id] = { x: px, y: py };
-          occupyRect(px, py, w, h);
-          queue.push({ mapId: t.id, gridX: px, gridY: py });
-
-          if (edge === "right" || edge === "left") {
-            placeY += h;
+            if (!placedGroup) {
+              let x = desiredGroupX;
+              while (!groupFitsAt(x, anchorY)) x += 1;
+              desiredGroupX = x;
+              desiredGroupY = anchorY;
+            }
           } else {
-            placeX += w;
+            // horizontal stacking; scan X to keep adjacency in Y
+            let xRight = anchorX;
+            let xLeft = anchorX;
+            let placedGroup = false;
+            if (groupFitsAt(anchorX, desiredGroupY)) {
+              desiredGroupX = anchorX;
+              placedGroup = true;
+            } else {
+              for (let radius = 1; radius <= 100 && !placedGroup; radius++) {
+                xRight = anchorX + radius;
+                if (groupFitsAt(xRight, desiredGroupY)) {
+                  desiredGroupX = xRight;
+                  placedGroup = true;
+                  break;
+                }
+                xLeft = anchorX - radius;
+                if (groupFitsAt(xLeft, desiredGroupY)) {
+                  desiredGroupX = xLeft;
+                  placedGroup = true;
+                  break;
+                }
+              }
+            }
+            if (!placedGroup) {
+              let y = desiredGroupY;
+              while (!groupFitsAt(anchorX, y)) y += 1;
+              desiredGroupY = y;
+              desiredGroupX = anchorX;
+            }
           }
-        });
+
+          // Place sequentially after locating group origin
+          let placeX = desiredGroupX;
+          let placeY = desiredGroupY;
+          targets.forEach((t) => {
+            const w = t.size.width;
+            const h = t.size.height;
+            const px = edge === "left" ? anchorX - w : placeX;
+            const py = edge === "top" ? anchorY - h : placeY;
+            mapPositions[t.id] = { x: px, y: py };
+            occupyRect(px, py, w, h);
+            globalColumnBottom[px] = Math.max(
+              globalColumnBottom[px] || py,
+              py + h
+            );
+            queue.push({ mapId: t.id, gridX: px, gridY: py });
+            if (edge === "right" || edge === "left") {
+              placeY += h;
+            } else {
+              placeX += w;
+            }
+          });
+        }
       });
     }
 
