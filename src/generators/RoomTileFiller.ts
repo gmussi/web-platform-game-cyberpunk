@@ -1,7 +1,13 @@
 import { WorldMapData, ExitZone } from "../types/map";
 import { createSeededRng, rngInt } from "../utils/seededRng";
 
-export type Algorithm = "cave" | "outside" | "corridor";
+export type Algorithm =
+  | "cave"
+  | "outside"
+  | "corridor"
+  | "bsp"
+  | "drunkard"
+  | "terrace";
 
 export interface FillOptions {
   algorithm: Algorithm;
@@ -238,11 +244,7 @@ function algorithmCave(map: WorldMapData, seed: string): Grid {
   const floorBand = Math.max(2, Math.floor(h * 0.05));
   fillRect(grid, 0, h - floorBand, w - 1, h - 1);
 
-  // 3) Carve exit apertures and connect to center with tunnels
-  for (const e of map.exits || []) carveExitAperture(grid, e, 3);
-  connectExitsToCenter(grid, map.exits || [], 1);
-
-  // 4) If cave became too open, add reinforcement strips
+  // 3) If cave became too open, add reinforcement strips
   const solidCount = grid.reduce(
     (acc, row) => acc + row.filter((v) => v === 1).length,
     0
@@ -255,13 +257,17 @@ function algorithmCave(map: WorldMapData, seed: string): Grid {
     }
   }
 
-  // 5) Final smoothing pass to clean artifacts, keep borders
+  // 4) Final smoothing pass to clean artifacts, keep borders
   smoothCave(grid, 1);
 
   // 6) If the room is wide, carve a horizontal backbone to avoid large dead sides
   if (w / Math.max(1, h) > 1.5) {
     ensureHorizontalBackbone(grid);
   }
+
+  // 7) Carve exit apertures and connect to center with tunnels (AFTER smoothing)
+  for (const e of map.exits || []) carveExitAperture(grid, e, 3);
+  connectExitsToCenter(grid, map.exits || [], 1);
 
   ensureNoSingleEmptyGaps(grid);
   ensureConnectivity(grid, map.exits || []);
@@ -377,6 +383,142 @@ function algorithmCorridor(map: WorldMapData, seed: string): Grid {
   return grid;
 }
 
+function algorithmBSP(map: WorldMapData, seed: string): Grid {
+  const { w, h } = dimsFromMap(map);
+  const rng = createSeededRng(seed);
+  const grid = makeGrid(w, h, 1);
+
+  type Rect = { x: number; y: number; w: number; h: number };
+  const leaves: Rect[] = [];
+
+  const stack: Rect[] = [{ x: 1, y: 1, w: w - 2, h: h - 2 }];
+  while (stack.length) {
+    const r = stack.pop()!;
+    const tooSmall = r.w < 8 || r.h < 8;
+    const splitH = rng() < 0.5;
+    if (tooSmall || (r.w < 16 && r.h < 16)) {
+      leaves.push(r);
+      continue;
+    }
+    if (splitH && r.h >= 10) {
+      const cut = Math.floor(r.y + 4 + rng() * (r.h - 8));
+      stack.push({ x: r.x, y: r.y, w: r.w, h: cut - r.y });
+      stack.push({ x: r.x, y: cut, w: r.w, h: r.y + r.h - cut });
+    } else if (r.w >= 10) {
+      const cut = Math.floor(r.x + 4 + rng() * (r.w - 8));
+      stack.push({ x: r.x, y: r.y, w: cut - r.x, h: r.h });
+      stack.push({ x: cut, y: r.y, w: r.x + r.w - cut, h: r.h });
+    } else {
+      leaves.push(r);
+    }
+  }
+
+  const centers: Array<{ x: number; y: number }> = [];
+  for (const r of leaves) {
+    const rx0 = Math.max(1, r.x + 1),
+      ry0 = Math.max(1, r.y + 1);
+    const rx1 = Math.min(w - 2, r.x + r.w - 2);
+    const ry1 = Math.min(h - 2, r.y + r.h - 2);
+    carveRect(grid, rx0, ry0, rx1, ry1);
+    centers.push({
+      x: Math.floor((rx0 + rx1) / 2),
+      y: Math.floor((ry0 + ry1) / 2),
+    });
+  }
+
+  centers.sort((a, b) => a.x - b.x);
+  for (let i = 1; i < centers.length; i++) {
+    carveLine(
+      grid,
+      centers[i - 1].x,
+      centers[i - 1].y,
+      centers[i].x,
+      centers[i].y,
+      1
+    );
+  }
+
+  ensureNoSingleEmptyGaps(grid);
+  for (const e of map.exits || []) carveExitAperture(grid, e, 3);
+  connectExitsToCenter(grid, map.exits || [], 1);
+  ensureConnectivity(grid, map.exits || []);
+  return grid;
+}
+
+function algorithmDrunkard(map: WorldMapData, seed: string): Grid {
+  const { w, h } = dimsFromMap(map);
+  const rng = createSeededRng(seed);
+  const grid = makeGrid(w, h, 1);
+
+  const seeds: Array<{ x: number; y: number }> = [
+    { x: Math.floor(w / 2), y: Math.floor(h / 2) },
+  ];
+  for (const e of map.exits || []) seeds.push(exitMidCell(e, w, h));
+
+  const target = Math.floor(w * h * 0.45);
+  let carved = 0;
+
+  for (const s of seeds) {
+    let x = clamp(s.x, 1, w - 2),
+      y = clamp(s.y, 1, h - 2);
+    for (let steps = 0; steps < w * h && carved < target; steps++) {
+      if (grid[y][x] === 1) {
+        grid[y][x] = 0;
+        carved++;
+      }
+      if (rng() < 0.25) carveRect(grid, x - 1, y - 1, x + 1, y + 1);
+      const dir = Math.floor(rng() * 4);
+      if (dir === 0 && x < w - 2) x++;
+      else if (dir === 1 && x > 1) x--;
+      else if (dir === 2 && y < h - 2) y++;
+      else if (dir === 3 && y > 1) y--;
+    }
+  }
+
+  if (w / Math.max(1, h) > 1.5) ensureHorizontalBackbone(grid);
+
+  ensureNoSingleEmptyGaps(grid);
+  for (const e of map.exits || []) carveExitAperture(grid, e, 3);
+  connectExitsToCenter(grid, map.exits || [], 1);
+  ensureConnectivity(grid, map.exits || []);
+  return grid;
+}
+
+function algorithmTerrace(map: WorldMapData, seed: string): Grid {
+  const { w, h } = dimsFromMap(map);
+  const rng = createSeededRng(seed);
+  const grid = makeGrid(w, h, 1);
+
+  // Clear interior
+  carveRect(grid, 1, 1, w - 2, h - 2);
+
+  // Create 3-4 horizontal terraces with gentle noise and stairs
+  const bands = Math.max(3, Math.min(4, Math.floor(h / 8)));
+  for (let i = 0; i < bands; i++) {
+    let y = Math.floor(h * (0.3 + (i * 0.5) / Math.max(1, bands)));
+    let x = 2;
+    while (x < w - 2) {
+      const seg = rngInt(rng, 4, 10);
+      const y0 = clamp(y + rngInt(rng, -1, 1), 2, h - 3);
+      const x1 = Math.min(w - 3, x + seg);
+      fillRect(grid, x, y0, x1, y0);
+      // small stair/ramp between segments
+      if (x1 + 2 < w - 2) {
+        const y1 = clamp(y0 + rngInt(rng, -2, 2), 2, h - 3);
+        carveLine(grid, x1, y0, x1 + 2, y1, 0);
+        y = y1;
+      }
+      x = x1 + 3;
+    }
+  }
+
+  for (const e of map.exits || []) carveExitAperture(grid, e, 3);
+  connectExitsToCenter(grid, map.exits || [], 1);
+  ensureNoSingleEmptyGaps(grid);
+  ensureConnectivity(grid, map.exits || []);
+  return grid;
+}
+
 export function fillRoom(map: WorldMapData, opts: FillOptions): number[][] {
   const seed = opts.seed || `${map.id}-seed`;
   switch (opts.algorithm) {
@@ -386,6 +528,12 @@ export function fillRoom(map: WorldMapData, opts: FillOptions): number[][] {
       return algorithmOutside(map, seed);
     case "corridor":
       return algorithmCorridor(map, seed);
+    case "bsp":
+      return algorithmBSP(map, seed);
+    case "drunkard":
+      return algorithmDrunkard(map, seed);
+    case "terrace":
+      return algorithmTerrace(map, seed);
     default:
       return algorithmCorridor(map, seed);
   }

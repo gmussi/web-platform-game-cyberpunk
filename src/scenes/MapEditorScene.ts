@@ -812,24 +812,36 @@ export class MapEditorScene extends Phaser.Scene {
     y: number,
     panelWidth: number
   ): number {
-    const btn = (label: string, onClick: () => void) => {
-      const t = this.add
-        .text(x, y, label, {
-          fontSize: "11px",
-          fill: "#ffffff",
-          fontStyle: "bold",
-          stroke: "#000000",
-          strokeThickness: 2,
-          backgroundColor: "#1e88e5",
-          padding: { x: 8, y: 4 },
-        })
-        .setInteractive();
+    const makeButton = (
+      label: string,
+      onClick: () => void,
+      bx: number,
+      by: number
+    ) => {
+      const t = this.add.text(bx, by, label, {
+        fontSize: "11px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+        backgroundColor: "#1e88e5",
+        padding: { x: 8, y: 4 },
+      });
+      t.setInteractive();
       t.on("pointerdown", onClick);
-      y += 25 + 6;
+      return t;
     };
 
     // Lazy import inside handlers to avoid editor load overhead
-    const handler = (algorithm: "cave" | "outside" | "corridor") => {
+    const handler = (
+      algorithm:
+        | "cave"
+        | "outside"
+        | "corridor"
+        | "bsp"
+        | "drunkard"
+        | "terrace"
+    ) => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const mod: any = require("../generators/RoomTileFiller");
@@ -882,11 +894,31 @@ export class MapEditorScene extends Phaser.Scene {
     });
     y += 20;
 
-    btn("Regenerate: Cave/Basement", () => handler("cave"));
-    btn("Regenerate: Outside", () => handler("outside"));
-    btn("Regenerate: Corridor", () => handler("corridor"));
+    // 3x2 grid (3 rows x 2 columns)
+    const buttons: Array<{ label: string; algo: any }> = [
+      { label: "Cave/Basement", algo: "cave" },
+      { label: "Outside", algo: "outside" },
+      { label: "Corridor", algo: "corridor" },
+      { label: "BSP", algo: "bsp" },
+      { label: "Drunkard Walk", algo: "drunkard" },
+      { label: "Terraced", algo: "terrace" },
+    ];
+    const cols = 2;
+    const rows = 3;
+    const buttonWidth = Math.max(100, Math.floor(panelWidth / cols) - 6);
+    const buttonHeight = 25;
+    const spacingX = 6;
+    const spacingY = 6;
 
-    return y;
+    buttons.forEach((b, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const bx = x + col * (buttonWidth + spacingX);
+      const by = y + row * (buttonHeight + spacingY);
+      makeButton(b.label, () => handler(b.algo), bx, by);
+    });
+
+    return y + rows * (buttonHeight + spacingY);
   }
 
   private updateToolSelection(): void {
