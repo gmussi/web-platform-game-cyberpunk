@@ -109,7 +109,7 @@ export class MapEditorScene extends Phaser.Scene {
     game: Phaser.GameObjects.Text;
   } | null = null;
   public exitConfigSelectors: Phaser.GameObjects.Text[] | null = null;
-  public selectedLayer: "background" | "decoration" | "game" = "game";
+  public selectedLayer: "walls" | "decoration" | "game" = "game";
   public generateWorldButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
@@ -391,14 +391,12 @@ export class MapEditorScene extends Phaser.Scene {
       (this.uiCamera as any).ignore(this.tilemapSystem.tileSprites);
     }
 
-    // Also ignore background and decoration sprites
+    // Also ignore walls and decoration sprites
     if (
-      (this.tilemapSystem as any).backgroundSprites &&
-      (this.tilemapSystem as any).backgroundSprites.length > 0
+      (this.tilemapSystem as any).wallsSprites &&
+      (this.tilemapSystem as any).wallsSprites.length > 0
     ) {
-      (this.uiCamera as any).ignore(
-        (this.tilemapSystem as any).backgroundSprites
-      );
+      (this.uiCamera as any).ignore((this.tilemapSystem as any).wallsSprites);
     }
     if (
       (this.tilemapSystem as any).decorationSprites &&
@@ -565,12 +563,12 @@ export class MapEditorScene extends Phaser.Scene {
     const selectColor = (layer: string) =>
       this.selectedLayer === layer ? "#1e88e5" : "#444444";
     const btnBg = makeBtn(
-      `Background (select)`,
+      `Walls (select)`,
       () => {
-        this.selectedLayer = "background";
+        this.selectedLayer = "walls";
         this.updateLayerButtons();
       },
-      selectColor("background")
+      selectColor("walls")
     );
     const btnDec = makeBtn(
       `Decoration (select)`,
@@ -592,7 +590,7 @@ export class MapEditorScene extends Phaser.Scene {
     // Visibility toggles row
     const makeVis = (
       labelTxt: string,
-      layer: "background" | "decoration" | "game"
+      layer: "walls" | "decoration" | "game"
     ) => {
       const vis = this.add.text(
         x + 140,
@@ -637,7 +635,7 @@ export class MapEditorScene extends Phaser.Scene {
       );
       if (btn) btn.setBackgroundColor(active ? "#1e88e5" : "#444444");
     };
-    setBg("Background (select)", this.selectedLayer === "background");
+    setBg("Walls (select)", this.selectedLayer === "walls");
     setBg("Decoration (select)", this.selectedLayer === "decoration");
     setBg("Game (select)", this.selectedLayer === "game");
   }
@@ -1094,7 +1092,7 @@ export class MapEditorScene extends Phaser.Scene {
     const spriteSize = 32;
     const spacing = 40;
     const cols =
-      this.selectedLayer === "background" || this.selectedLayer === "decoration"
+      this.selectedLayer === "walls" || this.selectedLayer === "decoration"
         ? 19
         : 8;
     const modalWidth = (cols - 1) * spacing + spriteSize + 80; // padding
@@ -1130,7 +1128,7 @@ export class MapEditorScene extends Phaser.Scene {
     let total = 64;
     let textureKey = "tileset_sprites";
     if (
-      this.selectedLayer === "background" &&
+      this.selectedLayer === "walls" &&
       this.textures.exists("background_sprites")
     ) {
       textureKey = "background_sprites";
@@ -1998,6 +1996,23 @@ export class MapEditorScene extends Phaser.Scene {
       this.updateToolSelection();
     });
 
+    // Add P key handler to switch to Platform tool
+    this.input.keyboard.on("keydown-P", () => {
+      this.selectedTool = "platform";
+      this.selectedSpriteIndex = null;
+      this.updateToolSelection();
+    });
+
+    // Add S key handler to save the map
+    this.input.keyboard.on("keydown-S", () => {
+      this.saveMap();
+    });
+
+    // Add L key handler to load a map
+    this.input.keyboard.on("keydown-L", () => {
+      this.loadMap();
+    });
+
     // Camera controls
     this.cameraSpeed = 10; // Increased speed for better navigation
   }
@@ -2064,13 +2079,9 @@ export class MapEditorScene extends Phaser.Scene {
             TilemapSystem.TILE_TYPES.SOLID,
             this.selectedSpriteIndex
           );
-        } else if (this.selectedLayer === "background") {
+        } else if (this.selectedLayer === "walls") {
           const t = this.tilemapSystem.worldToTile(x, y);
-          this.tilemapSystem.setBackground(
-            t.x,
-            t.y,
-            this.selectedSpriteIndex ?? 0
-          );
+          this.tilemapSystem.setWalls(t.x, t.y, this.selectedSpriteIndex ?? 0);
         } else if (this.selectedLayer === "decoration") {
           const t = this.tilemapSystem.worldToTile(x, y);
           this.tilemapSystem.setDecoration(
@@ -2298,8 +2309,8 @@ export class MapEditorScene extends Phaser.Scene {
           tilePos.y,
           TilemapSystem.TILE_TYPES.EMPTY
         );
-      } else if (this.selectedLayer === "background") {
-        this.tilemapSystem.setBackground(tilePos.x, tilePos.y, null);
+      } else if (this.selectedLayer === "walls") {
+        this.tilemapSystem.setWalls(tilePos.x, tilePos.y, null);
       } else if (this.selectedLayer === "decoration") {
         this.tilemapSystem.setDecoration(tilePos.x, tilePos.y, null);
       }
@@ -2476,7 +2487,7 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Clear existing tile data
     this.mapData.tiles = [];
-    this.mapData.background = [] as any;
+    this.mapData.walls = [] as any;
     this.mapData.decoration = [] as any;
 
     // Save tile data with sprite indices
@@ -2491,13 +2502,11 @@ export class MapEditorScene extends Phaser.Scene {
           type: tileType,
           spriteIndex: spriteIndex,
         };
-        // Persist background and decoration frames
-        (this.mapData.background as any)[y] =
-          (this.mapData.background as any)[y] || [];
+        // Persist walls and decoration frames
+        (this.mapData.walls as any)[y] = (this.mapData.walls as any)[y] || [];
         (this.mapData.decoration as any)[y] =
           (this.mapData.decoration as any)[y] || [];
-        (this.mapData.background as any)[y][x] =
-          this.tilemapSystem.getBackground(x, y);
+        (this.mapData.walls as any)[y][x] = this.tilemapSystem.getWalls(x, y);
         (this.mapData.decoration as any)[y][x] =
           this.tilemapSystem.getDecoration(x, y);
       }
@@ -2679,10 +2688,10 @@ export class MapEditorScene extends Phaser.Scene {
               // Number format: just tile type
               this.tilemapSystem.setTile(x, y, tileData);
             }
-            // Apply background/decoration
-            const bg = (this.mapData.background as any)?.[y]?.[x] ?? null;
+            // Apply walls/decoration
+            const bg = (this.mapData.walls as any)?.[y]?.[x] ?? null;
             const dec = (this.mapData.decoration as any)?.[y]?.[x] ?? null;
-            this.tilemapSystem.setBackground(x, y, bg);
+            this.tilemapSystem.setWalls(x, y, bg);
             this.tilemapSystem.setDecoration(x, y, dec);
           }
         }

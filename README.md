@@ -387,6 +387,16 @@ Each character (`char1` through `char4`) includes:
 9. **Grid**: Press 'G' or click "Grid" button to toggle grid overlay
 10. **Map Resizing**: Use +/- Row/Col buttons to adjust map dimensions
 
+#### Keyboard Shortcuts
+
+- **T**: Open sprite picker (tiles)
+- **G**: Toggle grid overlay
+- **A**: Toggle autotile ON/OFF
+- **E**: Switch to Erase tool
+- **P**: Switch to Platform tool
+- **S**: Save current map
+- **L**: Load a map/world file
+
 ### Adding New Levels
 
 1. **Using Map Editor**: Create custom levels with the built-in editor

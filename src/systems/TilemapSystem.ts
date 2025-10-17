@@ -18,11 +18,11 @@ export class TilemapSystem {
   public tileSprites: Phaser.GameObjects.GameObject[];
   public autoTileSystem!: AutotileSystem;
   // Additional layers
-  public backgroundIndices: (number | null)[][] = [];
+  public wallsIndices: (number | null)[][] = [];
   public decorationIndices: (number | null)[][] = [];
-  public backgroundSprites: Phaser.GameObjects.Image[] = [];
+  public wallsSprites: Phaser.GameObjects.Image[] = [];
   public decorationSprites: Phaser.GameObjects.Image[] = [];
-  public backgroundVisible: boolean = true;
+  public wallsVisible: boolean = true;
   public decorationVisible: boolean = true;
   public gameVisible: boolean = true;
 
@@ -68,10 +68,10 @@ export class TilemapSystem {
 
     // Initialize extra layer storages
     for (let y = 0; y < this.mapHeight; y++) {
-      this.backgroundIndices[y] = [];
+      this.wallsIndices[y] = [];
       this.decorationIndices[y] = [];
       for (let x = 0; x < this.mapWidth; x++) {
-        this.backgroundIndices[y][x] = null;
+        this.wallsIndices[y][x] = null;
         this.decorationIndices[y][x] = null;
       }
     }
@@ -86,12 +86,12 @@ export class TilemapSystem {
   }
 
   public setLayerVisible(
-    layer: "background" | "decoration" | "game",
+    layer: "walls" | "decoration" | "game",
     visible: boolean
   ): void {
-    if (layer === "background") {
-      this.backgroundVisible = visible;
-      this.backgroundSprites.forEach((s) => s.setVisible(visible));
+    if (layer === "walls") {
+      this.wallsVisible = visible;
+      this.wallsSprites.forEach((s) => s.setVisible(visible));
     } else if (layer === "decoration") {
       this.decorationVisible = visible;
       this.decorationSprites.forEach((s) => s.setVisible(visible));
@@ -102,16 +102,16 @@ export class TilemapSystem {
     }
   }
 
-  public setBackground(x: number, y: number, frame: number | null): void {
+  public setWalls(x: number, y: number, frame: number | null): void {
     if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight) return;
-    this.backgroundIndices[y][x] = frame;
-    this.updateBackgroundVisual(x, y);
+    this.wallsIndices[y][x] = frame;
+    this.updateWallsVisual(x, y);
   }
 
-  public getBackground(x: number, y: number): number | null {
+  public getWalls(x: number, y: number): number | null {
     if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight)
       return null;
-    return this.backgroundIndices[y]?.[x] ?? null;
+    return this.wallsIndices[y]?.[x] ?? null;
   }
 
   public setDecoration(x: number, y: number, frame: number | null): void {
@@ -126,11 +126,11 @@ export class TilemapSystem {
     return this.decorationIndices[y]?.[x] ?? null;
   }
 
-  private updateBackgroundVisual(x: number, y: number): void {
+  private updateWallsVisual(x: number, y: number): void {
     // Clear existing sprite at this cell
-    this.clearLayerSpriteAt(this.backgroundSprites, x, y);
-    const frame = this.backgroundIndices[y][x];
-    if (frame === null || !this.backgroundVisible) return;
+    this.clearLayerSpriteAt(this.wallsSprites, x, y);
+    const frame = this.wallsIndices[y][x];
+    if (frame === null || !this.wallsVisible) return;
     if (!this.scene.textures.exists("background_sprites")) return;
     const world = this.tileToWorld(x, y);
     const sprite = this.scene.add.image(
@@ -141,7 +141,7 @@ export class TilemapSystem {
     );
     sprite.setDisplaySize(this.tileSize, this.tileSize);
     sprite.setDepth(1);
-    this.backgroundSprites.push(sprite);
+    this.wallsSprites.push(sprite);
   }
 
   private updateDecorationVisual(x: number, y: number): void {
@@ -288,8 +288,8 @@ export class TilemapSystem {
 
   // Update visual representation of a single tile
   private updateTileVisual(x: number, y: number): void {
-    // ensure background and decoration are drawn beneath
-    this.updateBackgroundVisual(x, y);
+    // ensure walls and decoration are drawn beneath
+    this.updateWallsVisual(x, y);
     this.updateDecorationVisual(x, y);
     const tileType = this.tiles[y][x];
     const worldPos = this.tileToWorld(x, y);
@@ -463,9 +463,9 @@ export class TilemapSystem {
 
   // Redraw the entire visual layer
   public redrawVisualLayer(): void {
-    // First clear background/decoration
-    this.backgroundSprites.forEach((s) => s.destroy());
-    this.backgroundSprites = [];
+    // First clear walls/decoration
+    this.wallsSprites.forEach((s) => s.destroy());
+    this.wallsSprites = [];
     this.decorationSprites.forEach((s) => s.destroy());
     this.decorationSprites = [];
     // Clear existing tile sprites
@@ -480,8 +480,8 @@ export class TilemapSystem {
     let tilesDrawn = 0;
     for (let y = 0; y < this.mapHeight; y++) {
       for (let x = 0; x < this.mapWidth; x++) {
-        // draw bg/dec first
-        this.updateBackgroundVisual(x, y);
+        // draw walls/dec first
+        this.updateWallsVisual(x, y);
         this.updateDecorationVisual(x, y);
         const tileType = this.tiles[y][x];
         if (tileType !== TilemapSystem.TILE_TYPES.EMPTY) {
@@ -723,11 +723,8 @@ export class TilemapSystem {
         ) {
           newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
         }
-        if (
-          this.backgroundIndices[y] &&
-          this.backgroundIndices[y][x] !== undefined
-        ) {
-          newBg[y][x] = this.backgroundIndices[y][x];
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x] = this.wallsIndices[y][x];
         }
         if (
           this.decorationIndices[y] &&
@@ -743,7 +740,7 @@ export class TilemapSystem {
     this.mapHeight = newHeight;
     this.tiles = newTiles;
     this.tileSpriteIndices = newTileSpriteIndices;
-    this.backgroundIndices = newBg;
+    this.wallsIndices = newBg;
     this.decorationIndices = newDec;
 
     // Update autotile system dimensions
@@ -753,8 +750,8 @@ export class TilemapSystem {
 
     // Clear existing visuals and collision bodies
     this.clearAllVisuals();
-    this.backgroundSprites.forEach((s) => s.destroy());
-    this.backgroundSprites = [];
+    this.wallsSprites.forEach((s) => s.destroy());
+    this.wallsSprites = [];
     this.decorationSprites.forEach((s) => s.destroy());
     this.decorationSprites = [];
     this.clearCollisionBodies();

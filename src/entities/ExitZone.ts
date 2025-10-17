@@ -187,11 +187,10 @@ export class ExitZone extends Phaser.GameObjects.Container {
     }
   }
 
-  // Get target map and spawn
-  public getTargetInfo(): { mapId: string; spawnId: string } {
+  // Get target map
+  public getTargetInfo(): { mapId: string } {
     return {
       mapId: this.exitData.targetMapId,
-      spawnId: this.exitData.targetSpawnId,
     };
   }
 

@@ -688,10 +688,10 @@ export class GameScene extends Phaser.Scene {
               this.tilemapSystem.setTile(x, y, tileData);
               tilesLoaded++;
             }
-            // Apply background/decoration from map if present
-            const bg = (this.mapData as any).background?.[y]?.[x] ?? null;
+            // Apply walls/decoration from map if present
+            const bg = (this.mapData as any).walls?.[y]?.[x] ?? null;
             const dec = (this.mapData as any).decoration?.[y]?.[x] ?? null;
-            if (bg !== undefined) this.tilemapSystem.setBackground(x, y, bg);
+            if (bg !== undefined) this.tilemapSystem.setWalls(x, y, bg);
             if (dec !== undefined) this.tilemapSystem.setDecoration(x, y, dec);
           }
         }
@@ -1565,6 +1565,17 @@ export class GameScene extends Phaser.Scene {
 
     if (!edge) return;
 
+    // Only log once per frame to avoid spam
+    if (this.frameCount % 60 === 0) {
+      console.log(
+        `🔍 Player at ${edge} edge: pos=(${px.toFixed(0)}, ${py.toFixed(
+          0
+        )}), mapSize=(${this.mapData.world.width}, ${
+          this.mapData.world.height
+        })`
+      );
+    }
+
     // Find matching exit zone
     const exit = this.findExitAtPlayerPosition(edge, px, py);
 
@@ -1573,8 +1584,8 @@ export class GameScene extends Phaser.Scene {
         `🚪 Exit found at ${edge} edge, transitioning to ${exit.targetMapId}`
       );
       this.transitionToMap(exit.targetMapId, exit);
-    } else {
-      console.log(`⚠️ Player at ${edge} edge (${px}, ${py}) but no exit found`);
+    } else if (this.frameCount % 60 === 0) {
+      console.log(`⚠️ No exit found at ${edge} edge`);
     }
   }
 
@@ -1583,21 +1594,42 @@ export class GameScene extends Phaser.Scene {
     px: number,
     py: number
   ): any | null {
-    console.log(
-      `🔍 Looking for ${edge} exit at player pos (${px}, ${py}), total exits:`,
-      this.mapData.exits.length
-    );
+    if (!this.mapData.exits || this.mapData.exits.length === 0) {
+      console.warn(`⚠️ No exits defined in current map ${this.mapData.id}`);
+      return null;
+    }
+
+    const isHorizontal = edge === "top" || edge === "bottom";
+    const playerPos = isHorizontal ? px : py;
+    const mapSize = isHorizontal
+      ? this.mapData.world.width
+      : this.mapData.world.height;
+    const playerNormalized = playerPos / mapSize;
+
+    if (this.frameCount % 60 === 0) {
+      console.log(
+        `🔍 Looking for ${edge} exit: playerPos=${playerPos.toFixed(
+          0
+        )}, normalized=${playerNormalized.toFixed(3)}, total exits:`,
+        this.mapData.exits.length
+      );
+    }
+
     return this.mapData.exits.find((e: any) => {
       if (e.edge !== edge) return false;
 
-      const isHorizontal = edge === "top" || edge === "bottom";
-      const playerPos = isHorizontal ? px : py;
-      const mapSize = isHorizontal
-        ? this.mapData.world.width
-        : this.mapData.world.height;
-      const playerNormalized = playerPos / mapSize;
+      const matches =
+        playerNormalized >= e.edgeStart && playerNormalized <= e.edgeEnd;
 
-      return playerNormalized >= e.edgeStart && playerNormalized <= e.edgeEnd;
+      if (this.frameCount % 60 === 0) {
+        console.log(
+          `  Exit ${e.id}: edge=${e.edge}, range=[${e.edgeStart.toFixed(
+            3
+          )}, ${e.edgeEnd.toFixed(3)}], matches=${matches}`
+        );
+      }
+
+      return matches;
     });
   }
 
