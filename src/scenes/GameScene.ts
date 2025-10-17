@@ -254,8 +254,7 @@ export class GameScene extends Phaser.Scene {
     // Set world bounds based on scroll direction (after tilemap system is created)
     this.setupWorldBounds();
 
-    // Create background immediately
-    this.createBackground();
+    // Background disabled
     this.createDarkOverlay();
 
     // Load world data if available, otherwise use default
@@ -644,7 +643,7 @@ export class GameScene extends Phaser.Scene {
           );
           this.tilemapSystem.resizeMap(mapWidthInTiles, mapHeightInTiles);
           this.setupWorldBounds();
-          this.createBackground();
+          // Background disabled
           this.setupCamera();
         } else {
           console.log("✅ No resizing needed - dimensions match");
@@ -726,53 +725,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    // Randomly select one of the three background images
-    const backgroundKeys = ["background1", "background2", "background3"];
-    const selectedBackground =
-      backgroundKeys[Math.floor(Math.random() * backgroundKeys.length)];
-
-    // Create the background image
-    if (this.textures.exists(selectedBackground)) {
-      // Create a single background image that covers the entire world
-      const worldWidth = this.tilemapSystem
-        ? this.tilemapSystem.getWorldWidth()
-        : GAME_CONSTANTS.WORLD_WIDTH;
-      const worldHeight = this.tilemapSystem
-        ? this.tilemapSystem.getWorldHeight()
-        : GAME_CONSTANTS.WORLD_HEIGHT;
-      const imageWidth = this.textures.get(selectedBackground).source[0].width;
-      const imageHeight =
-        this.textures.get(selectedBackground).source[0].height;
-
-      // Calculate scale to cover the full world width (may stretch vertically)
-      // New images are 1728x576px, world is 4100x800px
-      const scaleX = worldWidth / imageWidth; // 4100 / 1728 ≈ 2.37
-      const scaleY = worldHeight / imageHeight; // 800 / 576 ≈ 1.39
-
-      // Use the larger scale to ensure full coverage of world width
-      const scale = Math.max(scaleX, scaleY);
-
-      // Background images have empty space in first 6 columns (at 32px per tile = 192px)
-      // Shift the background left to hide the empty space
-      const emptySpaceWidth = 192; // 6 tiles * 32px
-      const offsetX = -(emptySpaceWidth * scale) / 2;
-
-      // Position the background to start from the left edge of the world, adjusted for empty space
-      this.backgroundImage = this.add.image(
-        (imageWidth * scale) / 2 + offsetX,
-        worldHeight / 2,
-        selectedBackground
-      );
-      this.backgroundImage.setScrollFactor(0.3);
-      this.backgroundImage.setDepth(-10);
-      this.backgroundImage.setScale(scale);
-    } else {
-      // Background texture not found, using fallback
-      this.createFallbackBackground();
+    // Background images are disabled. Remove any existing background image and skip rendering.
+    if (this.backgroundImage) {
+      (this.backgroundImage as any).destroy();
+      this.backgroundImage = undefined as any;
     }
-
-    // Add some additional atmospheric elements with different parallax speeds
-    this.addAtmosphericElements();
+    return;
   }
 
   private createDarkOverlay(): void {
