@@ -111,6 +111,7 @@ export class MapEditorScene extends Phaser.Scene {
   public exitConfigSelectors: Phaser.GameObjects.Text[] | null = null;
   public selectedLayer: "walls" | "decoration" | "game" = "game";
   public generateWorldButton!: Phaser.GameObjects.Text;
+  public cityBackgroundButton!: Phaser.GameObjects.Text;
   public previewObjects: Phaser.GameObjects.GameObject[] = [];
   public gameObjects: Phaser.GameObjects.GameObject[] = [];
   public exitZones: ExitZone[] = [];
@@ -407,6 +408,14 @@ export class MapEditorScene extends Phaser.Scene {
       );
     }
 
+    // Ignore city background sprites
+    if (this.tilemapSystem.cityBackSprite) {
+      (this.uiCamera as any).ignore(this.tilemapSystem.cityBackSprite);
+    }
+    if (this.tilemapSystem.cityFrontSprite) {
+      (this.uiCamera as any).ignore(this.tilemapSystem.cityFrontSprite);
+    }
+
     // Also ignore the tilemap visual layer
     if (this.tilemapSystem.visualLayer) {
       (this.uiCamera as any).ignore(this.tilemapSystem.visualLayer);
@@ -493,6 +502,9 @@ export class MapEditorScene extends Phaser.Scene {
 
     // Layer selector and visibility toggles
     yOffset = this.createLayerControls(panelPadding, yOffset);
+
+    // City background selector
+    yOffset = this.createCityBackgroundSelector(panelPadding, yOffset);
 
     // Tool selection
     yOffset = this.createToolSelection(panelPadding, yOffset, panelWidth);
@@ -638,6 +650,148 @@ export class MapEditorScene extends Phaser.Scene {
     setBg("Walls (select)", this.selectedLayer === "walls");
     setBg("Decoration (select)", this.selectedLayer === "decoration");
     setBg("Game (select)", this.selectedLayer === "game");
+  }
+
+  private createCityBackgroundSelector(x: number, y: number): number {
+    const currentCity = this.mapData?.cityBackground?.variant || "None";
+    this.cityBackgroundButton = this.add.text(x, y, `City: ${currentCity}`, {
+      fontSize: "11px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 2,
+      backgroundColor: "#5a3d8a",
+      padding: { x: 8, y: 4 },
+    });
+    this.cityBackgroundButton.setInteractive();
+    this.cityBackgroundButton.on("pointerdown", () => {
+      this.openCitySelector();
+    });
+
+    return y + 30;
+  }
+
+  private openCitySelector(): void {
+    // Get center position for the modal
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+
+    // Create modal background
+    const modalBg = this.add.rectangle(
+      centerX,
+      centerY,
+      400,
+      350,
+      0x000000,
+      0.9
+    );
+    modalBg.setDepth(2000);
+    modalBg.setScrollFactor(0);
+
+    // Modal title
+    const title = this.add.text(
+      centerX,
+      centerY - 140,
+      "Select City Background",
+      {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+      }
+    );
+    title.setOrigin(0.5);
+    title.setDepth(2001);
+    title.setScrollFactor(0);
+
+    const cityOptions = [
+      { label: "None", value: null },
+      { label: "City 1", value: "city1" },
+      { label: "City 2", value: "city2" },
+      { label: "City 3", value: "city3" },
+      { label: "City 4", value: "city4" },
+    ];
+
+    const buttons: Phaser.GameObjects.Text[] = [];
+    let btnY = centerY - 90;
+
+    cityOptions.forEach((option) => {
+      const btn = this.add.text(centerX, btnY, option.label, {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#444444",
+        padding: { x: 20, y: 8 },
+      });
+      btn.setOrigin(0.5);
+      btn.setDepth(2001);
+      btn.setScrollFactor(0);
+      btn.setInteractive();
+
+      btn.on("pointerover", () => {
+        btn.setBackgroundColor("#666666");
+      });
+
+      btn.on("pointerout", () => {
+        btn.setBackgroundColor("#444444");
+      });
+
+      btn.on("pointerdown", () => {
+        console.log(
+          `🏙️ [MapEditor] City selector: Selected ${option.label} (${option.value})`
+        );
+
+        // Update map data
+        if (!this.mapData.cityBackground) {
+          this.mapData.cityBackground = { variant: option.value };
+        } else {
+          this.mapData.cityBackground.variant = option.value;
+        }
+        console.log(
+          `🏙️ [MapEditor] Map data updated:`,
+          this.mapData.cityBackground
+        );
+
+        // Apply city background to tilemap
+        console.log(
+          `🏙️ [MapEditor] Applying city background to tilemap: ${option.value}`
+        );
+        this.tilemapSystem.setCityBackground(option.value);
+
+        // Update button text
+        this.cityBackgroundButton.setText(`City: ${option.label}`);
+
+        // Close modal
+        modalBg.destroy();
+        title.destroy();
+        buttons.forEach((b) => b.destroy());
+        closeBtn.destroy();
+      });
+
+      buttons.push(btn);
+      btnY += 45;
+    });
+
+    // Close button
+    const closeBtn = this.add.text(centerX, centerY + 130, "Close", {
+      fontSize: "14px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      backgroundColor: "#aa0000",
+      padding: { x: 20, y: 8 },
+    });
+    closeBtn.setOrigin(0.5);
+    closeBtn.setDepth(2001);
+    closeBtn.setScrollFactor(0);
+    closeBtn.setInteractive();
+
+    closeBtn.on("pointerdown", () => {
+      modalBg.destroy();
+      title.destroy();
+      buttons.forEach((b) => b.destroy());
+      closeBtn.destroy();
+    });
   }
 
   private createGenerateWorldButton(x: number, y: number): number {
@@ -2707,6 +2861,32 @@ export class MapEditorScene extends Phaser.Scene {
       this.tilemapSystem.redrawAllLayers();
       this.tilemapSystem.createCollisionBodies();
     }
+
+    // Load city background if specified in map data
+    console.log(
+      `🗺️ [MapEditor] Loading city background from map data:`,
+      this.mapData.cityBackground
+    );
+    if (this.mapData.cityBackground?.variant) {
+      console.log(
+        `🗺️ [MapEditor] Setting city background to: ${this.mapData.cityBackground.variant}`
+      );
+      this.tilemapSystem.setCityBackground(this.mapData.cityBackground.variant);
+      // Update button text if it exists
+      if (this.cityBackgroundButton) {
+        const cityName = this.mapData.cityBackground.variant.replace(
+          "city",
+          "City "
+        );
+        this.cityBackgroundButton.setText(`City: ${cityName}`);
+      }
+    } else {
+      console.log(`🗺️ [MapEditor] No city background specified, clearing`);
+      this.tilemapSystem.clearCityBackground();
+      if (this.cityBackgroundButton) {
+        this.cityBackgroundButton.setText("City: None");
+      }
+    }
   }
 
   private clearAll(): void {
@@ -2773,6 +2953,11 @@ export class MapEditorScene extends Phaser.Scene {
   }
 
   public update(): void {
+    // Update city background parallax effect
+    if (this.tilemapSystem) {
+      this.tilemapSystem.updateCityBackgroundParallax();
+    }
+
     // If world view is visible, use arrows to pan world view instead of moving map camera
     if (this.worldViewRenderer && this.worldViewRenderer.getIsVisible()) {
       const panStep = 20; // pixels per frame; independent from tilemap camera speed

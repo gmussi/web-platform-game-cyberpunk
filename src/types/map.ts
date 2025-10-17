@@ -116,6 +116,9 @@ export interface WorldMapData {
   tiles: any[];
   walls: (number | null)[][];
   decoration: (number | null)[][];
+  cityBackground?: {
+    variant: "city1" | "city2" | "city3" | "city4" | null;
+  };
   gridPosition?: { x: number; y: number }; // Calculated by layout system
   gridHeight?: number; // Height in grid units
 }

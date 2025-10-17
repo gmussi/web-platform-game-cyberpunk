@@ -703,6 +703,21 @@ export class GameScene extends Phaser.Scene {
     } else {
       // No tile data found in map, using default tilemap
     }
+
+    // Load city background if specified in map data
+    console.log(
+      `🗺️ Loading city background from map data:`,
+      this.mapData.cityBackground
+    );
+    if (this.mapData.cityBackground?.variant) {
+      console.log(
+        `🗺️ Setting city background to: ${this.mapData.cityBackground.variant}`
+      );
+      this.tilemapSystem.setCityBackground(this.mapData.cityBackground.variant);
+    } else {
+      console.log(`🗺️ No city background specified, clearing`);
+      this.tilemapSystem.clearCityBackground();
+    }
   }
 
   private setupWorldBounds(): void {
@@ -1488,6 +1503,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   public update(): void {
+    // Update city background parallax effect
+    if (this.tilemapSystem) {
+      this.tilemapSystem.updateCityBackgroundParallax();
+    }
+
     // Handle map management keyboard shortcuts
     if (Phaser.Input.Keyboard.JustDown(this.mapSaveKey)) {
       this.saveCurrentMap();
@@ -1771,6 +1791,8 @@ export class GameScene extends Phaser.Scene {
     if (this.portalSprite) {
       this.portalSprite.destroy();
     }
+    // Clear city background
+    this.tilemapSystem.clearCityBackground();
   }
 
   private createEdgeWalls(): void {

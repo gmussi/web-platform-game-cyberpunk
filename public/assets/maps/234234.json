@@ -979,27 +979,435 @@
           },
           {
             "type": 0,
-            "spriteIndex": 60
+            "spriteIndex": null
           },
           {
             "type": 0,
-            "spriteIndex": 61
+            "spriteIndex": null
           },
           {
             "type": 0,
-            "spriteIndex": 61
+            "spriteIndex": null
           },
           {
             "type": 0,
-            "spriteIndex": 59
+            "spriteIndex": null
           },
           {
             "type": 0,
-            "spriteIndex": 62
+            "spriteIndex": null
           },
           {
             "type": 0,
-            "spriteIndex": 62
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
           },
           {
             "type": 0,
@@ -1485,210 +1893,6 @@
           },
           {
             "type": 0,
-            "spriteIndex": 60
-          },
-          {
-            "type": 0,
-            "spriteIndex": 60
-          },
-          {
-            "type": 0,
-            "spriteIndex": 59
-          },
-          {
-            "type": 0,
-            "spriteIndex": 61
-          },
-          {
-            "type": 0,
-            "spriteIndex": 60
-          },
-          {
-            "type": 0,
-            "spriteIndex": 60
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          }
-        ],
-        [
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          }
-        ],
-        [
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -1710,210 +1914,6 @@
           {
             "type": 0,
             "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          }
-        ],
-        [
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          }
-        ],
-        [
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": 59
-          },
-          {
-            "type": 0,
-            "spriteIndex": 59
-          },
-          {
-            "type": 0,
-            "spriteIndex": 61
-          },
-          {
-            "type": 0,
-            "spriteIndex": 61
-          },
-          {
-            "type": 0,
-            "spriteIndex": 59
-          },
-          {
-            "type": 0,
-            "spriteIndex": 59
           },
           {
             "type": 0,
@@ -2916,19 +2916,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -2940,55 +2928,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3006,19 +2946,9 @@
           {
             "type": 1,
             "spriteIndex": null
-          }
-        ],
-        [
-          {
-            "type": 1,
-            "spriteIndex": null
           },
           {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3026,39 +2956,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3074,7 +2972,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3120,10 +3018,6 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
             "spriteIndex": null
           },
@@ -3136,63 +3030,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3210,19 +3048,9 @@
           {
             "type": 1,
             "spriteIndex": null
-          }
-        ],
-        [
-          {
-            "type": 1,
-            "spriteIndex": null
           },
           {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3238,7 +3066,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3246,15 +3074,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3270,31 +3090,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 1,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
             "spriteIndex": null
           },
           {
@@ -3324,7 +3120,15 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3340,19 +3144,11 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
             "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3364,15 +3160,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3380,15 +3168,7 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
-            "spriteIndex": null
-          },
-          {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3396,7 +3176,227 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -3917,12 +3917,12 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          9,
+          10,
+          10,
+          10,
+          10,
+          10
         ],
         [
           null,
@@ -3944,12 +3944,12 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          47,
+          29,
+          29,
+          29,
+          29,
+          29
         ],
         [
           null,
@@ -3971,12 +3971,12 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          47,
+          29,
+          29,
+          29,
+          29,
+          29
         ],
         [
           null,
@@ -5519,7 +5519,10 @@
           null,
           null
         ]
-      ]
+      ],
+      "cityBackground": {
+        "variant": "city2"
+      }
     },
     "room_2": {
       "id": "room_2",

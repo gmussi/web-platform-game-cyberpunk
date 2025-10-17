@@ -109,6 +109,9 @@ export class LoadingScene extends Phaser.Scene {
     // Load background images
     this.loadBackgrounds();
 
+    // Load city backgrounds
+    this.loadCityBackgrounds();
+
     // Load UI images
     this.load.image("homebg", `${ASSET_PATHS.ui}/homebg.png`);
     this.load.image("logo", `${ASSET_PATHS.ui}/logo.png`);
@@ -146,6 +149,21 @@ export class LoadingScene extends Phaser.Scene {
       "background3",
       `${ASSET_PATHS.backgrounds}/background3.png`
     );
+  }
+
+  private loadCityBackgrounds(): void {
+    // Load city background images (4 variants with front and back layers)
+    const cities = ["city1", "city2", "city3", "city4"];
+    const layers = ["front", "back"];
+
+    cities.forEach((city) => {
+      layers.forEach((layer) => {
+        this.load.image(
+          `${city}_${layer}`,
+          `/assets/images/cities/${city}/${layer}.png`
+        );
+      });
+    });
   }
 
   private loadCharacterSprites(): void {

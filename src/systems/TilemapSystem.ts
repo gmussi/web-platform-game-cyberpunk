@@ -25,6 +25,10 @@ export class TilemapSystem {
   public wallsVisible: boolean = true;
   public decorationVisible: boolean = true;
   public gameVisible: boolean = true;
+  // City background layers (parallax)
+  public cityBackSprite: Phaser.GameObjects.TileSprite | null = null;
+  public cityFrontSprite: Phaser.GameObjects.TileSprite | null = null;
+  public cityVariant: string | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -124,6 +128,190 @@ export class TilemapSystem {
     if (x < 0 || y < 0 || x >= this.mapWidth || y >= this.mapHeight)
       return null;
     return this.decorationIndices[y]?.[x] ?? null;
+  }
+
+  /**
+   * Set city background with parallax layers
+   * Depth layers:
+   * 0: City background (back) - scrollFactor 0.2
+   * 0.5: City background (front) - scrollFactor 0.5
+   * 1: Walls/Background tiles - scrollFactor 1.0
+   * 3: Decoration tiles - scrollFactor 1.0
+   * 4: Game collision tiles - scrollFactor 1.0
+   */
+  public setCityBackground(variant: string | null): void {
+    console.log(`🏙️ setCityBackground called with variant: ${variant}`);
+
+    // Clear existing city backgrounds
+    this.clearCityBackground();
+
+    if (!variant) {
+      this.cityVariant = null;
+      console.log(`🏙️ No variant specified, city background cleared`);
+      return;
+    }
+
+    this.cityVariant = variant;
+    const worldWidth = this.getWorldWidth();
+    const worldHeight = this.getWorldHeight();
+    console.log(`🏙️ World dimensions: ${worldWidth}x${worldHeight}`);
+
+    // Get camera reference for debug logging later
+    const camera = this.scene.cameras.main;
+
+    // Check if textures exist
+    const backTextureKey = `${variant}_back`;
+    const frontTextureKey = `${variant}_front`;
+    console.log(
+      `🏙️ Looking for textures: ${backTextureKey}, ${frontTextureKey}`
+    );
+
+    if (!this.scene.textures.exists(backTextureKey)) {
+      console.warn(`❌ City back texture not found: ${backTextureKey}`);
+      return;
+    }
+    if (!this.scene.textures.exists(frontTextureKey)) {
+      console.warn(`❌ City front texture not found: ${frontTextureKey}`);
+      return;
+    }
+    console.log(`✅ Both textures found`);
+
+    // Get texture dimensions
+    const backTexture = this.scene.textures.get(backTextureKey);
+    const frontTexture = this.scene.textures.get(frontTextureKey);
+    const backWidth = backTexture.source[0].width;
+    const backHeight = backTexture.source[0].height;
+    const frontWidth = frontTexture.source[0].width;
+    const frontHeight = frontTexture.source[0].height;
+    console.log(`🏙️ Back texture size: ${backWidth}x${backHeight}`);
+    console.log(`🏙️ Front texture size: ${frontWidth}x${frontHeight}`);
+
+    // Create back layer (deeper parallax)
+    // Size to ONLY cover the tile grid area (worldWidth x worldHeight)
+    // Position centered in the tile grid to fill from (0,0) to (worldWidth, worldHeight)
+    this.cityBackSprite = this.scene.add.tileSprite(
+      worldWidth / 2,
+      worldHeight / 2,
+      worldWidth,
+      worldHeight,
+      backTextureKey
+    );
+    this.cityBackSprite.setOrigin(0.5, 0.5);
+    this.cityBackSprite.setDepth(0);
+    this.cityBackSprite.setScrollFactor(1.0); // Move with camera (stay aligned with tiles)
+    // Tile horizontally only (width=1), no vertical tiling needed
+    this.cityBackSprite.setTileScale(1, 1);
+    // Store for parallax updates in game loop
+    (this.cityBackSprite as any).parallaxFactor = 0.2; // Texture scrolls at 20% speed
+    console.log(
+      `🏙️ Back sprite created at (${worldWidth / 2}, ${
+        worldHeight / 2
+      }), size: ${worldWidth}x${worldHeight}, depth: 0, scrollFactor: 1.0, parallaxFactor: 0.2`
+    );
+    console.log(
+      `🏙️ Back sprite position: (${this.cityBackSprite.x}, ${this.cityBackSprite.y}), origin: (${this.cityBackSprite.originX}, ${this.cityBackSprite.originY})`
+    );
+    console.log(
+      `🏙️ Back sprite visible: ${this.cityBackSprite.visible}, active: ${this.cityBackSprite.active}`
+    );
+    console.log(
+      `🏙️ Back sprite displayWidth: ${this.cityBackSprite.displayWidth}, displayHeight: ${this.cityBackSprite.displayHeight}`
+    );
+    console.log(
+      `🏙️ Back sprite tilePositionX: ${this.cityBackSprite.tilePositionX}, tilePositionY: ${this.cityBackSprite.tilePositionY}`
+    );
+
+    // Create front layer (moderate parallax)
+    // Front layer uses natural height and is positioned at bottom (ground level)
+    // Width matches tile grid width for horizontal coverage
+    const frontSpriteHeight = Math.min(frontHeight, worldHeight);
+    const frontYPosition = worldHeight - frontSpriteHeight / 2;
+    this.cityFrontSprite = this.scene.add.tileSprite(
+      worldWidth / 2,
+      frontYPosition,
+      worldWidth,
+      frontSpriteHeight,
+      frontTextureKey
+    );
+    this.cityFrontSprite.setOrigin(0.5, 0.5);
+    this.cityFrontSprite.setDepth(0.5);
+    this.cityFrontSprite.setScrollFactor(1.0); // Move with camera (stay aligned with tiles)
+    // Tile horizontally only (width=1), no vertical tiling needed
+    this.cityFrontSprite.setTileScale(1, 1);
+    // Store for parallax updates in game loop
+    (this.cityFrontSprite as any).parallaxFactor = 0.5; // Texture scrolls at 50% speed
+    console.log(
+      `🏙️ Front sprite created at (${
+        worldWidth / 2
+      }, ${frontYPosition}), size: ${worldWidth}x${frontSpriteHeight}, depth: 0.5, scrollFactor: 1.0, parallaxFactor: 0.5`
+    );
+    console.log(
+      `🏙️ Front sprite position: (${this.cityFrontSprite.x}, ${this.cityFrontSprite.y}), origin: (${this.cityFrontSprite.originX}, ${this.cityFrontSprite.originY})`
+    );
+    console.log(
+      `🏙️ Front sprite visible: ${this.cityFrontSprite.visible}, active: ${this.cityFrontSprite.active}`
+    );
+    console.log(
+      `🏙️ Front sprite displayWidth: ${this.cityFrontSprite.displayWidth}, displayHeight: ${this.cityFrontSprite.displayHeight}`
+    );
+    console.log(
+      `🏙️ Front sprite tilePositionX: ${this.cityFrontSprite.tilePositionX}, tilePositionY: ${this.cityFrontSprite.tilePositionY}`
+    );
+
+    // Log camera and world bounds info (reusing camera variable from above)
+    console.log(`🎥 Camera position: (${camera.scrollX}, ${camera.scrollY})`);
+    console.log(
+      `🎥 Camera bounds: x=${camera.x}, y=${camera.y}, width=${camera.width}, height=${camera.height}`
+    );
+    console.log(`🎥 Camera zoom: ${camera.zoom}`);
+    const physicsWorld = this.scene.physics.world;
+    console.log(
+      `🌍 Physics world bounds: x=${physicsWorld.bounds.x}, y=${physicsWorld.bounds.y}, width=${physicsWorld.bounds.width}, height=${physicsWorld.bounds.height}`
+    );
+    console.log(
+      `🗺️ Map dimensions (tiles): ${this.mapWidth}x${this.mapHeight}`
+    );
+    console.log(`🗺️ Tile size: ${this.tileSize}px`);
+    console.log(`🗺️ Map dimensions (pixels): ${worldWidth}x${worldHeight}`);
+
+    console.log(`✅ City background set: ${variant}`);
+  }
+
+  public clearCityBackground(): void {
+    console.log(`🏙️ clearCityBackground called`);
+    if (this.cityBackSprite) {
+      console.log(`🏙️ Destroying back sprite`);
+      this.cityBackSprite.destroy();
+      this.cityBackSprite = null;
+    }
+    if (this.cityFrontSprite) {
+      console.log(`🏙️ Destroying front sprite`);
+      this.cityFrontSprite.destroy();
+      this.cityFrontSprite = null;
+    }
+    this.cityVariant = null;
+    console.log(`🏙️ City background cleared`);
+  }
+
+  public updateCityBackgroundParallax(): void {
+    const camera = this.scene.cameras.main;
+
+    if (this.cityBackSprite && (this.cityBackSprite as any).parallaxFactor) {
+      const parallaxFactor = (this.cityBackSprite as any).parallaxFactor;
+      // Offset the texture position based on camera scroll and parallax factor
+      // The further back (smaller parallaxFactor), the slower it scrolls
+      this.cityBackSprite.tilePositionX = camera.scrollX * (1 - parallaxFactor);
+      this.cityBackSprite.tilePositionY = camera.scrollY * (1 - parallaxFactor);
+    }
+
+    if (this.cityFrontSprite && (this.cityFrontSprite as any).parallaxFactor) {
+      const parallaxFactor = (this.cityFrontSprite as any).parallaxFactor;
+      // Offset the texture position based on camera scroll and parallax factor
+      this.cityFrontSprite.tilePositionX =
+        camera.scrollX * (1 - parallaxFactor);
+      this.cityFrontSprite.tilePositionY =
+        camera.scrollY * (1 - parallaxFactor);
+    }
   }
 
   private updateWallsVisual(x: number, y: number): void {
@@ -755,6 +943,12 @@ export class TilemapSystem {
     this.decorationSprites.forEach((s) => s.destroy());
     this.decorationSprites = [];
     this.clearCollisionBodies();
+
+    // Recreate city background if one was set
+    const currentCityVariant = this.cityVariant;
+    if (currentCityVariant) {
+      this.setCityBackground(currentCityVariant);
+    }
 
     // Redraw everything
     this.redrawVisualLayer();
