@@ -70,6 +70,7 @@ export class GameScene extends Phaser.Scene {
   public enemyGroup!: Phaser.Physics.Arcade.Group;
   public playerGroup!: Phaser.Physics.Arcade.Group;
   public exitZones: ExitZone[] = [];
+  public edgeWalls: Phaser.GameObjects.Rectangle[] = [];
   public portalSprite!: Phaser.GameObjects.Sprite;
   public portalArea!: PortalArea;
   public mapData!: WorldMapData;
@@ -1087,6 +1088,9 @@ export class GameScene extends Phaser.Scene {
     // Clean up any existing colliders first
     this.cleanupColliders();
 
+    // Create edge walls with gaps for exit zones
+    this.createEdgeWalls();
+
     // Player vs Tilemap
     const playerTilemapCollider = this.physics.add.collider(
       this.player,
@@ -1554,7 +1558,7 @@ export class GameScene extends Phaser.Scene {
 
     const px = this.player.x;
     const py = this.player.y;
-    const threshold = 32;
+    const threshold = 48; // Increased threshold to detect exits before hitting boundary
 
     // Detect edge
     let edge: string | null = null;
@@ -1565,10 +1569,10 @@ export class GameScene extends Phaser.Scene {
 
     if (!edge) return;
 
-    // Only log once per frame to avoid spam
+    // Only log once per second to avoid spam
     if (this.frameCount % 60 === 0) {
       console.log(
-        `🔍 Player at ${edge} edge: pos=(${px.toFixed(0)}, ${py.toFixed(
+        `🔍 Player near ${edge} edge: pos=(${px.toFixed(0)}, ${py.toFixed(
           0
         )}), mapSize=(${this.mapData.world.width}, ${
           this.mapData.world.height
@@ -1580,12 +1584,27 @@ export class GameScene extends Phaser.Scene {
     const exit = this.findExitAtPlayerPosition(edge, px, py);
 
     if (exit) {
-      console.log(
-        `🚪 Exit found at ${edge} edge, transitioning to ${exit.targetMapId}`
-      );
-      this.transitionToMap(exit.targetMapId, exit);
-    } else if (this.frameCount % 60 === 0) {
-      console.log(`⚠️ No exit found at ${edge} edge`);
+      // Transition when player is close to edge (within 16 pixels) - before hitting edge wall
+      const atEdge =
+        (edge === "left" && px < 16) ||
+        (edge === "right" && px > this.mapData.world.width - 16) ||
+        (edge === "top" && py < 16) ||
+        (edge === "bottom" && py > this.mapData.world.height - 16);
+
+      if (atEdge) {
+        console.log(
+          `🚪 Exit found at ${edge} edge, transitioning to ${exit.targetMapId}`
+        );
+        this.transitionToMap(exit.targetMapId, exit);
+      }
+    } else if (
+      this.frameCount % 60 === 0 &&
+      (px < 4 ||
+        px > this.mapData.world.width - 4 ||
+        py < 4 ||
+        py > this.mapData.world.height - 4)
+    ) {
+      console.log(`⚠️ Player blocked at ${edge} edge - no exit zone here`);
     }
   }
 
@@ -1747,9 +1766,179 @@ export class GameScene extends Phaser.Scene {
     this.enemies = [];
     this.exitZones.forEach((exit) => exit.destroy());
     this.exitZones = [];
+    this.edgeWalls.forEach((wall) => wall.destroy());
+    this.edgeWalls = [];
     if (this.portalSprite) {
       this.portalSprite.destroy();
     }
+  }
+
+  private createEdgeWalls(): void {
+    // Clean up existing edge walls
+    this.edgeWalls.forEach((wall) => wall.destroy());
+    this.edgeWalls = [];
+
+    if (!this.mapData || !this.mapData.world) {
+      console.warn("Cannot create edge walls: map data not loaded");
+      return;
+    }
+
+    const mapWidth = this.mapData.world.width;
+    const mapHeight = this.mapData.world.height;
+    const wallThickness = 32; // Thickness of the edge walls
+    const wallOffset = 48; // Distance from map edge to place walls (allows transition zone)
+    const exits = this.mapData.exits || [];
+
+    console.log(
+      `🧱 Creating edge walls for map ${this.mapData.id}, dimensions: ${mapWidth}x${mapHeight}`
+    );
+
+    // Define edges - positioned further out to allow transition zone
+    const edges = [
+      {
+        name: "left",
+        x: -wallOffset - wallThickness / 2,
+        y: mapHeight / 2,
+        width: wallThickness,
+        height: mapHeight,
+      },
+      {
+        name: "right",
+        x: mapWidth + wallOffset + wallThickness / 2,
+        y: mapHeight / 2,
+        width: wallThickness,
+        height: mapHeight,
+      },
+      {
+        name: "top",
+        x: mapWidth / 2,
+        y: -wallOffset - wallThickness / 2,
+        width: mapWidth,
+        height: wallThickness,
+      },
+      {
+        name: "bottom",
+        x: mapWidth / 2,
+        y: mapHeight + wallOffset + wallThickness / 2,
+        width: mapWidth,
+        height: wallThickness,
+      },
+    ];
+
+    edges.forEach((edge) => {
+      // Get all exits on this edge
+      const edgeExits = exits.filter((e: any) => e.edge === edge.name);
+
+      if (edgeExits.length === 0) {
+        // No exits on this edge - create one solid wall
+        const wall = this.add.rectangle(
+          edge.x,
+          edge.y,
+          edge.width,
+          edge.height,
+          0x000000,
+          0
+        );
+        this.physics.add.existing(wall, true); // true = static body
+        this.edgeWalls.push(wall);
+        console.log(`  Created solid wall on ${edge.name} edge`);
+      } else {
+        // Exits exist - create wall segments between exits
+        const isHorizontal = edge.name === "top" || edge.name === "bottom";
+        const edgeLength = isHorizontal ? mapWidth : mapHeight;
+
+        // Sort exits by position
+        edgeExits.sort((a: any, b: any) => a.edgeStart - b.edgeStart);
+
+        // Create wall segments
+        let lastEnd = 0;
+
+        edgeExits.forEach((exitZone: any) => {
+          const exitStart = exitZone.edgeStart * edgeLength;
+          const exitEnd = exitZone.edgeEnd * edgeLength;
+
+          // Create wall before this exit
+          if (exitStart > lastEnd + 1) {
+            const segmentLength = exitStart - lastEnd;
+            const segmentCenter = lastEnd + segmentLength / 2;
+
+            if (isHorizontal) {
+              const wall = this.add.rectangle(
+                segmentCenter,
+                edge.y,
+                segmentLength,
+                wallThickness,
+                0x000000,
+                0
+              );
+              this.physics.add.existing(wall, true);
+              this.edgeWalls.push(wall);
+            } else {
+              const wall = this.add.rectangle(
+                edge.x,
+                segmentCenter,
+                wallThickness,
+                segmentLength,
+                0x000000,
+                0
+              );
+              this.physics.add.existing(wall, true);
+              this.edgeWalls.push(wall);
+            }
+          }
+
+          lastEnd = exitEnd;
+        });
+
+        // Create wall after last exit
+        if (lastEnd < edgeLength - 1) {
+          const segmentLength = edgeLength - lastEnd;
+          const segmentCenter = lastEnd + segmentLength / 2;
+
+          if (isHorizontal) {
+            const wall = this.add.rectangle(
+              segmentCenter,
+              edge.y,
+              segmentLength,
+              wallThickness,
+              0x000000,
+              0
+            );
+            this.physics.add.existing(wall, true);
+            this.edgeWalls.push(wall);
+          } else {
+            const wall = this.add.rectangle(
+              edge.x,
+              segmentCenter,
+              wallThickness,
+              segmentLength,
+              0x000000,
+              0
+            );
+            this.physics.add.existing(wall, true);
+            this.edgeWalls.push(wall);
+          }
+        }
+
+        console.log(
+          `  Created ${edgeExits.length} gaps on ${edge.name} edge for exits`
+        );
+      }
+    });
+
+    // Add colliders for player vs edge walls
+    this.edgeWalls.forEach((wall) => {
+      const collider = this.physics.add.collider(this.player, wall);
+      this.activeColliders.push(collider);
+    });
+
+    // Add colliders for enemies vs edge walls
+    this.edgeWalls.forEach((wall) => {
+      const collider = this.physics.add.collider(this.enemies, wall);
+      this.activeColliders.push(collider);
+    });
+
+    console.log(`✅ Created ${this.edgeWalls.length} edge wall segments`);
   }
 
   private startBackgroundMusic(): void {
