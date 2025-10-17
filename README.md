@@ -28,6 +28,7 @@ A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeS
 - **Controls**:
   - Arrow keys: Move left/right
   - Spacebar: Jump
+  - Down + Spacebar: Drop through platforms (one-way)
 - **Physics**: Realistic gravity and collision detection
 - **Camera**: Follows the player with smooth scrolling
 - **Starting Positions**: Most characters start at the beginning, Plasma Paladin starts near the portal
@@ -35,11 +36,7 @@ A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeS
 ### Game World
 
 - **Platforms**: Multiple platforms at varying heights with neon-lit edges
-- **Background**: Custom cyberpunk cityscape backgrounds with:
-  - Three unique high-quality background images (1728x576px, ~800KB each)
-  - Random background selection on each map load
-  - Atmospheric effects (floating particles, fog, rain)
-  - **Parallax scrolling** for enhanced depth perception
+- **Background**: Disabled (no background images rendered)
 - **World Size**: Large 4100px wide × 800px tall world for exploration
 - **Maximized Playable Area**: Ground positioned at bottom of screen for maximum vertical space
 - **Animated Portal**: Victory condition - reach the animated portal at the end of the level with smooth 12-frame sprite animation
@@ -61,6 +58,7 @@ A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeS
 - **Health Bar**: Visual health indicator with color changes
 - **Game Over Screen**: Restart functionality with character info
 - **Victory Screen**: Celebration screen with floating particles and play again option
+- **World Picker**: After selecting a character, choose which world JSON to load
 
 ### Audio Features
 
@@ -78,6 +76,9 @@ A complete 2D platformer game built with **Next.js**, **Phaser.js**, and **TypeS
 - **Map Validation**: Automatic validation of map data structure and integrity
 - **File System Integration**: Uses modern File System Access API with fallback
 - **Map Management**: Built-in save/load functionality with keyboard shortcuts (S/L keys)
+  - Platform tool: place platform tiles that are one-way in gameplay
+  - Autotile behavior: platforms are treated as non-solid for solid-tile autotiling
+  - With autotile ON, platform placement randomly picks tile index 49–52
 
 ## Recent Improvements
 
@@ -444,7 +445,7 @@ The game engine is integrated into Next.js through:
 ### Graphics & Assets
 
 - **Character Sprites**: High-quality pixel art character sprites with multiple animation states
-- **Background System**: Custom high-quality background images with random selection and parallax scrolling
+- **Background System**: Disabled (no background images rendered)
 - **Sprite Sizes**: Characters and enemies use 64x64 pixel sprites for detailed visuals
 - **Animated Sprites**: Portal uses clean 12-frame sprite animation, characters have walking/idle/jump animations
 

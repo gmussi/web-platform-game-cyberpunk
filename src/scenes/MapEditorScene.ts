@@ -1991,6 +1991,13 @@ export class MapEditorScene extends Phaser.Scene {
       this.toggleAutotile();
     });
 
+    // Add E key handler to switch to Erase tool
+    this.input.keyboard.on("keydown-E", () => {
+      this.selectedTool = "erase";
+      this.selectedSpriteIndex = null;
+      this.updateToolSelection();
+    });
+
     // Camera controls
     this.cameraSpeed = 10; // Increased speed for better navigation
   }
