@@ -1,0 +1,6379 @@
+{
+  "version": "2.0",
+  "metadata": {
+    "name": "World 234234",
+    "description": "Generated 16 rooms (tool output)",
+    "author": "Map Editor",
+    "created": "2025-10-17T12:28:47.729Z"
+  },
+  "seed": "234234",
+  "startingMap": "room_1",
+  "startingSpawn": "default",
+  "startingPosition": {
+    "x": 100,
+    "y": 1008
+  },
+  "maps": {
+    "room_1": {
+      "id": "room_1",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_1",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.728Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 1120,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_1_to_room_2_right_0",
+          "x": 768,
+          "y": 544,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4857142857142857,
+          "edgeEnd": 0.5428571428571428,
+          "tileStart": 17,
+          "tileEnd": 19,
+          "targetMapId": "room_2"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": 62
+          },
+          {
+            "type": 0,
+            "spriteIndex": 62
+          },
+          {
+            "type": 0,
+            "spriteIndex": 59
+          },
+          {
+            "type": 0,
+            "spriteIndex": 60
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": 60
+          },
+          {
+            "type": 0,
+            "spriteIndex": 62
+          },
+          {
+            "type": 0,
+            "spriteIndex": 60
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 2,
+            "spriteIndex": 60
+          },
+          {
+            "type": 2,
+            "spriteIndex": 61
+          },
+          {
+            "type": 2,
+            "spriteIndex": 61
+          },
+          {
+            "type": 2,
+            "spriteIndex": 59
+          },
+          {
+            "type": 2,
+            "spriteIndex": 62
+          },
+          {
+            "type": 2,
+            "spriteIndex": 62
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 2,
+            "spriteIndex": 60
+          },
+          {
+            "type": 2,
+            "spriteIndex": 60
+          },
+          {
+            "type": 2,
+            "spriteIndex": 59
+          },
+          {
+            "type": 2,
+            "spriteIndex": 61
+          },
+          {
+            "type": 2,
+            "spriteIndex": 60
+          },
+          {
+            "type": 2,
+            "spriteIndex": 60
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": 60
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": 60
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 2,
+            "spriteIndex": 59
+          },
+          {
+            "type": 2,
+            "spriteIndex": 59
+          },
+          {
+            "type": 2,
+            "spriteIndex": 61
+          },
+          {
+            "type": 2,
+            "spriteIndex": 61
+          },
+          {
+            "type": 2,
+            "spriteIndex": 59
+          },
+          {
+            "type": 2,
+            "spriteIndex": 59
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": 61
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 0,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ],
+        [
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          },
+          {
+            "type": 1,
+            "spriteIndex": null
+          }
+        ]
+      ],
+      "gridPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "gridHeight": 1,
+      "background": [
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "decoration": [
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    "room_2": {
+      "id": "room_2",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_2",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.728Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1152,
+        "height": 1600,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_2_to_room_1_left_0",
+          "x": 0,
+          "y": 768,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.48,
+          "edgeEnd": 0.52,
+          "tileStart": 24,
+          "tileEnd": 26,
+          "targetMapId": "room_1"
+        },
+        {
+          "id": "room_2_to_room_3_right_0",
+          "x": 1120,
+          "y": 768,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.48,
+          "edgeEnd": 0.52,
+          "tileStart": 24,
+          "tileEnd": 26,
+          "targetMapId": "room_3"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 1,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_3": {
+      "id": "room_3",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_3",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.728Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1536,
+        "height": 2272,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_3_to_room_2_left_0",
+          "x": 0,
+          "y": 1120,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.49295774647887325,
+          "edgeEnd": 0.5211267605633803,
+          "tileStart": 35,
+          "tileEnd": 37,
+          "targetMapId": "room_2"
+        },
+        {
+          "id": "room_3_to_room_4_right_0",
+          "x": 1504,
+          "y": 736,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.3333333333333333,
+          "edgeStart": 0.323943661971831,
+          "edgeEnd": 0.352112676056338,
+          "tileStart": 23,
+          "tileEnd": 25,
+          "targetMapId": "room_4"
+        },
+        {
+          "id": "room_3_to_room_9_right_1",
+          "x": 1504,
+          "y": 1472,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.6666666666666666,
+          "edgeStart": 0.647887323943662,
+          "edgeEnd": 0.676056338028169,
+          "tileStart": 46,
+          "tileEnd": 48,
+          "targetMapId": "room_9"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 2,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_4": {
+      "id": "room_4",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_4",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.728Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1888,
+        "height": 1920,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_4_to_room_10_bottom_0",
+          "x": 928,
+          "y": 1888,
+          "width": 96,
+          "height": 32,
+          "edge": "bottom",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4915254237288136,
+          "edgeEnd": 0.5254237288135594,
+          "tileStart": 29,
+          "tileEnd": 31,
+          "targetMapId": "room_10"
+        },
+        {
+          "id": "room_4_to_room_3_left_0",
+          "x": 0,
+          "y": 928,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.48333333333333334,
+          "edgeEnd": 0.5166666666666667,
+          "tileStart": 29,
+          "tileEnd": 31,
+          "targetMapId": "room_3"
+        },
+        {
+          "id": "room_4_to_room_5_right_0",
+          "x": 1856,
+          "y": 608,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.3333333333333333,
+          "edgeStart": 0.31666666666666665,
+          "edgeEnd": 0.35,
+          "tileStart": 19,
+          "tileEnd": 21,
+          "targetMapId": "room_5"
+        },
+        {
+          "id": "room_4_to_room_13_right_1",
+          "x": 1856,
+          "y": 1248,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.6666666666666666,
+          "edgeStart": 0.65,
+          "edgeEnd": 0.6833333333333333,
+          "tileStart": 39,
+          "tileEnd": 41,
+          "targetMapId": "room_13"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 3,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_5": {
+      "id": "room_5",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_5",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.728Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1600,
+        "height": 1408,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_5_to_room_4_left_0",
+          "x": 0,
+          "y": 672,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4772727272727273,
+          "edgeEnd": 0.5227272727272727,
+          "tileStart": 21,
+          "tileEnd": 23,
+          "targetMapId": "room_4"
+        },
+        {
+          "id": "room_5_to_room_6_right_0",
+          "x": 1568,
+          "y": 672,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4772727272727273,
+          "edgeEnd": 0.5227272727272727,
+          "tileStart": 21,
+          "tileEnd": 23,
+          "targetMapId": "room_6"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 6,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_6": {
+      "id": "room_6",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_6",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.728Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1312,
+        "height": 2400,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_6_to_room_5_left_0",
+          "x": 0,
+          "y": 1184,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.49333333333333335,
+          "edgeEnd": 0.52,
+          "tileStart": 37,
+          "tileEnd": 39,
+          "targetMapId": "room_5"
+        },
+        {
+          "id": "room_6_to_room_7_right_0",
+          "x": 1280,
+          "y": 576,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.25,
+          "edgeStart": 0.24,
+          "edgeEnd": 0.26666666666666666,
+          "tileStart": 18,
+          "tileEnd": 20,
+          "targetMapId": "room_7"
+        },
+        {
+          "id": "room_6_to_room_14_right_1",
+          "x": 1280,
+          "y": 1184,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.49333333333333335,
+          "edgeEnd": 0.52,
+          "tileStart": 37,
+          "tileEnd": 39,
+          "targetMapId": "room_14"
+        },
+        {
+          "id": "room_6_to_room_15_right_2",
+          "x": 1280,
+          "y": 1760,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.75,
+          "edgeStart": 0.7333333333333333,
+          "edgeEnd": 0.76,
+          "tileStart": 55,
+          "tileEnd": 57,
+          "targetMapId": "room_15"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 7,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_7": {
+      "id": "room_7",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_7",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1280,
+        "height": 3136,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_7_to_room_6_left_0",
+          "x": 0,
+          "y": 1024,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.3333333333333333,
+          "edgeStart": 0.32653061224489793,
+          "edgeEnd": 0.3469387755102041,
+          "tileStart": 32,
+          "tileEnd": 34,
+          "targetMapId": "room_6"
+        },
+        {
+          "id": "room_7_to_room_15_left_1",
+          "x": 0,
+          "y": 2048,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.6666666666666666,
+          "edgeStart": 0.6530612244897959,
+          "edgeEnd": 0.673469387755102,
+          "tileStart": 64,
+          "tileEnd": 66,
+          "targetMapId": "room_15"
+        },
+        {
+          "id": "room_7_to_room_8_right_0",
+          "x": 1248,
+          "y": 768,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.25,
+          "edgeStart": 0.24489795918367346,
+          "edgeEnd": 0.2653061224489796,
+          "tileStart": 24,
+          "tileEnd": 26,
+          "targetMapId": "room_8"
+        },
+        {
+          "id": "room_7_to_room_11_right_1",
+          "x": 1248,
+          "y": 1536,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4897959183673469,
+          "edgeEnd": 0.5102040816326531,
+          "tileStart": 48,
+          "tileEnd": 50,
+          "targetMapId": "room_11"
+        },
+        {
+          "id": "room_7_to_room_12_right_2",
+          "x": 1248,
+          "y": 2336,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.75,
+          "edgeStart": 0.7448979591836735,
+          "edgeEnd": 0.7653061224489796,
+          "tileStart": 73,
+          "tileEnd": 75,
+          "targetMapId": "room_12"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 10,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_8": {
+      "id": "room_8",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_8",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 768,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_8_to_room_7_left_0",
+          "x": 0,
+          "y": 352,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4583333333333333,
+          "edgeEnd": 0.5416666666666666,
+          "tileStart": 11,
+          "tileEnd": 13,
+          "targetMapId": "room_7"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 13,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_9": {
+      "id": "room_9",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_9",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 672,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_9_to_room_3_left_0",
+          "x": 0,
+          "y": 320,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.47619047619047616,
+          "edgeEnd": 0.5714285714285714,
+          "tileStart": 10,
+          "tileEnd": 12,
+          "targetMapId": "room_3"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 4,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_10": {
+      "id": "room_10",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_10",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1280,
+        "height": 992,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_10_to_room_4_top_0",
+          "x": 608,
+          "y": 0,
+          "width": 96,
+          "height": 32,
+          "edge": "top",
+          "edgePosition": 0.5,
+          "edgeStart": 0.475,
+          "edgeEnd": 0.525,
+          "tileStart": 19,
+          "tileEnd": 21,
+          "targetMapId": "room_4"
+        },
+        {
+          "id": "room_10_to_room_16_right_0",
+          "x": 1248,
+          "y": 480,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4838709677419355,
+          "edgeEnd": 0.5483870967741935,
+          "tileStart": 15,
+          "tileEnd": 17,
+          "targetMapId": "room_16"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 4,
+        "y": 1
+      },
+      "gridHeight": 1
+    },
+    "room_11": {
+      "id": "room_11",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_11",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 992,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_11_to_room_7_left_0",
+          "x": 0,
+          "y": 480,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4838709677419355,
+          "edgeEnd": 0.5483870967741935,
+          "tileStart": 15,
+          "tileEnd": 17,
+          "targetMapId": "room_7"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 11,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_12": {
+      "id": "room_12",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_12",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 1056,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_12_to_room_7_left_0",
+          "x": 0,
+          "y": 512,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.48484848484848486,
+          "edgeEnd": 0.5454545454545454,
+          "tileStart": 16,
+          "tileEnd": 18,
+          "targetMapId": "room_7"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 12,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_13": {
+      "id": "room_13",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_13",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 1088,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_13_to_room_4_left_0",
+          "x": 0,
+          "y": 512,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.47058823529411764,
+          "edgeEnd": 0.5294117647058824,
+          "tileStart": 16,
+          "tileEnd": 18,
+          "targetMapId": "room_4"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 5,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_14": {
+      "id": "room_14",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_14",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 1024,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_14_to_room_6_left_0",
+          "x": 0,
+          "y": 480,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.46875,
+          "edgeEnd": 0.53125,
+          "tileStart": 15,
+          "tileEnd": 17,
+          "targetMapId": "room_6"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 8,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_15": {
+      "id": "room_15",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_15",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 1312,
+        "height": 1664,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_15_to_room_6_left_0",
+          "x": 0,
+          "y": 800,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4807692307692308,
+          "edgeEnd": 0.5192307692307693,
+          "tileStart": 25,
+          "tileEnd": 27,
+          "targetMapId": "room_6"
+        },
+        {
+          "id": "room_15_to_room_7_right_0",
+          "x": 1280,
+          "y": 800,
+          "width": 32,
+          "height": 96,
+          "edge": "right",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4807692307692308,
+          "edgeEnd": 0.5192307692307693,
+          "tileStart": 25,
+          "tileEnd": 27,
+          "targetMapId": "room_7"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 9,
+        "y": 0
+      },
+      "gridHeight": 1
+    },
+    "room_16": {
+      "id": "room_16",
+      "version": "2.0",
+      "metadata": {
+        "name": "room_16",
+        "description": "Auto-generated from seed 234234",
+        "created": "2025-10-17T12:28:47.729Z",
+        "author": "Map Editor"
+      },
+      "world": {
+        "width": 800,
+        "height": 896,
+        "tileSize": 32
+      },
+      "exits": [
+        {
+          "id": "room_16_to_room_10_left_0",
+          "x": 0,
+          "y": 416,
+          "width": 32,
+          "height": 96,
+          "edge": "left",
+          "edgePosition": 0.5,
+          "edgeStart": 0.4642857142857143,
+          "edgeEnd": 0.5357142857142857,
+          "tileStart": 13,
+          "tileEnd": 15,
+          "targetMapId": "room_10"
+        }
+      ],
+      "portal": null,
+      "enemies": [],
+      "platforms": [],
+      "collectibles": [],
+      "checkpoints": [],
+      "tiles": [],
+      "gridPosition": {
+        "x": 5,
+        "y": 1
+      },
+      "gridHeight": 1
+    }
+  }
+}

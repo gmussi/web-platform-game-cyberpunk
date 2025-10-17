@@ -233,7 +233,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  public create(): void {
+  public create(data?: any): void {
     // Initialize world system
     this.worldSystem = new WorldSystem(this as any);
 
@@ -254,12 +254,11 @@ export class GameScene extends Phaser.Scene {
     // Set world bounds based on scroll direction (after tilemap system is created)
     this.setupWorldBounds();
 
-    // Create background immediately
-    this.createBackground();
+    // Background disabled
     this.createDarkOverlay();
 
     // Load world data if available, otherwise use default
-    this.loadWorldData();
+    this.loadWorldDataWithOptionalSelector(data);
 
     // Create player immediately (will be repositioned when map loads)
     this.createPlayer();
@@ -372,6 +371,244 @@ export class GameScene extends Phaser.Scene {
       });
   }
 
+  private loadWorldDataWithOptionalSelector(data?: any): void {
+    this.worldSystem
+      .loadWorldFromURL(
+        `${ASSET_PATHS.maps}/default_world.json?v=${Date.now()}`
+      )
+      .then((worldData) => {
+        console.log(
+          "🎯 GameScene: World data loaded:",
+          worldData.metadata?.name
+        );
+        this.worldViewRenderer.setWorldData(worldData);
+        const currentMap = this.worldSystem.getCurrentMap();
+        if (!currentMap) throw new Error("Starting map not found in world");
+        this.mapData = currentMap;
+        const startingSpawn = this.worldSystem.getSpawnPoint(
+          worldData.startingSpawn
+        );
+        this.loadTileDataFromMap();
+        this.tilemapSystem.createCollisionBodies();
+        this.createEnemies();
+        this.createExitZones();
+        this.createPortal();
+        this.setupCollisions();
+        this.updateObjectsFromMapData(startingSpawn);
+        if (data && data.showWorldPicker) {
+          this.time.delayedCall(50, () => this.openWorldPicker());
+        }
+      })
+      .catch((error: Error) => {
+        console.error("Failed to load world file:", error.message);
+        console.error(
+          "Game cannot start without a valid world file. Please ensure default_world.json exists in the maps directory."
+        );
+        this.add
+          .text(600, 400, "World Loading Error", {
+            fontSize: "32px",
+            fill: "#ff4444",
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5);
+        this.add
+          .text(600, 450, "Failed to load default world", {
+            fontSize: "18px",
+            fill: "#ffffff",
+          })
+          .setOrigin(0.5);
+        this.add
+          .text(600, 480, "Please ensure the world file exists and is valid", {
+            fontSize: "16px",
+            fill: "#cccccc",
+          })
+          .setOrigin(0.5);
+      });
+  }
+
+  private openMapSelectorModal(): void {
+    const centerX =
+      this.cameras.main.worldView.x + this.cameras.main.worldView.width / 2;
+    const centerY =
+      this.cameras.main.worldView.y + this.cameras.main.worldView.height / 2;
+    const bg = this.add.rectangle(centerX, centerY, 400, 500, 0x000000, 0.8);
+    bg.setDepth(1000);
+    const title = this.add
+      .text(centerX, centerY - 220, "Select Map", {
+        fontSize: "18px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(1001);
+    const mapIds = this.worldSystem.getAllMapIds();
+    const startY = centerY - 180;
+    const itemHeight = 40;
+    const maxVisible = 8;
+    const buttons: Phaser.GameObjects.Text[] = [];
+    mapIds.slice(0, maxVisible).forEach((mapId, index) => {
+      const map = this.worldSystem.getMap(mapId);
+      if (!map) return;
+      const displayText = `${mapId} - ${map.metadata.name || mapId}`;
+      const btn = this.add
+        .text(centerX, startY + index * itemHeight, displayText, {
+          fontSize: "12px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          backgroundColor: "#444444",
+          padding: { x: 10, y: 5 },
+        })
+        .setOrigin(0.5)
+        .setDepth(1001)
+        .setInteractive();
+      btn.on("pointerdown", () => {
+        this.switchToMapAndCloseModal(mapId, [bg, title, ...buttons]);
+      });
+      buttons.push(btn);
+    });
+    const close = this.add
+      .text(centerX, centerY + 220, "Close", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#aa0000",
+        padding: { x: 10, y: 6 },
+      })
+      .setOrigin(0.5)
+      .setDepth(1001)
+      .setInteractive();
+    close.on("pointerdown", () => {
+      [bg, title, ...buttons, close].forEach((o) => o.destroy());
+    });
+  }
+
+  // Reuse MapEditorScene world picker flow: list JSON files from /api/worlds/list
+  private async openWorldPicker(): Promise<void> {
+    try {
+      const res = await fetch("/api/worlds/list");
+      if (!res.ok) throw new Error(`List failed: ${res.status}`);
+      const data = await res.json();
+      const files: string[] = (data?.files || []).filter((f: string) =>
+        f.endsWith(".json")
+      );
+
+      const centerX =
+        this.cameras.main.worldView.x + this.cameras.main.worldView.width / 2;
+      const centerY =
+        this.cameras.main.worldView.y + this.cameras.main.worldView.height / 2;
+      const modalBg = this.add.rectangle(
+        centerX,
+        centerY,
+        420,
+        520,
+        0x000000,
+        0.85
+      );
+      modalBg.setDepth(1000);
+
+      const title = this.add
+        .text(centerX, centerY - 230, "Load World", {
+          fontSize: "16px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5)
+        .setDepth(1001);
+
+      const buttons: Phaser.GameObjects.Text[] = [];
+      const listStartY = centerY - 190;
+      const lineHeight = 24;
+      files.slice(0, 16).forEach((file, idx) => {
+        const by = listStartY + idx * lineHeight;
+        const btn = this.add
+          .text(centerX, by, file, {
+            fontSize: "12px",
+            fill: "#ffffff",
+            backgroundColor: "#444444",
+            padding: { x: 6, y: 3 },
+          })
+          .setOrigin(0.5)
+          .setDepth(1001)
+          .setInteractive();
+        btn.on("pointerdown", async () => {
+          await this.loadWorldFromFile(file);
+          cleanup();
+        });
+        btn.on("pointerover", () => btn.setBackgroundColor("#666666"));
+        btn.on("pointerout", () => btn.setBackgroundColor("#444444"));
+        buttons.push(btn);
+      });
+
+      const cancelBtn = this.add
+        .text(centerX, centerY + 230, "Cancel", {
+          fontSize: "12px",
+          fill: "#ffffff",
+          backgroundColor: "#aa0000",
+          padding: { x: 10, y: 6 },
+        })
+        .setOrigin(0.5)
+        .setDepth(1001)
+        .setInteractive();
+      cancelBtn.on("pointerdown", () => cleanup());
+
+      const cleanup = () => {
+        modalBg.destroy();
+        title.destroy();
+        cancelBtn.destroy();
+        buttons.forEach((b) => b.destroy());
+      };
+    } catch (e: any) {
+      console.error("Failed to list worlds:", e);
+      alert(`Failed to list worlds: ${e?.message || e}`);
+    }
+  }
+
+  private async loadWorldFromFile(fileName: string): Promise<void> {
+    try {
+      const url = `${ASSET_PATHS.maps}/${fileName}?v=${Date.now()}`;
+      const worldData = await this.worldSystem.loadWorldFromURL(url);
+      this.worldViewRenderer.setWorldData(worldData);
+      const currentMap = this.worldSystem.getCurrentMap();
+      if (!currentMap) return;
+      this.mapData = currentMap;
+      this.cleanupMapContent();
+      this.loadTileDataFromMap();
+      this.tilemapSystem.createCollisionBodies();
+      this.createEnemies();
+      this.createExitZones();
+      this.createPortal();
+      this.setupCollisions();
+      this.setupWorldBounds();
+      this.setupCamera();
+      if (this.worldViewRenderer.getIsVisible())
+        this.worldViewRenderer.update();
+    } catch (e: any) {
+      console.error("Error loading world:", e);
+      alert(`Error loading world: ${e?.message || e}`);
+    }
+  }
+
+  private switchToMapAndCloseModal(
+    mapId: string,
+    toDestroy: Phaser.GameObjects.GameObject[]
+  ): void {
+    toDestroy.forEach((o) => o.destroy());
+    const ok = this.worldSystem.switchMap(mapId, null);
+    if (!ok) return;
+    const newMap = this.worldSystem.getCurrentMap();
+    if (!newMap) return;
+    this.cleanupMapContent();
+    this.loadTileDataFromMap();
+    this.tilemapSystem.createCollisionBodies();
+    this.createEnemies();
+    this.createExitZones();
+    this.createPortal();
+    this.setupCollisions();
+    this.setupWorldBounds();
+    this.setupCamera();
+    if (this.worldViewRenderer.getIsVisible()) this.worldViewRenderer.update();
+  }
+
   private loadTileDataFromMap(): void {
     // Load tile data from map
     if (
@@ -406,7 +643,7 @@ export class GameScene extends Phaser.Scene {
           );
           this.tilemapSystem.resizeMap(mapWidthInTiles, mapHeightInTiles);
           this.setupWorldBounds();
-          this.createBackground();
+          // Background disabled
           this.setupCamera();
         } else {
           console.log("✅ No resizing needed - dimensions match");
@@ -488,53 +725,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBackground(): void {
-    // Randomly select one of the three background images
-    const backgroundKeys = ["background1", "background2", "background3"];
-    const selectedBackground =
-      backgroundKeys[Math.floor(Math.random() * backgroundKeys.length)];
-
-    // Create the background image
-    if (this.textures.exists(selectedBackground)) {
-      // Create a single background image that covers the entire world
-      const worldWidth = this.tilemapSystem
-        ? this.tilemapSystem.getWorldWidth()
-        : GAME_CONSTANTS.WORLD_WIDTH;
-      const worldHeight = this.tilemapSystem
-        ? this.tilemapSystem.getWorldHeight()
-        : GAME_CONSTANTS.WORLD_HEIGHT;
-      const imageWidth = this.textures.get(selectedBackground).source[0].width;
-      const imageHeight =
-        this.textures.get(selectedBackground).source[0].height;
-
-      // Calculate scale to cover the full world width (may stretch vertically)
-      // New images are 1728x576px, world is 4100x800px
-      const scaleX = worldWidth / imageWidth; // 4100 / 1728 ≈ 2.37
-      const scaleY = worldHeight / imageHeight; // 800 / 576 ≈ 1.39
-
-      // Use the larger scale to ensure full coverage of world width
-      const scale = Math.max(scaleX, scaleY);
-
-      // Background images have empty space in first 6 columns (at 32px per tile = 192px)
-      // Shift the background left to hide the empty space
-      const emptySpaceWidth = 192; // 6 tiles * 32px
-      const offsetX = -(emptySpaceWidth * scale) / 2;
-
-      // Position the background to start from the left edge of the world, adjusted for empty space
-      this.backgroundImage = this.add.image(
-        (imageWidth * scale) / 2 + offsetX,
-        worldHeight / 2,
-        selectedBackground
-      );
-      this.backgroundImage.setScrollFactor(0.3);
-      this.backgroundImage.setDepth(-10);
-      this.backgroundImage.setScale(scale);
-    } else {
-      // Background texture not found, using fallback
-      this.createFallbackBackground();
+    // Background images are disabled. Remove any existing background image and skip rendering.
+    if (this.backgroundImage) {
+      (this.backgroundImage as any).destroy();
+      this.backgroundImage = undefined as any;
     }
-
-    // Add some additional atmospheric elements with different parallax speeds
-    this.addAtmosphericElements();
+    return;
   }
 
   private createDarkOverlay(): void {
@@ -903,6 +1099,54 @@ export class GameScene extends Phaser.Scene {
       const collider = this.physics.add.collider(this.player, body);
       this.activeColliders.push(collider);
     });
+    // Player vs one-way platforms using process callback
+    if (this.tilemapSystem.platformGroup) {
+      const playerPlatformCollider = (this.physics.add as any).collider(
+        this.player,
+        this.tilemapSystem.platformGroup,
+        undefined,
+        (player: any, platform: any) => {
+          const pb = (player && player.body) as Phaser.Physics.Arcade.Body;
+          const plb = (platform && platform.body) as Phaser.Physics.Arcade.Body;
+          if (!pb || !plb) return false;
+          const dropping = (player as any).isDroppingThrough === true;
+          const until = (player as any).dropThroughUntil || 0;
+          const now = this.time.now;
+          if (dropping && now < until) return false;
+          return pb.velocity.y > 0 && pb.bottom <= plb.top + 6;
+        }
+      );
+      (this as any).playerPlatformCollider = playerPlatformCollider;
+      this.activeColliders.push(playerPlatformCollider);
+
+      // Enemies vs platforms (simple collider)
+      const enemyPlatformCollider = this.physics.add.collider(
+        this.enemies,
+        this.tilemapSystem.platformGroup
+      );
+      this.activeColliders.push(enemyPlatformCollider);
+
+      // Backup colliders for individual platform bodies
+      this.tilemapSystem.platformBodies.forEach((body: any) => {
+        const c = (this.physics.add as any).collider(
+          this.player,
+          body,
+          undefined,
+          (player: any, platform: any) => {
+            const pb = (player && player.body) as Phaser.Physics.Arcade.Body;
+            const plb = (platform &&
+              platform.body) as Phaser.Physics.Arcade.Body;
+            if (!pb || !plb) return false;
+            const dropping = (player as any).isDroppingThrough === true;
+            const until = (player as any).dropThroughUntil || 0;
+            const now = this.time.now;
+            if (dropping && now < until) return false;
+            return pb.velocity.y > 0 && pb.bottom <= plb.top + 6;
+          }
+        );
+        this.activeColliders.push(c);
+      });
+    }
 
     // Player vs Enemies
     const playerEnemyOverlap = this.physics.add.overlap(

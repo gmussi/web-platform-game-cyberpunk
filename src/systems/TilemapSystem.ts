@@ -12,6 +12,8 @@ export class TilemapSystem {
   public visualLayer: Phaser.GameObjects.Graphics;
   public collisionBodies: any[];
   public collisionGroup!: Phaser.Physics.Arcade.StaticGroup;
+  public platformBodies: any[];
+  public platformGroup!: Phaser.Physics.Arcade.StaticGroup;
   public tileSpriteIndices: (number | null)[][];
   public tileSprites: Phaser.GameObjects.GameObject[];
   public autoTileSystem!: AutotileSystem;
@@ -58,6 +60,7 @@ export class TilemapSystem {
 
     // Initialize collision bodies array
     this.collisionBodies = [];
+    this.platformBodies = [];
 
     // Initialize sprite indices storage
     this.tileSpriteIndices = [];
@@ -180,6 +183,7 @@ export class TilemapSystem {
   static TILE_TYPES = {
     EMPTY: 0,
     SOLID: 1, // All non-zero values are treated as SOLID tiles
+    PLATFORM: 2,
     EXIT_LEFT: 100,
     EXIT_RIGHT: 101,
     EXIT_TOP: 102,
@@ -206,18 +210,25 @@ export class TilemapSystem {
       this.tiles[y][x] = tileType;
 
       // Handle sprite index storage based on autotiling state
-      if (tileType === TilemapSystem.TILE_TYPES.SOLID) {
+      if (
+        tileType === TilemapSystem.TILE_TYPES.SOLID ||
+        tileType === TilemapSystem.TILE_TYPES.PLATFORM
+      ) {
         if (!this.tileSpriteIndices) {
           this.tileSpriteIndices = [];
         }
         this.tileSpriteIndices[y] = this.tileSpriteIndices[y] || [];
-
-        if (this.autoTileSystem?.isEnabled()) {
-          // Autotiling enabled: clear manual sprite index, let autotile system handle it
-          this.tileSpriteIndices[y][x] = null;
-        } else {
-          // Autotiling disabled: store the provided sprite index (manual mode)
+        if (tileType === TilemapSystem.TILE_TYPES.PLATFORM) {
+          // Always store sprite index for PLATFORM (we don't autotile platforms)
           this.tileSpriteIndices[y][x] = spriteIndex;
+        } else {
+          if (this.autoTileSystem?.isEnabled()) {
+            // Autotiling enabled: clear manual sprite index, let autotile system handle it
+            this.tileSpriteIndices[y][x] = null;
+          } else {
+            // Autotiling disabled: store the provided sprite index (manual mode)
+            this.tileSpriteIndices[y][x] = spriteIndex;
+          }
         }
       }
 
@@ -289,18 +300,32 @@ export class TilemapSystem {
     // Only render solid tiles (empty tiles and special tiles like exits don't get visuals)
     if (this.isSolidTile(tileType) && this.gameVisible) {
       let spriteIndex: number | null = null;
-
-      // Use autotile system if enabled, otherwise use stored sprite index
-      if (this.autoTileSystem?.isEnabled()) {
-        spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
-      } else {
-        // Get stored sprite index if available (manual mode)
+      // Platforms: always use stored sprite index (no autotile)
+      if (tileType === TilemapSystem.TILE_TYPES.PLATFORM) {
         if (
           this.tileSpriteIndices &&
           this.tileSpriteIndices[y] &&
           this.tileSpriteIndices[y][x] !== undefined
         ) {
           spriteIndex = this.tileSpriteIndices[y][x];
+        }
+        if (spriteIndex === null) {
+          // Fallback frame for platform
+          spriteIndex = 49;
+        }
+      } else {
+        // Use autotile system if enabled, otherwise use stored sprite index
+        if (this.autoTileSystem?.isEnabled()) {
+          spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
+        } else {
+          // Get stored sprite index if available (manual mode)
+          if (
+            this.tileSpriteIndices &&
+            this.tileSpriteIndices[y] &&
+            this.tileSpriteIndices[y][x] !== undefined
+          ) {
+            spriteIndex = this.tileSpriteIndices[y][x];
+          }
         }
       }
 
@@ -324,7 +349,7 @@ export class TilemapSystem {
         worldPos.x,
         worldPos.y,
         tileType,
-        tileImage,
+        tileType === TilemapSystem.TILE_TYPES.PLATFORM ? null : tileImage,
         spriteIndex
       );
     }
@@ -472,12 +497,17 @@ export class TilemapSystem {
             spriteIndex = this.tileSpriteIndices[y][x];
           }
 
-          // If autotiling is disabled and we have a stored sprite index, use it
-          if (!this.autoTileSystem?.isEnabled() && spriteIndex !== null) {
-            // Use the stored sprite index for manual tiles
-          } else if (this.autoTileSystem?.isEnabled()) {
-            // Use autotile system to calculate sprite index
-            spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
+          // Platforms: always use stored sprite index
+          if (tileType !== TilemapSystem.TILE_TYPES.PLATFORM) {
+            // If autotiling is disabled and we have a stored sprite index, use it
+            if (!this.autoTileSystem?.isEnabled() && spriteIndex !== null) {
+              // Use the stored sprite index for manual tiles
+            } else if (this.autoTileSystem?.isEnabled()) {
+              // Use autotile system to calculate sprite index
+              spriteIndex = this.autoTileSystem.calculateTileIndex(x, y);
+            }
+          } else if (spriteIndex === null) {
+            spriteIndex = 49;
           }
 
           // Determine tile image based on context (fallback if no sprite index)
@@ -500,7 +530,7 @@ export class TilemapSystem {
             worldPos.x,
             worldPos.y,
             tileType,
-            tileImage,
+            tileType === TilemapSystem.TILE_TYPES.PLATFORM ? null : tileImage,
             spriteIndex
           );
           tilesDrawn++;
@@ -529,9 +559,11 @@ export class TilemapSystem {
   public createCollisionBodies(): Phaser.Physics.Arcade.StaticGroup {
     // Clear existing collision bodies
     this.collisionBodies = [];
+    this.platformBodies = [];
 
     // Create a static group for all collision bodies
     this.collisionGroup = this.scene.physics.add.staticGroup();
+    this.platformGroup = this.scene.physics.add.staticGroup();
 
     // Create individual collision bodies for ALL solid tiles (including ground)
     let solidTilesCount = 0;
@@ -540,7 +572,7 @@ export class TilemapSystem {
         const tileType = this.tiles[y][x];
 
         // Create collision for ALL solid tiles (including ground level)
-        if (this.isSolidTile(tileType)) {
+        if (tileType === TilemapSystem.TILE_TYPES.SOLID) {
           const worldPos = this.tileToWorld(x, y);
           const collisionBody = this.createTileCollisionBody(
             worldPos.x,
@@ -550,6 +582,22 @@ export class TilemapSystem {
           this.collisionBodies.push(collisionBody);
           this.collisionGroup.add(collisionBody);
           solidTilesCount++;
+        } else if (tileType === TilemapSystem.TILE_TYPES.PLATFORM) {
+          const worldPos = this.tileToWorld(x, y);
+          const platformBody = this.createTileCollisionBody(
+            worldPos.x,
+            worldPos.y,
+            tileType
+          );
+          // Configure as one-way: collide only from above
+          (platformBody.body as any).checkCollision = {
+            up: true,
+            down: false,
+            left: false,
+            right: false,
+          };
+          this.platformBodies.push(platformBody);
+          this.platformGroup.add(platformBody);
         }
       }
     }
@@ -560,7 +608,9 @@ export class TilemapSystem {
 
   // Check if a tile type is solid
   private isSolidTile(tileType: number): boolean {
-    const isSolid = tileType === TilemapSystem.TILE_TYPES.SOLID;
+    const isSolid =
+      tileType === TilemapSystem.TILE_TYPES.SOLID ||
+      tileType === TilemapSystem.TILE_TYPES.PLATFORM;
     if (tileType >= 100 && tileType <= 103) {
       console.log(
         `🔍 isSolidTile check: exit tile type ${tileType} -> ${isSolid}`

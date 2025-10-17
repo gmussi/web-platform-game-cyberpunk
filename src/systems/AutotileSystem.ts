@@ -43,7 +43,10 @@ export class AutotileSystem {
     }
 
     const tileType = this.getTileCallback(x, y);
-    return tileType !== 0; // 0 = empty, anything else = solid
+    // Only treat classic SOLID tiles (value 1) as solid for autotiling.
+    // Platforms (value 2) and other non-zero special tiles should NOT affect
+    // the blob autotile rules for solid blocks.
+    return tileType === 1;
   }
 
   // Calculate the correct tile index for a position based on its neighbors
