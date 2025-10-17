@@ -38,6 +38,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public jumpPhase: JumpPhase;
   public jumpStartTime: number;
   public jumpFrameIndex: number;
+  public isDroppingThrough?: boolean;
+  public dropThroughUntil?: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, characterKey: string) {
     // Get the appropriate character name
@@ -52,12 +54,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Start with the breathing-idle animation first frame
     const initialTexture = `${charName}_breathing_idle_000`;
-    
+
     // Check if the texture exists, fallback to rotation sprite if not
-    const textureKey = scene.textures.exists(initialTexture) 
-      ? initialTexture 
+    const textureKey = scene.textures.exists(initialTexture)
+      ? initialTexture
       : `${charName}_south`;
-    
+
     super(scene, x, y, textureKey);
 
     this.scene = scene;
@@ -190,6 +192,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       // During jump, keep grounded false until landing is complete
       this.isGrounded = false;
+    }
+
+    // Drop-through: down + jump while grounded
+    if (
+      this.isGrounded &&
+      this.cursors.down?.isDown &&
+      Phaser.Input.Keyboard.JustDown(this.spaceKey)
+    ) {
+      this.isDroppingThrough = true;
+      this.dropThroughUntil = this.scene.time.now + 300;
+      // Nudge downward to ensure separation starts
+      this.setVelocityY(60);
+      this.scene.events.emit("playerDropThrough");
+      return;
     }
 
     if (this.isGrounded && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {

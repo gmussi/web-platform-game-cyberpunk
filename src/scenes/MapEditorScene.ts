@@ -890,6 +890,7 @@ export class MapEditorScene extends Phaser.Scene {
       { name: "Portal", key: "portal", color: "#ff00ff" },
       { name: "Enemy1", key: "enemy1", color: "#ff0000" },
       { name: "Enemy2", key: "enemy2", color: "#ff8800" },
+      { name: "Platform", key: "platform", color: "#66ccff" },
       { name: "Solid", key: "solid", color: "#8B4513" },
       { name: "Erase", key: "erase", color: "#000000" },
       { name: "Remove", key: "remove", color: "#ff0000" },
@@ -2046,7 +2047,6 @@ export class MapEditorScene extends Phaser.Scene {
         this.addEnemy(x, y, this.selectedTool);
         break;
       case "ground":
-      case "platform":
       case "wall":
       case "solid":
         // Route based on selected layer
@@ -2070,6 +2070,24 @@ export class MapEditorScene extends Phaser.Scene {
             t.x,
             t.y,
             this.selectedSpriteIndex ?? 0
+          );
+        }
+        break;
+      case "platform":
+        if (this.selectedLayer === "game") {
+          const t = this.tilemapSystem.worldToTile(x, y);
+          // Decide platform sprite index: random 59..63 when autotile ON, else selected or random
+          const autoOn =
+            this.tilemapSystem.autoTileSystem?.isEnabled() ?? false;
+          const rand49to52 = 59 + Math.floor(Math.random() * 4);
+          const spriteIndex = autoOn
+            ? rand49to52
+            : this.selectedSpriteIndex ?? rand49to52;
+          this.tilemapSystem.setTile(
+            t.x,
+            t.y,
+            TilemapSystem.TILE_TYPES.PLATFORM,
+            spriteIndex
           );
         }
         break;

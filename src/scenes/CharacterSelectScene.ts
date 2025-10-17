@@ -293,6 +293,6 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     console.log("🧠 Transitioning to GameScene");
     // Start the game scene
-    this.scene.start("GameScene");
+    this.scene.start("GameScene", { showWorldPicker: true });
   }
 }
