@@ -204,6 +204,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.dropThroughUntil = this.scene.time.now + 300;
       // Nudge downward to ensure separation starts
       this.setVelocityY(60);
+      // Enter falling phase immediately and start on frame 005
+      this.isGrounded = false;
+      this.isJumping = true;
+      this.jumpPhase = "falling";
+      this.jumpStartTime = this.scene.time.now;
+      this.jumpFrameIndex = 0;
       this.scene.events.emit("playerDropThrough");
       return;
     }
