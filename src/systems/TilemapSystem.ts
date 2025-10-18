@@ -955,6 +955,646 @@ export class TilemapSystem {
     this.createCollisionBodies();
   }
 
+  // Add a row to the top (shifts all content down)
+  public addRowToTop(): void {
+    const newHeight = this.mapHeight + 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < newHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data shifted down by 1
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y + 1][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y + 1][x] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y + 1][x] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y + 1][x] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    this.applyResizeChanges(
+      this.mapWidth,
+      newHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Add a row to the bottom
+  public addRowToBottom(): void {
+    const newHeight = this.mapHeight + 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < newHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data (stays in same position)
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    this.applyResizeChanges(
+      this.mapWidth,
+      newHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Remove a row from the top
+  public removeRowFromTop(): void {
+    if (this.mapHeight <= 1) return; // Prevent removing last row
+
+    // Save exit tiles from top row that will be removed
+    const topExitTiles: { x: number; spriteIndex: number | null }[] = [];
+    for (let x = 0; x < this.mapWidth; x++) {
+      if (this.tiles[0][x] === TilemapSystem.TILE_TYPES.EXIT_TOP) {
+        topExitTiles.push({
+          x,
+          spriteIndex: this.tileSpriteIndices[0]?.[x] || null,
+        });
+      }
+    }
+
+    const newHeight = this.mapHeight - 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < newHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data (skip first row)
+    for (let y = 1; y < this.mapHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y - 1][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y - 1][x] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y - 1][x] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y - 1][x] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    // Restore exit tiles to new top row (row 0)
+    for (const exit of topExitTiles) {
+      newTiles[0][exit.x] = TilemapSystem.TILE_TYPES.EXIT_TOP;
+      if (exit.spriteIndex !== null) {
+        newTileSpriteIndices[0][exit.x] = exit.spriteIndex;
+      }
+    }
+
+    this.applyResizeChanges(
+      this.mapWidth,
+      newHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Remove a row from the bottom
+  public removeRowFromBottom(): void {
+    if (this.mapHeight <= 1) return; // Prevent removing last row
+
+    // Save exit tiles from bottom row that will be removed
+    const bottomRow = this.mapHeight - 1;
+    const bottomExitTiles: { x: number; spriteIndex: number | null }[] = [];
+    for (let x = 0; x < this.mapWidth; x++) {
+      if (this.tiles[bottomRow][x] === TilemapSystem.TILE_TYPES.EXIT_BOTTOM) {
+        bottomExitTiles.push({
+          x,
+          spriteIndex: this.tileSpriteIndices[bottomRow]?.[x] || null,
+        });
+      }
+    }
+
+    const newHeight = this.mapHeight - 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < newHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data (skip last row)
+    for (let y = 0; y < newHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    // Restore exit tiles to new bottom row
+    const newBottomRow = newHeight - 1;
+    for (const exit of bottomExitTiles) {
+      newTiles[newBottomRow][exit.x] = TilemapSystem.TILE_TYPES.EXIT_BOTTOM;
+      if (exit.spriteIndex !== null) {
+        newTileSpriteIndices[newBottomRow][exit.x] = exit.spriteIndex;
+      }
+    }
+
+    this.applyResizeChanges(
+      this.mapWidth,
+      newHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Add a column to the left (shifts all content right)
+  public addColumnToLeft(): void {
+    const newWidth = this.mapWidth + 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < this.mapHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < newWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data shifted right by 1
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x + 1] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x + 1] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x + 1] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x + 1] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    this.applyResizeChanges(
+      newWidth,
+      this.mapHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Add a column to the right
+  public addColumnToRight(): void {
+    const newWidth = this.mapWidth + 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < this.mapHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < newWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data (stays in same position)
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 0; x < this.mapWidth; x++) {
+        newTiles[y][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    this.applyResizeChanges(
+      newWidth,
+      this.mapHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Remove a column from the left
+  public removeColumnFromLeft(): void {
+    if (this.mapWidth <= 1) return; // Prevent removing last column
+
+    // Save exit tiles from left column that will be removed
+    const leftExitTiles: { y: number; spriteIndex: number | null }[] = [];
+    for (let y = 0; y < this.mapHeight; y++) {
+      if (this.tiles[y][0] === TilemapSystem.TILE_TYPES.EXIT_LEFT) {
+        leftExitTiles.push({
+          y,
+          spriteIndex: this.tileSpriteIndices[y]?.[0] || null,
+        });
+      }
+    }
+
+    const newWidth = this.mapWidth - 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < this.mapHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < newWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data (skip first column)
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 1; x < this.mapWidth; x++) {
+        newTiles[y][x - 1] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x - 1] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x - 1] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x - 1] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    // Restore exit tiles to new left column (column 0)
+    for (const exit of leftExitTiles) {
+      newTiles[exit.y][0] = TilemapSystem.TILE_TYPES.EXIT_LEFT;
+      if (exit.spriteIndex !== null) {
+        newTileSpriteIndices[exit.y][0] = exit.spriteIndex;
+      }
+    }
+
+    this.applyResizeChanges(
+      newWidth,
+      this.mapHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Remove a column from the right
+  public removeColumnFromRight(): void {
+    if (this.mapWidth <= 1) return; // Prevent removing last column
+
+    // Save exit tiles from right column that will be removed
+    const rightCol = this.mapWidth - 1;
+    const rightExitTiles: { y: number; spriteIndex: number | null }[] = [];
+    for (let y = 0; y < this.mapHeight; y++) {
+      if (this.tiles[y][rightCol] === TilemapSystem.TILE_TYPES.EXIT_RIGHT) {
+        rightExitTiles.push({
+          y,
+          spriteIndex: this.tileSpriteIndices[y]?.[rightCol] || null,
+        });
+      }
+    }
+
+    const newWidth = this.mapWidth - 1;
+    const newTiles: number[][] = [];
+    const newTileSpriteIndices: (number | null)[][] = [];
+    const newBg: (number | null)[][] = [];
+    const newDec: (number | null)[][] = [];
+
+    // Initialize new arrays
+    for (let y = 0; y < this.mapHeight; y++) {
+      newTiles[y] = [];
+      newTileSpriteIndices[y] = [];
+      newBg[y] = [];
+      newDec[y] = [];
+      for (let x = 0; x < newWidth; x++) {
+        newTiles[y][x] = TilemapSystem.TILE_TYPES.EMPTY;
+        newTileSpriteIndices[y][x] = null;
+        newBg[y][x] = null;
+        newDec[y][x] = null;
+      }
+    }
+
+    // Copy existing data (skip last column)
+    for (let y = 0; y < this.mapHeight; y++) {
+      for (let x = 0; x < newWidth; x++) {
+        newTiles[y][x] = this.tiles[y][x];
+        if (
+          this.tileSpriteIndices[y] &&
+          this.tileSpriteIndices[y][x] !== undefined
+        ) {
+          newTileSpriteIndices[y][x] = this.tileSpriteIndices[y][x];
+        }
+        if (this.wallsIndices[y] && this.wallsIndices[y][x] !== undefined) {
+          newBg[y][x] = this.wallsIndices[y][x];
+        }
+        if (
+          this.decorationIndices[y] &&
+          this.decorationIndices[y][x] !== undefined
+        ) {
+          newDec[y][x] = this.decorationIndices[y][x];
+        }
+      }
+    }
+
+    // Restore exit tiles to new right column
+    const newRightCol = newWidth - 1;
+    for (const exit of rightExitTiles) {
+      newTiles[exit.y][newRightCol] = TilemapSystem.TILE_TYPES.EXIT_RIGHT;
+      if (exit.spriteIndex !== null) {
+        newTileSpriteIndices[exit.y][newRightCol] = exit.spriteIndex;
+      }
+    }
+
+    this.applyResizeChanges(
+      newWidth,
+      this.mapHeight,
+      newTiles,
+      newTileSpriteIndices,
+      newBg,
+      newDec
+    );
+  }
+
+  // Adjust exit tiles after edge operations
+  public adjustExitTilesAfterEdgeOperation(
+    operation:
+      | "addTop"
+      | "addBottom"
+      | "removeTop"
+      | "removeBottom"
+      | "addLeft"
+      | "addRight"
+      | "removeLeft"
+      | "removeRight"
+  ): void {
+    // Find and move exit tiles to their correct positions
+    if (operation === "addTop") {
+      // Move EXIT_TOP tiles from row 1 back to row 0
+      for (let x = 0; x < this.mapWidth; x++) {
+        if (
+          this.tiles[1] &&
+          this.tiles[1][x] === TilemapSystem.TILE_TYPES.EXIT_TOP
+        ) {
+          this.tiles[0][x] = TilemapSystem.TILE_TYPES.EXIT_TOP;
+          this.tiles[1][x] = TilemapSystem.TILE_TYPES.EMPTY;
+          if (this.tileSpriteIndices[1])
+            this.tileSpriteIndices[0][x] = this.tileSpriteIndices[1][x];
+          if (this.tileSpriteIndices[1]) this.tileSpriteIndices[1][x] = null;
+        }
+      }
+    } else if (operation === "addBottom") {
+      // Move EXIT_BOTTOM tiles to the new bottom row
+      const oldBottomRow = this.mapHeight - 2;
+      const newBottomRow = this.mapHeight - 1;
+      for (let x = 0; x < this.mapWidth; x++) {
+        if (
+          this.tiles[oldBottomRow] &&
+          this.tiles[oldBottomRow][x] === TilemapSystem.TILE_TYPES.EXIT_BOTTOM
+        ) {
+          this.tiles[newBottomRow][x] = TilemapSystem.TILE_TYPES.EXIT_BOTTOM;
+          this.tiles[oldBottomRow][x] = TilemapSystem.TILE_TYPES.EMPTY;
+          if (this.tileSpriteIndices[oldBottomRow])
+            this.tileSpriteIndices[newBottomRow][x] =
+              this.tileSpriteIndices[oldBottomRow][x];
+          if (this.tileSpriteIndices[oldBottomRow])
+            this.tileSpriteIndices[oldBottomRow][x] = null;
+        }
+      }
+    } else if (operation === "addLeft") {
+      // Move EXIT_LEFT tiles from column 1 back to column 0
+      for (let y = 0; y < this.mapHeight; y++) {
+        if (this.tiles[y][1] === TilemapSystem.TILE_TYPES.EXIT_LEFT) {
+          this.tiles[y][0] = TilemapSystem.TILE_TYPES.EXIT_LEFT;
+          this.tiles[y][1] = TilemapSystem.TILE_TYPES.EMPTY;
+          if (this.tileSpriteIndices[y])
+            this.tileSpriteIndices[y][0] = this.tileSpriteIndices[y][1];
+          if (this.tileSpriteIndices[y]) this.tileSpriteIndices[y][1] = null;
+        }
+      }
+    } else if (operation === "addRight") {
+      // Move EXIT_RIGHT tiles to the new right column
+      const oldRightCol = this.mapWidth - 2;
+      const newRightCol = this.mapWidth - 1;
+      for (let y = 0; y < this.mapHeight; y++) {
+        if (
+          this.tiles[y][oldRightCol] === TilemapSystem.TILE_TYPES.EXIT_RIGHT
+        ) {
+          this.tiles[y][newRightCol] = TilemapSystem.TILE_TYPES.EXIT_RIGHT;
+          this.tiles[y][oldRightCol] = TilemapSystem.TILE_TYPES.EMPTY;
+          if (this.tileSpriteIndices[y])
+            this.tileSpriteIndices[y][newRightCol] =
+              this.tileSpriteIndices[y][oldRightCol];
+          if (this.tileSpriteIndices[y])
+            this.tileSpriteIndices[y][oldRightCol] = null;
+        }
+      }
+    }
+    // For remove operations, the tiles are already in the correct position relative to the edges
+
+    // Redraw to reflect changes
+    this.redrawVisualLayer();
+  }
+
+  // Helper method to apply resize changes
+  private applyResizeChanges(
+    newWidth: number,
+    newHeight: number,
+    newTiles: number[][],
+    newTileSpriteIndices: (number | null)[][],
+    newBg: (number | null)[][],
+    newDec: (number | null)[][]
+  ): void {
+    this.mapWidth = newWidth;
+    this.mapHeight = newHeight;
+    this.tiles = newTiles;
+    this.tileSpriteIndices = newTileSpriteIndices;
+    this.wallsIndices = newBg;
+    this.decorationIndices = newDec;
+
+    // Update autotile system dimensions
+    if (this.autoTileSystem) {
+      this.autoTileSystem.updateDimensions(newWidth, newHeight);
+    }
+
+    // Clear existing visuals and collision bodies
+    this.clearAllVisuals();
+    this.wallsSprites.forEach((s) => s.destroy());
+    this.wallsSprites = [];
+    this.decorationSprites.forEach((s) => s.destroy());
+    this.decorationSprites = [];
+    this.clearCollisionBodies();
+
+    // Recreate city background if one was set
+    const currentCityVariant = this.cityVariant;
+    if (currentCityVariant) {
+      this.setCityBackground(currentCityVariant);
+    }
+
+    // Redraw everything
+    this.redrawVisualLayer();
+    this.createCollisionBodies();
+  }
+
   // Clear all visual elements
   private clearAllVisuals(): void {
     if (this.tileSprites) {

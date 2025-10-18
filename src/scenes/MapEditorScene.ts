@@ -1708,8 +1708,8 @@ export class MapEditorScene extends Phaser.Scene {
     const modalBg = this.add.rectangle(
       centerX,
       centerY,
-      360,
-      200,
+      500,
+      350,
       0x000000,
       0.9
     );
@@ -1717,7 +1717,7 @@ export class MapEditorScene extends Phaser.Scene {
     modalBg.setDepth(1000);
 
     const title = this.add
-      .text(centerX, centerY - 70, "Resize Map (tiles)", {
+      .text(centerX, centerY - 155, "Resize Map (tiles)", {
         fontSize: "16px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -1778,8 +1778,149 @@ export class MapEditorScene extends Phaser.Scene {
       canvasBounds.top + centerY + 15
     );
 
-    const applyBtn = this.add
-      .text(centerX - 40, centerY + 60, "Apply", {
+    // Track all modal elements for cleanup
+    const modalElements: Phaser.GameObjects.GameObject[] = [
+      modalBg,
+      title,
+      labelW,
+      labelH,
+    ];
+
+    // Helper function to create edge operation buttons
+    const createEdgeButton = (
+      x: number,
+      y: number,
+      label: string,
+      color: number,
+      operation: () => void
+    ): Phaser.GameObjects.Text => {
+      const btn = this.add
+        .text(x, y, label, {
+          fontSize: "12px",
+          fill: "#ffffff",
+          fontStyle: "bold",
+          backgroundColor: `#${color.toString(16).padStart(6, "0")}`,
+          padding: { x: 8, y: 4 },
+        })
+        .setOrigin(0.5)
+        .setInteractive();
+      btn.setScrollFactor(0);
+      btn.setDepth(1001);
+
+      btn.on("pointerdown", () => {
+        const oldWidth = this.tilemapSystem.mapWidth;
+        const oldHeight = this.tilemapSystem.mapHeight;
+        operation();
+        inputWidth.value = String(this.tilemapSystem.mapWidth);
+        inputHeight.value = String(this.tilemapSystem.mapHeight);
+        this.updateMapAfterResize();
+        this.updatePreviewObjects();
+      });
+
+      btn.on("pointerover", () => {
+        btn.setStyle({
+          backgroundColor: `#${(color + 0x222222)
+            .toString(16)
+            .padStart(6, "0")}`,
+        });
+      });
+
+      btn.on("pointerout", () => {
+        btn.setStyle({
+          backgroundColor: `#${color.toString(16).padStart(6, "0")}`,
+        });
+      });
+
+      modalElements.push(btn);
+      return btn;
+    };
+
+    // Top buttons (Row operations)
+    createEdgeButton(centerX - 40, centerY - 120, "Row +", 0x0066aa, () => {
+      const oldHeight = this.tilemapSystem.mapHeight;
+      this.tilemapSystem.addRowToTop();
+      this.tilemapSystem.adjustExitTilesAfterEdgeOperation("addTop");
+      this.adjustExitsAfterEdgeOperation(
+        "addTop",
+        this.tilemapSystem.mapWidth,
+        oldHeight
+      );
+    });
+    createEdgeButton(centerX + 40, centerY - 120, "Row -", 0xaa6600, () => {
+      const oldHeight = this.tilemapSystem.mapHeight;
+      this.tilemapSystem.removeRowFromTop();
+      this.adjustExitsAfterEdgeOperation(
+        "removeTop",
+        this.tilemapSystem.mapWidth,
+        oldHeight
+      );
+    });
+
+    // Bottom buttons (Row operations)
+    createEdgeButton(centerX - 40, centerY + 120, "Row +", 0x0066aa, () => {
+      const oldHeight = this.tilemapSystem.mapHeight;
+      this.tilemapSystem.addRowToBottom();
+      this.tilemapSystem.adjustExitTilesAfterEdgeOperation("addBottom");
+      this.adjustExitsAfterEdgeOperation(
+        "addBottom",
+        this.tilemapSystem.mapWidth,
+        oldHeight
+      );
+    });
+    createEdgeButton(centerX + 40, centerY + 120, "Row -", 0xaa6600, () => {
+      const oldHeight = this.tilemapSystem.mapHeight;
+      this.tilemapSystem.removeRowFromBottom();
+      this.adjustExitsAfterEdgeOperation(
+        "removeBottom",
+        this.tilemapSystem.mapWidth,
+        oldHeight
+      );
+    });
+
+    // Left buttons (Column operations)
+    createEdgeButton(centerX - 180, centerY - 30, "Col +", 0x0066aa, () => {
+      const oldWidth = this.tilemapSystem.mapWidth;
+      this.tilemapSystem.addColumnToLeft();
+      this.tilemapSystem.adjustExitTilesAfterEdgeOperation("addLeft");
+      this.adjustExitsAfterEdgeOperation(
+        "addLeft",
+        oldWidth,
+        this.tilemapSystem.mapHeight
+      );
+    });
+    createEdgeButton(centerX - 180, centerY + 30, "Col -", 0xaa6600, () => {
+      const oldWidth = this.tilemapSystem.mapWidth;
+      this.tilemapSystem.removeColumnFromLeft();
+      this.adjustExitsAfterEdgeOperation(
+        "removeLeft",
+        oldWidth,
+        this.tilemapSystem.mapHeight
+      );
+    });
+
+    // Right buttons (Column operations)
+    createEdgeButton(centerX + 180, centerY - 30, "Col +", 0x0066aa, () => {
+      const oldWidth = this.tilemapSystem.mapWidth;
+      this.tilemapSystem.addColumnToRight();
+      this.tilemapSystem.adjustExitTilesAfterEdgeOperation("addRight");
+      this.adjustExitsAfterEdgeOperation(
+        "addRight",
+        oldWidth,
+        this.tilemapSystem.mapHeight
+      );
+    });
+    createEdgeButton(centerX + 180, centerY + 30, "Col -", 0xaa6600, () => {
+      const oldWidth = this.tilemapSystem.mapWidth;
+      this.tilemapSystem.removeColumnFromRight();
+      this.adjustExitsAfterEdgeOperation(
+        "removeRight",
+        oldWidth,
+        this.tilemapSystem.mapHeight
+      );
+    });
+
+    const closeBtn = this.add
+      .text(centerX, centerY + 155, "Close", {
         fontSize: "14px",
         fill: "#ffffff",
         fontStyle: "bold",
@@ -1788,33 +1929,20 @@ export class MapEditorScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setInteractive();
-    applyBtn.setScrollFactor(0);
-    applyBtn.setDepth(1001);
-
-    const cancelBtn = this.add
-      .text(centerX + 40, centerY + 60, "Cancel", {
-        fontSize: "14px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        backgroundColor: "#aa0000",
-        padding: { x: 12, y: 6 },
-      })
-      .setOrigin(0.5)
-      .setInteractive();
-    cancelBtn.setScrollFactor(0);
-    cancelBtn.setDepth(1001);
+    closeBtn.setScrollFactor(0);
+    closeBtn.setDepth(1001);
+    modalElements.push(closeBtn);
 
     const cleanup = () => {
-      [modalBg, title, labelW, labelH, applyBtn, cancelBtn].forEach((o) =>
-        o.destroy()
-      );
+      modalElements.forEach((o) => o.destroy());
       document.body.contains(inputWidth) &&
         document.body.removeChild(inputWidth);
       document.body.contains(inputHeight) &&
         document.body.removeChild(inputHeight);
     };
 
-    applyBtn.on("pointerdown", () => {
+    closeBtn.on("pointerdown", () => {
+      // Apply any changes from the input fields before closing
       const newW = Math.max(1, parseInt(inputWidth.value || "1", 10));
       const newH = Math.max(1, parseInt(inputHeight.value || "1", 10));
       if (
@@ -1826,10 +1954,6 @@ export class MapEditorScene extends Phaser.Scene {
       }
       cleanup();
       afterResize && afterResize();
-    });
-
-    cancelBtn.on("pointerdown", () => {
-      cleanup();
     });
   }
   public toggleGrid(): void {
@@ -2900,6 +3024,145 @@ export class MapEditorScene extends Phaser.Scene {
     }
 
     this.updatePreviewObjects();
+  }
+
+  private adjustExitsAfterEdgeOperation(
+    operation:
+      | "addTop"
+      | "addBottom"
+      | "removeTop"
+      | "removeBottom"
+      | "addLeft"
+      | "addRight"
+      | "removeLeft"
+      | "removeRight",
+    oldWidth: number,
+    oldHeight: number
+  ): void {
+    if (!this.mapData || !this.mapData.exits) return;
+
+    const tileSize = this.tilemapSystem.tileSize;
+    const newWidth = this.tilemapSystem.mapWidth;
+    const newHeight = this.tilemapSystem.mapHeight;
+
+    this.mapData.exits.forEach((exit) => {
+      let needsUpdate = false;
+
+      // Handle row operations
+      if (operation === "addTop") {
+        // Top exits stay at top edge, others shift down
+        if (exit.edge === "top") {
+          exit.y = 0;
+          needsUpdate = true;
+        } else if (exit.edge === "bottom") {
+          exit.y += tileSize;
+          needsUpdate = true;
+        } else if (exit.edge === "left" || exit.edge === "right") {
+          exit.y += tileSize;
+          // Adjust tileStart and tileEnd (these are along the vertical edge)
+          exit.tileStart += 1;
+          exit.tileEnd += 1;
+          needsUpdate = true;
+        }
+      } else if (operation === "addBottom") {
+        // Bottom exits move to the new bottom row
+        if (exit.edge === "bottom") {
+          exit.y = (newHeight - 1) * tileSize;
+          needsUpdate = true;
+        }
+      } else if (operation === "removeTop") {
+        // All exits move up by 1 tile in world space
+        if (exit.edge === "top") {
+          exit.y = 0;
+          needsUpdate = true;
+        } else if (exit.edge === "bottom") {
+          exit.y -= tileSize;
+          needsUpdate = true;
+        } else if (exit.edge === "left" || exit.edge === "right") {
+          exit.y -= tileSize;
+          // Adjust tileStart and tileEnd (these are along the vertical edge)
+          if (exit.tileStart > 0) exit.tileStart -= 1;
+          if (exit.tileEnd > 0) exit.tileEnd -= 1;
+          needsUpdate = true;
+        }
+      } else if (operation === "removeBottom") {
+        // Bottom exits move inward by 1 tile
+        if (exit.edge === "bottom") {
+          exit.y = (newHeight - 1) * tileSize;
+          needsUpdate = true;
+        }
+      }
+
+      // Handle column operations
+      if (operation === "addLeft") {
+        // Left exits stay at left edge, others shift right
+        if (exit.edge === "left") {
+          exit.x = 0;
+          needsUpdate = true;
+        } else if (exit.edge === "right") {
+          exit.x += tileSize;
+          needsUpdate = true;
+        } else if (exit.edge === "top" || exit.edge === "bottom") {
+          exit.x += tileSize;
+          // Adjust tileStart and tileEnd (these are along the horizontal edge)
+          exit.tileStart += 1;
+          exit.tileEnd += 1;
+          needsUpdate = true;
+        }
+      } else if (operation === "addRight") {
+        // Right exits move to the new right column
+        if (exit.edge === "right") {
+          exit.x = (newWidth - 1) * tileSize;
+          needsUpdate = true;
+        }
+      } else if (operation === "removeLeft") {
+        // All exits move left by 1 tile in world space
+        if (exit.edge === "left") {
+          exit.x = 0;
+          needsUpdate = true;
+        } else if (exit.edge === "right") {
+          exit.x -= tileSize;
+          needsUpdate = true;
+        } else if (exit.edge === "top" || exit.edge === "bottom") {
+          exit.x -= tileSize;
+          // Adjust tileStart and tileEnd (these are along the horizontal edge)
+          if (exit.tileStart > 0) exit.tileStart -= 1;
+          if (exit.tileEnd > 0) exit.tileEnd -= 1;
+          needsUpdate = true;
+        }
+      } else if (operation === "removeRight") {
+        // Right exits move inward by 1 tile
+        if (exit.edge === "right") {
+          exit.x = (newWidth - 1) * tileSize;
+          needsUpdate = true;
+        }
+      }
+
+      // Recalculate edge positions based on new dimensions
+      if (needsUpdate) {
+        if (exit.edge === "left" || exit.edge === "right") {
+          // For left/right edges, calculate based on y position and height
+          const exitStartY = exit.y;
+          const exitEndY = exit.y + exit.height;
+          exit.edgeStart = exitStartY / (newHeight * tileSize);
+          exit.edgeEnd = exitEndY / (newHeight * tileSize);
+          exit.edgePosition = (exit.edgeStart + exit.edgeEnd) / 2;
+        } else if (exit.edge === "top" || exit.edge === "bottom") {
+          // For top/bottom edges, calculate based on x position and width
+          const exitStartX = exit.x;
+          const exitEndX = exit.x + exit.width;
+          exit.edgeStart = exitStartX / (newWidth * tileSize);
+          exit.edgeEnd = exitEndX / (newWidth * tileSize);
+          exit.edgePosition = (exit.edgeStart + exit.edgeEnd) / 2;
+        }
+      }
+    });
+
+    // Update world dimensions in mapData
+    if (this.mapData.world) {
+      this.mapData.world.width = newWidth * tileSize;
+      this.mapData.world.height = newHeight * tileSize;
+    }
   }
 
   private updateMapAfterResize(): void {
