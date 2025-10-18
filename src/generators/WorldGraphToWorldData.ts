@@ -286,6 +286,8 @@ export function convertToWorldData(
       collectibles: [],
       checkpoints: [],
       tiles: [],
+      walls: [] as any,
+      decoration: [] as any,
       gridPosition: { x: pos.x, y: pos.y },
       gridHeight: 1,
     };

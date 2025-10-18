@@ -331,6 +331,8 @@ export class WorldSystem {
       collectibles: [],
       checkpoints: [],
       tiles: [],
+      walls: [] as any,
+      decoration: [] as any,
     };
 
     this.worldData.maps[newId] = newMap;

@@ -2763,14 +2763,19 @@ export class MapEditorScene extends Phaser.Scene {
     this.mapData.world.height =
       this.tilemapSystem.mapHeight * this.tilemapSystem.tileSize;
 
-    // Clear existing tile data
+    // Clear existing tile data - create NEW arrays to avoid reference sharing
     this.mapData.tiles = [];
-    this.mapData.walls = [] as any;
-    this.mapData.decoration = [] as any;
+    // Important: Create new array instances to prevent reference sharing between maps
+    (this.mapData as any).walls = [];
+    (this.mapData as any).decoration = [];
 
     // Save tile data with sprite indices
     for (let y = 0; y < this.tilemapSystem.mapHeight; y++) {
       this.mapData.tiles[y] = [];
+      // Create new row arrays to avoid reference sharing
+      (this.mapData as any).walls[y] = [];
+      (this.mapData as any).decoration[y] = [];
+
       for (let x = 0; x < this.tilemapSystem.mapWidth; x++) {
         const tileType = this.tilemapSystem.getTile(x, y);
         const spriteIndex = this.tilemapSystem.getTileSpriteIndex(x, y);
@@ -2781,11 +2786,8 @@ export class MapEditorScene extends Phaser.Scene {
           spriteIndex: spriteIndex,
         };
         // Persist walls and decoration frames
-        (this.mapData.walls as any)[y] = (this.mapData.walls as any)[y] || [];
-        (this.mapData.decoration as any)[y] =
-          (this.mapData.decoration as any)[y] || [];
-        (this.mapData.walls as any)[y][x] = this.tilemapSystem.getWalls(x, y);
-        (this.mapData.decoration as any)[y][x] =
+        (this.mapData as any).walls[y][x] = this.tilemapSystem.getWalls(x, y);
+        (this.mapData as any).decoration[y][x] =
           this.tilemapSystem.getDecoration(x, y);
       }
     }
