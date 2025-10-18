@@ -42,7 +42,7 @@
       ],
       "player": {
         "startPosition": { "x": 144, "y": 144 },
-        "character": "A"
+        "character": "biker"
       },
       "portal": null,
       "enemies": [],

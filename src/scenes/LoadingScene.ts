@@ -167,64 +167,36 @@ export class LoadingScene extends Phaser.Scene {
   }
 
   private loadCharacterSprites(): void {
-    const characters = ["char1", "char2", "char3", "char4"];
-    const characterNames = [
-      "cyberWarrior",
-      "quantumMage",
-      "stealthRogue",
-      "plasmaPaladin",
+    const characters = ["Biker", "Punk", "Cyborg"];
+    const characterKeys = ["biker", "punk", "cyborg"];
+    const animations = [
+      "idle",
+      "run",
+      "jump",
+      "attack1",
+      "attack2",
+      "attack3",
+      "climb",
+      "death",
+      "doublejump",
+      "hurt",
+      "punch",
+      "run_attack",
     ];
 
-    characters.forEach((char, index) => {
-      const charName = characterNames[index];
+    characters.forEach((charName, index) => {
+      const charKey = characterKeys[index];
 
-      // Load rotation sprites
-      this.load.image(
-        `${charName}_south`,
-        `${ASSET_PATHS.characters}/${char}/rotations/south.png`
-      );
-      this.load.image(
-        `${charName}_west`,
-        `${ASSET_PATHS.characters}/${char}/rotations/west.png`
-      );
-      this.load.image(
-        `${charName}_east`,
-        `${ASSET_PATHS.characters}/${char}/rotations/east.png`
-      );
-      this.load.image(
-        `${charName}_north`,
-        `${ASSET_PATHS.characters}/${char}/rotations/north.png`
-      );
-
-      // Load breathing-idle animation frames
-      for (let i = 0; i < 4; i++) {
-        const frameNumber = i.toString().padStart(3, "0");
-        this.load.image(
-          `${charName}_breathing_idle_${frameNumber}`,
-          `${ASSET_PATHS.characters}/${char}/animations/breathing-idle/south/frame_${frameNumber}.png`
+      // Load all animation sprite sheets
+      animations.forEach((animation) => {
+        this.load.spritesheet(
+          `${charKey}_${animation}`,
+          `/assets/images/characters/${charName}/${charName}_${animation}.png`,
+          {
+            frameWidth: 48,
+            frameHeight: 48,
+          }
         );
-      }
-
-      // Load walk animation frames (east and west)
-      ["east", "west"].forEach((direction) => {
-        for (let i = 0; i < 6; i++) {
-          const frameNumber = i.toString().padStart(3, "0");
-          this.load.image(
-            `${charName}_walk_${direction}_${frameNumber}`,
-            `${ASSET_PATHS.characters}/${char}/animations/walk/${direction}/frame_${frameNumber}.png`
-          );
-        }
-      });
-
-      // Load jumping animation frames (east and west)
-      ["east", "west"].forEach((direction) => {
-        for (let i = 0; i < 9; i++) {
-          const frameNumber = i.toString().padStart(3, "0");
-          this.load.image(
-            `${charName}_jumping_${direction}_${frameNumber}`,
-            `${ASSET_PATHS.characters}/${char}/animations/jumping-1/${direction}/frame_${frameNumber}.png`
-          );
-        }
       });
     });
   }

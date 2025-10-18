@@ -134,103 +134,144 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createCharacterAnimations(): void {
-    const characterNames = [
-      "cyberWarrior",
-      "quantumMage",
-      "stealthRogue",
-      "plasmaPaladin",
-    ];
+    const characterKeys = ["biker", "punk", "cyborg"];
 
-    characterNames.forEach((charName) => {
-      // Check if all required textures exist before creating animations
-      const requiredTextures = [
-        `${charName}_breathing_idle_000`,
-        `${charName}_breathing_idle_001`,
-        `${charName}_breathing_idle_002`,
-        `${charName}_breathing_idle_003`,
-        `${charName}_walk_east_000`,
-        `${charName}_walk_west_000`,
-        `${charName}_jumping_east_000`,
-        `${charName}_jumping_west_000`,
-      ];
-
-      const missingTextures = requiredTextures.filter(
-        (textureKey) => !this.textures.exists(textureKey)
-      );
-      if (missingTextures.length > 0) {
-        console.warn(`Missing textures for ${charName}:`, missingTextures);
-        return; // Skip animation creation for this character
-      }
-      // Create breathing-idle animation with error handling
+    characterKeys.forEach((charKey) => {
       try {
+        // Create idle animation (4 frames)
         this.anims.create({
-          key: `${charName}_breathing_idle`,
-          frames: [
-            { key: `${charName}_breathing_idle_000` },
-            { key: `${charName}_breathing_idle_001` },
-            { key: `${charName}_breathing_idle_002` },
-            { key: `${charName}_breathing_idle_003` },
-          ],
-          frameRate: 8, // Slow breathing animation
-          repeat: -1, // Loop infinitely
+          key: `${charKey}_idle`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_idle`, {
+            start: 0,
+            end: 3,
+          }),
+          frameRate: 8,
+          repeat: -1,
+        });
+
+        // Create run animation (6 frames)
+        this.anims.create({
+          key: `${charKey}_run`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_run`, {
+            start: 0,
+            end: 5,
+          }),
+          frameRate: 12,
+          repeat: -1,
+        });
+
+        // Create jump animation (4 frames)
+        this.anims.create({
+          key: `${charKey}_jump`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_jump`, {
+            start: 0,
+            end: 3,
+          }),
+          frameRate: 12,
+          repeat: 0,
+        });
+
+        // Create attack1 animation
+        this.anims.create({
+          key: `${charKey}_attack1`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_attack1`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 12,
+          repeat: 0,
+        });
+
+        // Create attack2 animation
+        this.anims.create({
+          key: `${charKey}_attack2`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_attack2`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 12,
+          repeat: 0,
+        });
+
+        // Create attack3 animation
+        this.anims.create({
+          key: `${charKey}_attack3`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_attack3`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 12,
+          repeat: 0,
+        });
+
+        // Create climb animation
+        this.anims.create({
+          key: `${charKey}_climb`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_climb`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 8,
+          repeat: -1,
+        });
+
+        // Create death animation
+        this.anims.create({
+          key: `${charKey}_death`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_death`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 10,
+          repeat: 0,
+        });
+
+        // Create doublejump animation
+        this.anims.create({
+          key: `${charKey}_doublejump`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_doublejump`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 12,
+          repeat: 0,
+        });
+
+        // Create hurt animation
+        this.anims.create({
+          key: `${charKey}_hurt`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_hurt`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 10,
+          repeat: 0,
+        });
+
+        // Create punch animation
+        this.anims.create({
+          key: `${charKey}_punch`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_punch`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 12,
+          repeat: 0,
+        });
+
+        // Create run_attack animation
+        this.anims.create({
+          key: `${charKey}_run_attack`,
+          frames: this.anims.generateFrameNumbers(`${charKey}_run_attack`, {
+            start: 0,
+            end: -1,
+          }),
+          frameRate: 12,
+          repeat: 0,
         });
       } catch (error) {
-        console.warn(
-          `Failed to create breathing animation for ${charName}:`,
-          error
-        );
+        console.warn(`Failed to create animations for ${charKey}:`, error);
       }
-
-      // Create walk animations for east and west
-      ["east", "west"].forEach((direction) => {
-        try {
-          this.anims.create({
-            key: `${charName}_walk_${direction}`,
-            frames: [
-              { key: `${charName}_walk_${direction}_000` },
-              { key: `${charName}_walk_${direction}_001` },
-              { key: `${charName}_walk_${direction}_002` },
-              { key: `${charName}_walk_${direction}_003` },
-              { key: `${charName}_walk_${direction}_004` },
-              { key: `${charName}_walk_${direction}_005` },
-            ],
-            frameRate: 12, // Smooth walking animation
-            repeat: -1, // Loop infinitely
-          });
-        } catch (error) {
-          console.warn(
-            `Failed to create walk animation for ${charName} ${direction}:`,
-            error
-          );
-        }
-      });
-
-      // Create jumping animations for east and west
-      ["east", "west"].forEach((direction) => {
-        try {
-          this.anims.create({
-            key: `${charName}_jumping_${direction}`,
-            frames: [
-              { key: `${charName}_jumping_${direction}_000` },
-              { key: `${charName}_jumping_${direction}_001` },
-              { key: `${charName}_jumping_${direction}_002` },
-              { key: `${charName}_jumping_${direction}_003` },
-              { key: `${charName}_jumping_${direction}_004` },
-              { key: `${charName}_jumping_${direction}_005` },
-              { key: `${charName}_jumping_${direction}_006` },
-              { key: `${charName}_jumping_${direction}_007` },
-              { key: `${charName}_jumping_${direction}_008` },
-            ],
-            frameRate: 15, // Quick jumping animation
-            repeat: 0, // Play once
-          });
-        } catch (error) {
-          console.warn(
-            `Failed to create jumping animation for ${charName} ${direction}:`,
-            error
-          );
-        }
-      });
     });
   }
 
@@ -1219,19 +1260,21 @@ export class GameScene extends Phaser.Scene {
 
   private createUI(): void {
     // Character name display with error handling
-    const selectedCharacterKey = gameData.selectedCharacter ?? "A";
+    const selectedCharacterKey = gameData.selectedCharacter ?? "biker";
     const selectedCharacter = characters[selectedCharacterKey];
 
     // Fallback to first character if selected character doesn't exist
     const characterName =
-      selectedCharacter?.name ?? characters["A"]?.name ?? "Unknown Character";
+      selectedCharacter?.name ??
+      characters["biker"]?.name ??
+      "Unknown Character";
 
     // Ensure gameData.selectedCharacter is valid
     if (
       !gameData.selectedCharacter ||
       !characters[gameData.selectedCharacter]
     ) {
-      gameData.selectedCharacter = "A";
+      gameData.selectedCharacter = "biker";
     }
     this.characterNameText = this.add
       .text(50, 5, characterName, {

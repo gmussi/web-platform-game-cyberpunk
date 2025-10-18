@@ -334,7 +334,7 @@ export class MapSystem {
       },
       player: {
         startPosition: { x: 0, y: 0 },
-        character: "A",
+        character: "biker",
       },
       portal: {
         position: { x: 0, y: 0 },

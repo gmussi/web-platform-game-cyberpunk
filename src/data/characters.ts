@@ -10,24 +10,19 @@ export const gameData: GameData = {
 
 // Character definitions
 export const characters: Characters = {
-  A: {
-    name: "Cyber Warrior",
+  biker: {
+    name: "Biker",
     color: 0xff4444,
     scrollDirection: "right",
   },
-  B: {
-    name: "Quantum Mage",
-    color: 0x8844ff,
+  punk: {
+    name: "Punk",
+    color: 0xff00ff,
     scrollDirection: "right",
   },
-  C: {
-    name: "Stealth Rogue",
-    color: 0x2244aa,
-    scrollDirection: "right",
-  },
-  D: {
-    name: "Plasma Paladin",
-    color: 0xffaa00,
+  cyborg: {
+    name: "Cyborg",
+    color: 0x00ffff,
     scrollDirection: "right",
   },
 };

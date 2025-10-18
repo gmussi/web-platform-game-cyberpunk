@@ -2,22 +2,11 @@ import { GAME_CONSTANTS } from "../data/config";
 import { characters, gameData } from "../data/characters";
 import { Character } from "../types/game";
 
-// Character names mapping
-interface CharacterNames {
-  [key: string]: string;
-}
-
 // Jump phase type
 type JumpPhase = "none" | "start" | "ascending" | "falling" | "landing";
 
 // Animation state type
-type AnimationState =
-  | "breathing_idle"
-  | "walking"
-  | "jumping_start"
-  | "jumping_ascending"
-  | "jumping_falling"
-  | "jumping_landing";
+type AnimationState = "idle" | "running" | "jumping";
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   public scene: Phaser.Scene;
@@ -42,25 +31,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public dropThroughUntil?: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, characterKey: string) {
-    // Get the appropriate character name
-    const characterNames: CharacterNames = {
-      A: "cyberWarrior",
-      B: "quantumMage",
-      C: "stealthRogue",
-      D: "plasmaPaladin",
-    };
+    // Character key is now the character name directly (biker, punk, cyborg)
+    const charName = characterKey;
 
-    const charName = characterNames[characterKey];
+    // Start with the idle animation first frame
+    const initialTexture = `${charName}_idle`;
 
-    // Start with the breathing-idle animation first frame
-    const initialTexture = `${charName}_breathing_idle_000`;
-
-    // Check if the texture exists, fallback to rotation sprite if not
-    const textureKey = scene.textures.exists(initialTexture)
-      ? initialTexture
-      : `${charName}_south`;
-
-    super(scene, x, y, textureKey);
+    super(scene, x, y, initialTexture);
 
     this.scene = scene;
     this.characterKey = characterKey;
@@ -71,14 +48,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    // Scale sprite to 150% (48px -> 72px display size)
+    this.setScale(1.5);
+
     // Set up physics body
     this.setCollideWorldBounds(false); // Disable world bounds - we use custom edge walls instead
     this.setBounce(0.2);
     this.setDragX(300);
 
     // Set proper physics body size (smaller than sprite for better gameplay)
-    this.body.setSize(32, 48); // Width: 32px, Height: 48px (smaller than 64x64 sprite)
-    this.body.setOffset(16, 8); // Center horizontally, offset vertically to align with body
+    // Sprite is 48x48, body should be narrower and aligned to bottom (where feet are)
+    const bodyWidth = 32;
+    const bodyHeight = 44;
+    this.body.setSize(bodyWidth, bodyHeight);
+    this.body.setOffset(0, 48 - bodyHeight); // Left-align horizontally, align bottom
 
     // Set depth to appear above dark overlay and other elements
     this.setDepth(30);
@@ -103,7 +86,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Animation states
     this.isMoving = false;
     this.facingRight = true; // Always face right
-    this.currentAnimation = "breathing_idle";
+    this.currentAnimation = "idle";
     this.isJumping = false;
 
     // Jump animation phases
@@ -114,8 +97,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Set initial facing direction (always right)
     this.setFlipX(false);
 
-    // Start with breathing-idle animation
-    this.play(`${charName}_breathing_idle`);
+    // Start with idle animation
+    this.play(`${charName}_idle`);
 
     // Player created successfully
   }
@@ -250,115 +233,47 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private updateAnimation(): void {
-    const direction = this.facingRight ? "east" : "west";
+    // Set sprite flip based on facing direction
+    this.setFlipX(!this.facingRight);
 
     // Handle jump animation phases
     if (this.jumpPhase !== "none") {
-      this.handleJumpAnimation(direction);
+      this.handleJumpAnimation();
       return;
     }
 
     // Handle ground animations
     if (this.isMoving) {
-      // Walking animation
-      const animationKey = `${this.charName}_walk_${direction}`;
-      if (
-        this.currentAnimation !== "walking" ||
-        this.anims.currentAnim.key !== animationKey
-      ) {
+      // Running animation
+      const animationKey = `${this.charName}_run`;
+      if (this.currentAnimation !== "running") {
         this.play(animationKey);
-        this.currentAnimation = "walking";
+        this.currentAnimation = "running";
       }
     } else {
-      // Idle breathing animation
-      if (this.currentAnimation !== "breathing_idle") {
-        this.play(`${this.charName}_breathing_idle`);
-        this.currentAnimation = "breathing_idle";
+      // Idle animation
+      if (this.currentAnimation !== "idle") {
+        this.play(`${this.charName}_idle`);
+        this.currentAnimation = "idle";
       }
     }
   }
 
-  private handleJumpAnimation(direction: string): void {
-    const timeSinceStart = this.scene.time.now - this.jumpStartTime;
+  private handleJumpAnimation(): void {
+    // Play jump animation if not already playing
+    if (this.currentAnimation !== "jumping") {
+      this.play(`${this.charName}_jump`);
+      this.currentAnimation = "jumping";
+    }
 
-    switch (this.jumpPhase) {
-      case "start":
-        // Play frames 000-003 in sequence
-        const startFrame = Math.min(3, Math.floor(timeSinceStart / 50)); // 50ms per frame
-        const startFrameKey = `${
-          this.charName
-        }_jumping_${direction}_${startFrame.toString().padStart(3, "0")}`;
-        if (
-          this.currentAnimation !== "jumping_start" ||
-          this.texture.key !== startFrameKey
-        ) {
-          try {
-            this.setTexture(startFrameKey);
-            this.currentAnimation = "jumping_start";
-          } catch (error) {
-            console.warn(`Failed to set texture ${startFrameKey}:`, error);
-          }
-        }
-        break;
-
-      case "ascending":
-        // Show frame 004
-        const ascendingFrameKey = `${this.charName}_jumping_${direction}_004`;
-        if (
-          this.currentAnimation !== "jumping_ascending" ||
-          this.texture.key !== ascendingFrameKey
-        ) {
-          try {
-            this.setTexture(ascendingFrameKey);
-            this.currentAnimation = "jumping_ascending";
-          } catch (error) {
-            console.warn(`Failed to set texture ${ascendingFrameKey}:`, error);
-          }
-        }
-        break;
-
-      case "falling":
-        // Show frame 005
-        const fallingFrameKey = `${this.charName}_jumping_${direction}_005`;
-        if (
-          this.currentAnimation !== "jumping_falling" ||
-          this.texture.key !== fallingFrameKey
-        ) {
-          try {
-            this.setTexture(fallingFrameKey);
-            this.currentAnimation = "jumping_falling";
-          } catch (error) {
-            console.warn(`Failed to set texture ${fallingFrameKey}:`, error);
-          }
-        }
-        break;
-
-      case "landing":
-        // Play frames 006-008 in sequence
-        const landingFrame = Math.min(2, Math.floor(timeSinceStart / 50)); // 50ms per frame
-        const landingFrameKey = `${this.charName}_jumping_${direction}_${(
-          landingFrame + 6
-        )
-          .toString()
-          .padStart(3, "0")}`;
-        if (
-          this.currentAnimation !== "jumping_landing" ||
-          this.texture.key !== landingFrameKey
-        ) {
-          try {
-            this.setTexture(landingFrameKey);
-            this.currentAnimation = "jumping_landing";
-          } catch (error) {
-            console.warn(`Failed to set texture ${landingFrameKey}:`, error);
-          }
-        }
-
-        // Finish landing animation after 150ms
-        if (timeSinceStart > 150) {
-          this.jumpPhase = "none";
-          this.isJumping = false;
-        }
-        break;
+    // Check if we've landed and the jump animation has finished
+    if (this.jumpPhase === "landing") {
+      const timeSinceStart = this.scene.time.now - this.jumpStartTime;
+      // Finish landing after a short delay
+      if (timeSinceStart > 150) {
+        this.jumpPhase = "none";
+        this.isJumping = false;
+      }
     }
   }
 

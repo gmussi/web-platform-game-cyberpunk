@@ -8,17 +8,14 @@ export class SpriteGenerator {
   static generateHeroSprites(scene: Phaser.Scene): { [key: string]: string } {
     const heroes: { [key: string]: string } = {};
 
-    // Hero A: Cyber Warrior
-    heroes.A = this.createCyberWarrior(scene);
+    // Hero: Biker
+    heroes.biker = this.createBiker(scene);
 
-    // Hero B: Quantum Mage
-    heroes.B = this.createQuantumMage(scene);
+    // Hero: Punk
+    heroes.punk = this.createPunk(scene);
 
-    // Hero C: Stealth Rogue
-    heroes.C = this.createStealthRogue(scene);
-
-    // Hero D: Plasma Paladin
-    heroes.D = this.createPlasmaPaladin(scene);
+    // Hero: Cyborg
+    heroes.cyborg = this.createCyborg(scene);
 
     return heroes;
   }
@@ -47,157 +44,108 @@ export class SpriteGenerator {
     };
   }
 
-  // Hero A: Cyber Warrior
-  static createCyberWarrior(scene: Phaser.Scene): string {
+  // Hero: Biker
+  static createBiker(scene: Phaser.Scene): string {
     const graphics = scene.add.graphics();
-    const size = 64;
+    const size = 48;
 
-    // Body (red armor)
+    // Body (red leather jacket)
     graphics.fillStyle(0xff4444);
-    graphics.fillRect(20, 20, 24, 32);
+    graphics.fillRect(14, 14, 20, 24);
 
-    // Helmet (red)
-    graphics.fillStyle(0xcc3333);
-    graphics.fillRect(22, 8, 20, 16);
+    // Helmet
+    graphics.fillStyle(0x333333);
+    graphics.fillRect(16, 6, 16, 12);
 
-    // Shoulder plates (red)
+    // Visor (red tinted)
+    graphics.fillStyle(0xff6666);
+    graphics.fillRect(18, 8, 12, 4);
+
+    // Shoulder pads
     graphics.fillStyle(0xaa2222);
-    graphics.fillRect(16, 24, 8, 12);
-    graphics.fillRect(40, 24, 8, 12);
+    graphics.fillRect(12, 16, 6, 8);
+    graphics.fillRect(30, 16, 6, 8);
 
-    // Legs (red)
-    graphics.fillStyle(0xdd3333);
-    graphics.fillRect(24, 52, 8, 12);
-    graphics.fillRect(32, 52, 8, 12);
+    // Legs (dark pants)
+    graphics.fillStyle(0x222222);
+    graphics.fillRect(18, 38, 6, 10);
+    graphics.fillRect(24, 38, 6, 10);
 
-    // Eyes (blue glowing)
-    graphics.fillStyle(0x0088ff);
-    graphics.fillRect(26, 12, 4, 4);
-    graphics.fillRect(34, 12, 4, 4);
+    graphics.generateTexture("biker_idle", size, size);
+    graphics.destroy();
 
-    // Weapon (energy sword)
+    return "biker_idle";
+  }
+
+  // Hero: Punk
+  static createPunk(scene: Phaser.Scene): string {
+    const graphics = scene.add.graphics();
+    const size = 48;
+
+    // Body (punk jacket)
+    graphics.fillStyle(0xff00ff);
+    graphics.fillRect(14, 14, 20, 24);
+
+    // Mohawk
+    graphics.fillStyle(0xff00aa);
+    graphics.fillRect(20, 2, 8, 10);
+
+    // Face
+    graphics.fillStyle(0xffddaa);
+    graphics.fillRect(18, 10, 12, 8);
+
+    // Eyes (piercing)
     graphics.fillStyle(0x00ffff);
-    graphics.fillRect(48, 16, 4, 24);
+    graphics.fillRect(20, 12, 2, 2);
+    graphics.fillRect(26, 12, 2, 2);
 
-    graphics.generateTexture("cyberWarrior_breathing_idle_000", size, size);
+    // Legs (torn pants)
+    graphics.fillStyle(0x444444);
+    graphics.fillRect(18, 38, 6, 10);
+    graphics.fillRect(24, 38, 6, 10);
+
+    graphics.generateTexture("punk_idle", size, size);
     graphics.destroy();
 
-    return "cyberWarrior_breathing_idle_000";
+    return "punk_idle";
   }
 
-  // Hero B: Quantum Mage
-  static createQuantumMage(scene: Phaser.Scene): string {
+  // Hero: Cyborg
+  static createCyborg(scene: Phaser.Scene): string {
     const graphics = scene.add.graphics();
-    const size = 64;
+    const size = 48;
 
-    // Body (purple robes)
-    graphics.fillStyle(0x8844ff);
-    graphics.fillRect(20, 20, 24, 32);
+    // Body (metallic)
+    graphics.fillStyle(0x00ffff);
+    graphics.fillRect(14, 14, 20, 24);
 
-    // Helmet (purple)
-    graphics.fillStyle(0x6633cc);
-    graphics.fillRect(22, 8, 20, 16);
+    // Head (robotic)
+    graphics.fillStyle(0x0088aa);
+    graphics.fillRect(16, 6, 16, 12);
 
-    // Shoulder plates (purple)
-    graphics.fillStyle(0x5522aa);
-    graphics.fillRect(16, 24, 8, 12);
-    graphics.fillRect(40, 24, 8, 12);
+    // Eyes (glowing cyan)
+    graphics.fillStyle(0x00ffff);
+    graphics.fillRect(18, 8, 4, 4);
+    graphics.fillRect(26, 8, 4, 4);
 
-    // Legs (purple)
-    graphics.fillStyle(0x9933dd);
-    graphics.fillRect(24, 52, 8, 12);
-    graphics.fillRect(32, 52, 8, 12);
+    // Shoulder plates (metallic)
+    graphics.fillStyle(0x006688);
+    graphics.fillRect(12, 16, 6, 8);
+    graphics.fillRect(30, 16, 6, 8);
 
-    // Eyes (purple glowing)
-    graphics.fillStyle(0xaa44ff);
-    graphics.fillRect(26, 12, 4, 4);
-    graphics.fillRect(34, 12, 4, 4);
+    // Legs (metallic)
+    graphics.fillStyle(0x0099bb);
+    graphics.fillRect(18, 38, 6, 10);
+    graphics.fillRect(24, 38, 6, 10);
 
-    // Staff (energy staff)
-    graphics.fillStyle(0xff44ff);
-    graphics.fillRect(48, 12, 4, 32);
+    // Chest panel (glowing)
+    graphics.fillStyle(0x00ccff);
+    graphics.fillRect(20, 20, 8, 8);
 
-    graphics.generateTexture("quantumMage_breathing_idle_000", size, size);
+    graphics.generateTexture("cyborg_idle", size, size);
     graphics.destroy();
 
-    return "quantumMage_breathing_idle_000";
-  }
-
-  // Hero C: Stealth Rogue
-  static createStealthRogue(scene: Phaser.Scene): string {
-    const graphics = scene.add.graphics();
-    const size = 64;
-
-    // Body (blue armor)
-    graphics.fillStyle(0x2244aa);
-    graphics.fillRect(20, 20, 24, 32);
-
-    // Helmet (blue)
-    graphics.fillStyle(0x1133aa);
-    graphics.fillRect(22, 8, 20, 16);
-
-    // Shoulder plates (blue)
-    graphics.fillStyle(0x0022aa);
-    graphics.fillRect(16, 24, 8, 12);
-    graphics.fillRect(40, 24, 8, 12);
-
-    // Legs (blue)
-    graphics.fillStyle(0x3355bb);
-    graphics.fillRect(24, 52, 8, 12);
-    graphics.fillRect(32, 52, 8, 12);
-
-    // Eyes (blue glowing)
-    graphics.fillStyle(0x4488ff);
-    graphics.fillRect(26, 12, 4, 4);
-    graphics.fillRect(34, 12, 4, 4);
-
-    // Daggers (blue energy)
-    graphics.fillStyle(0x44aaff);
-    graphics.fillRect(48, 20, 3, 16);
-    graphics.fillRect(52, 20, 3, 16);
-
-    graphics.generateTexture("stealthRogue_breathing_idle_000", size, size);
-    graphics.destroy();
-
-    return "stealthRogue_breathing_idle_000";
-  }
-
-  // Hero D: Plasma Paladin
-  static createPlasmaPaladin(scene: Phaser.Scene): string {
-    const graphics = scene.add.graphics();
-    const size = 64;
-
-    // Body (golden armor)
-    graphics.fillStyle(0xffaa00);
-    graphics.fillRect(20, 20, 24, 32);
-
-    // Helmet (golden)
-    graphics.fillStyle(0xcc8800);
-    graphics.fillRect(22, 8, 20, 16);
-
-    // Shoulder plates (golden)
-    graphics.fillStyle(0xaa6600);
-    graphics.fillRect(16, 24, 8, 12);
-    graphics.fillRect(40, 24, 8, 12);
-
-    // Legs (golden)
-    graphics.fillStyle(0xdd9900);
-    graphics.fillRect(24, 52, 8, 12);
-    graphics.fillRect(32, 52, 8, 12);
-
-    // Eyes (golden glowing)
-    graphics.fillStyle(0xffcc00);
-    graphics.fillRect(26, 12, 4, 4);
-    graphics.fillRect(34, 12, 4, 4);
-
-    // Shield (golden energy)
-    graphics.fillStyle(0xffdd44);
-    graphics.fillRect(48, 16, 8, 20);
-
-    graphics.generateTexture("plasmaPaladin_breathing_idle_000", size, size);
-    graphics.destroy();
-
-    return "plasmaPaladin_breathing_idle_000";
+    return "cyborg_idle";
   }
 
   // Stationary Robot

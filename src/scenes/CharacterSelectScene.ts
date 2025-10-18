@@ -46,9 +46,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.addCyberpunkElements();
 
     // Character selection area
-    const characterKeys = ["A", "B", "C", "D"];
+    const characterKeys = ["biker", "punk", "cyborg"];
     const characterSize = 120;
-    const spacing = 200; // Increased spacing for larger screen
+    const spacing = 250; // Increased spacing for 3 characters
     const totalWidth = (characterKeys.length - 1) * spacing;
     const startX = (1200 - totalWidth) / 2; // Center the characters
     const y = 520; // Moved further down to make more space
@@ -89,20 +89,14 @@ export class CharacterSelectScene extends Phaser.Scene {
       interactiveArea.setInteractive();
       interactiveArea.setDepth(0.5); // Between background and character
 
-      // Character sprite (using breathing-idle animation)
-      const charName = [
-        "cyberWarrior",
-        "quantumMage",
-        "stealthRogue",
-        "plasmaPaladin",
-      ][index];
-      const sprite = this.add.sprite(x, y, `${charName}_breathing_idle_000`);
-      sprite.setDisplaySize(characterSize, characterSize);
-      sprite.setScale(1.2); // Start at larger size
+      // Character sprite (using idle animation)
+      const charKey = characterKeys[index];
+      const sprite = this.add.sprite(x, y, `${charKey}_idle`);
+      sprite.setScale(1.8); // 50% larger than gameplay (1.2 * 1.5)
       sprite.setDepth(1); // Above background
 
-      // Play breathing-idle animation
-      sprite.play(`${charName}_breathing_idle`);
+      // Play idle animation
+      sprite.play(`${charKey}_idle`);
 
       // Character name
       this.add
@@ -170,6 +164,9 @@ export class CharacterSelectScene extends Phaser.Scene {
       });
     });
 
+    // Set up attack animation timers for each character
+    this.setupAttackAnimations();
+
     // Instructions (moved down)
     this.add
       .text(600, 720, "Click on a hero to begin your cyberpunk adventure!", {
@@ -211,25 +208,29 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   private createCharacterAnimations(): void {
-    const characterNames = [
-      "cyberWarrior",
-      "quantumMage",
-      "stealthRogue",
-      "plasmaPaladin",
-    ];
+    const characterKeys = ["biker", "punk", "cyborg"];
 
-    characterNames.forEach((charName) => {
-      // Create breathing-idle animation for selection screen
+    characterKeys.forEach((charKey) => {
+      // Create idle animation for selection screen
       this.anims.create({
-        key: `${charName}_breathing_idle`,
-        frames: [
-          { key: `${charName}_breathing_idle_000` },
-          { key: `${charName}_breathing_idle_001` },
-          { key: `${charName}_breathing_idle_002` },
-          { key: `${charName}_breathing_idle_003` },
-        ],
-        frameRate: 8, // Slow breathing animation
+        key: `${charKey}_idle`,
+        frames: this.anims.generateFrameNumbers(`${charKey}_idle`, {
+          start: 0,
+          end: 3,
+        }),
+        frameRate: 8, // Slow idle animation
         repeat: -1, // Loop infinitely
+      });
+
+      // Create attack3 animation for selection screen
+      this.anims.create({
+        key: `${charKey}_attack3`,
+        frames: this.anims.generateFrameNumbers(`${charKey}_attack3`, {
+          start: 0,
+          end: -1,
+        }),
+        frameRate: 12,
+        repeat: 0, // Play once
       });
     });
   }
@@ -283,6 +284,25 @@ export class CharacterSelectScene extends Phaser.Scene {
       console.log("🧠 Pressing E key to open map editor");
       this.scene.start("MapEditorScene");
     }
+  }
+
+  private setupAttackAnimations(): void {
+    // Set up timers for each character to play attack3 animation every 3 seconds
+    this.characters.forEach((character) => {
+      this.time.addEvent({
+        delay: 3000, // 3 seconds
+        callback: () => {
+          // Play attack3 animation
+          character.sprite.play(`${character.key}_attack3`);
+
+          // When attack3 finishes, return to idle
+          character.sprite.once("animationcomplete", () => {
+            character.sprite.play(`${character.key}_idle`);
+          });
+        },
+        loop: true,
+      });
+    });
   }
 
   private selectCharacter(characterKey: string): void {
