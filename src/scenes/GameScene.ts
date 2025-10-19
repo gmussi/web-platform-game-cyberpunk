@@ -1147,6 +1147,13 @@ export class GameScene extends Phaser.Scene {
     // Create edge walls with gaps for exit zones
     this.createEdgeWalls();
 
+    // Player vs Edge Walls - IMPORTANT: This prevents player from going through walls where there are no exits
+    this.edgeWalls.forEach((wall) => {
+      const collider = this.physics.add.collider(this.player, wall);
+      this.activeColliders.push(collider);
+    });
+    console.log(`Added ${this.edgeWalls.length} edge wall colliders`);
+
     // Player vs Tilemap
     const playerTilemapCollider = this.physics.add.collider(
       this.player,
@@ -1218,6 +1225,12 @@ export class GameScene extends Phaser.Scene {
     );
     this.activeColliders.push(playerEnemyOverlap);
 
+    // Enemies vs Edge Walls
+    this.edgeWalls.forEach((wall) => {
+      const collider = this.physics.add.collider(this.enemies, wall);
+      this.activeColliders.push(collider);
+    });
+
     // Enemies vs Tilemap - use individual collision bodies
     console.log(
       `Setting up enemy collisions with ${this.tilemapSystem.collisionBodies.length} collision bodies`
@@ -1249,13 +1262,16 @@ export class GameScene extends Phaser.Scene {
   private cleanupColliders(): void {
     // Remove all active colliders from the physics world
     this.activeColliders.forEach((collider) => {
-      if (collider) {
-        // Disable the collider using type assertion
-        (collider as any).active = false;
-        // Phaser will automatically clean up disabled colliders
+      if (collider && collider.active) {
+        try {
+          this.physics.world.removeCollider(collider);
+        } catch (e) {
+          console.warn("Failed to remove collider:", e);
+        }
       }
     });
     this.activeColliders = [];
+    console.log("✅ Cleaned up all colliders");
   }
 
   private createUI(): void {
@@ -1610,6 +1626,7 @@ export class GameScene extends Phaser.Scene {
 
     // Check if map data is loaded
     if (!this.mapData || !this.mapData.world) {
+      console.warn("⚠️ checkEdgeTransition: No map data available");
       return;
     }
 
@@ -1639,7 +1656,9 @@ export class GameScene extends Phaser.Scene {
           0
         )}), mapSize=(${this.mapData.world.width}, ${
           this.mapData.world.height
-        })`
+        }), currentMap=${this.mapData.id}, totalExits=${
+          this.mapData.exits?.length || 0
+        }`
       );
     }
 
@@ -1700,14 +1719,24 @@ export class GameScene extends Phaser.Scene {
     return this.mapData.exits.find((e: any) => {
       if (e.edge !== edge) return false;
 
+      // CRITICAL FIX: Calculate edgeStart/edgeEnd from actual exit position
+      // instead of using stored values (which may be incorrect in old map files)
+      const exitPos = isHorizontal ? e.x : e.y;
+      const exitSize = isHorizontal ? e.width : e.height;
+      const actualEdgeStart = exitPos / mapSize;
+      const actualEdgeEnd = (exitPos + exitSize) / mapSize;
+
       const matches =
-        playerNormalized >= e.edgeStart && playerNormalized <= e.edgeEnd;
+        playerNormalized >= actualEdgeStart &&
+        playerNormalized <= actualEdgeEnd;
 
       if (this.frameCount % 60 === 0) {
         console.log(
-          `  Exit ${e.id}: edge=${e.edge}, range=[${e.edgeStart.toFixed(
+          `  Exit ${e.id}: edge=${e.edge}, stored=[${e.edgeStart.toFixed(
             3
-          )}, ${e.edgeEnd.toFixed(3)}], matches=${matches}`
+          )}, ${e.edgeEnd.toFixed(3)}], actual=[${actualEdgeStart.toFixed(
+            3
+          )}, ${actualEdgeEnd.toFixed(3)}], matches=${matches}`
         );
       }
 
@@ -1734,7 +1763,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Get new map
+    // Get new map - CRITICAL: Get fresh reference after switchMap
     const newMapData = this.worldSystem.getCurrentMap();
     if (!newMapData) {
       console.error(`Failed to get map data for ${targetMapId}`);
@@ -1742,9 +1771,25 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    console.log(
+      `📍 New map loaded: ${newMapData.id}, exits:`,
+      newMapData.exits?.length || 0
+    );
+    if (newMapData.exits && newMapData.exits.length > 0) {
+      console.log(
+        `   Exit details:`,
+        newMapData.exits.map((e: any) => ({
+          id: e.id,
+          edge: e.edge,
+          targetMapId: e.targetMapId,
+        }))
+      );
+    }
+
     // Calculate spawn position on opposite edge
     const spawnPos = this.calculateOppositeEdgeSpawn(fromExit, newMapData);
 
+    // Update map data reference BEFORE cleanup
     this.mapData = newMapData;
 
     // Reload map content
@@ -1754,6 +1799,15 @@ export class GameScene extends Phaser.Scene {
     this.createEnemies();
     this.createExitZones();
     this.createPortal();
+
+    // Verify map data is still correct after reload
+    const verifyMapData = this.worldSystem.getCurrentMap();
+    if (verifyMapData && verifyMapData.id !== this.mapData.id) {
+      console.error(
+        `⚠️ Map data mismatch after reload! Expected ${this.mapData.id}, got ${verifyMapData.id}`
+      );
+      this.mapData = verifyMapData;
+    }
 
     // Spawn player at calculated position
     this.player.setPosition(spawnPos.x, spawnPos.y);
@@ -1772,7 +1826,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     (this as any).isTransitioning = false;
-    console.log(`✅ Transition to map ${targetMapId} complete`);
+    console.log(
+      `✅ Transition to map ${targetMapId} complete, exits available: ${
+        this.mapData.exits?.length || 0
+      }`
+    );
   }
 
   private calculateOppositeEdgeSpawn(
@@ -1787,27 +1845,78 @@ export class GameScene extends Phaser.Scene {
       bottom: "top",
     }[fromExit.edge];
 
-    // Find matching exit on opposite edge with similar position
-    const targetExit = targetMap.exits.find((e: any) => {
-      if (e.edge !== oppositeEdge) return false;
+    // Calculate actual normalized position of fromExit
+    const fromIsHorizontal =
+      fromExit.edge === "top" || fromExit.edge === "bottom";
+    const fromMapSize = fromIsHorizontal
+      ? this.mapData.world.width
+      : this.mapData.world.height;
+    const fromExitPos = fromIsHorizontal ? fromExit.x : fromExit.y;
+    const fromExitSize = fromIsHorizontal ? fromExit.width : fromExit.height;
+    const fromActualStart = fromExitPos / fromMapSize;
+    const fromActualEnd = (fromExitPos + fromExitSize) / fromMapSize;
+    const fromActualCenter = (fromActualStart + fromActualEnd) / 2;
 
-      // Check if exit ranges overlap (allows some flexibility)
-      const overlap = !(
-        e.edgeEnd < fromExit.edgeStart || e.edgeStart > fromExit.edgeEnd
-      );
-      return overlap;
-    });
+    // Find matching exit on opposite edge using targetMapId first (most reliable)
+    const targetIsHorizontal =
+      oppositeEdge === "top" || oppositeEdge === "bottom";
+    const targetMapSize = targetIsHorizontal
+      ? targetMap.world.width
+      : targetMap.world.height;
 
-    if (!targetExit) {
-      console.warn(
-        `No matching exit found on ${oppositeEdge} edge of ${targetMap.id}`
-      );
+    // Filter exits on the opposite edge
+    const oppositeEdgeExits = targetMap.exits.filter(
+      (e: any) => e.edge === oppositeEdge
+    );
+
+    if (oppositeEdgeExits.length === 0) {
+      console.warn(`No exits found on ${oppositeEdge} edge of ${targetMap.id}`);
       // Fallback: spawn at map center
       return {
         x: targetMap.world.width / 2,
         y: targetMap.world.height / 2,
       };
     }
+
+    // Try to find exit that points back to our current map
+    let targetExit = oppositeEdgeExits.find(
+      (e: any) => e.targetMapId === this.mapData.id
+    );
+
+    // If no exit points back to us, find the closest exit by position
+    if (!targetExit) {
+      console.log(
+        `No direct return exit found on ${oppositeEdge} edge, finding closest exit by position`
+      );
+
+      let minDistance = Infinity;
+      oppositeEdgeExits.forEach((e: any) => {
+        const targetExitPos = targetIsHorizontal ? e.x : e.y;
+        const targetExitSize = targetIsHorizontal ? e.width : e.height;
+        const targetActualStart = targetExitPos / targetMapSize;
+        const targetActualEnd =
+          (targetExitPos + targetExitSize) / targetMapSize;
+        const targetActualCenter = (targetActualStart + targetActualEnd) / 2;
+
+        const distance = Math.abs(targetActualCenter - fromActualCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          targetExit = e;
+        }
+      });
+    }
+
+    if (!targetExit) {
+      console.warn(`Could not determine spawn exit on ${oppositeEdge} edge`);
+      return {
+        x: targetMap.world.width / 2,
+        y: targetMap.world.height / 2,
+      };
+    }
+
+    console.log(
+      `Spawning at exit ${targetExit.id} on ${oppositeEdge} edge of ${targetMap.id}`
+    );
 
     // Calculate spawn position at center of target exit
     const spawnX = targetExit.x + targetExit.width / 2;
