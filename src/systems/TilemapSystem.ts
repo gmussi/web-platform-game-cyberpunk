@@ -189,8 +189,8 @@ export class TilemapSystem {
     // Create back layer (deeper parallax)
     // Prevent vertical tiling by sizing the TileSprite height to the texture height only
     // and aligning it to the bottom of the world. Horizontal tiling remains enabled to cover width.
-    const backSpriteHeight = backHeight;
-    const backYPosition = worldHeight - backSpriteHeight / 2;
+    const backSpriteHeight = Math.min(backHeight, worldHeight);
+    const backYPosition = backSpriteHeight / 2; // Anchor top of back layer to world top
     this.cityBackSprite = this.scene.add.tileSprite(
       worldWidth / 2,
       backYPosition,
