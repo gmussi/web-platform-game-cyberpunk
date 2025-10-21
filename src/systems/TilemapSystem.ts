@@ -187,13 +187,15 @@ export class TilemapSystem {
     console.log(`🏙️ Front texture size: ${frontWidth}x${frontHeight}`);
 
     // Create back layer (deeper parallax)
-    // Size to ONLY cover the tile grid area (worldWidth x worldHeight)
-    // Position centered in the tile grid to fill from (0,0) to (worldWidth, worldHeight)
+    // Prevent vertical tiling by sizing the TileSprite height to the texture height only
+    // and aligning it to the bottom of the world. Horizontal tiling remains enabled to cover width.
+    const backSpriteHeight = backHeight;
+    const backYPosition = worldHeight - backSpriteHeight / 2;
     this.cityBackSprite = this.scene.add.tileSprite(
       worldWidth / 2,
-      worldHeight / 2,
+      backYPosition,
       worldWidth,
-      worldHeight,
+      backSpriteHeight,
       backTextureKey
     );
     this.cityBackSprite.setOrigin(0.5, 0.5);
@@ -204,9 +206,9 @@ export class TilemapSystem {
     // Store for parallax updates in game loop
     (this.cityBackSprite as any).parallaxFactor = 0.2; // Texture scrolls at 20% speed
     console.log(
-      `🏙️ Back sprite created at (${worldWidth / 2}, ${
-        worldHeight / 2
-      }), size: ${worldWidth}x${worldHeight}, depth: 0, scrollFactor: 1.0, parallaxFactor: 0.2`
+      `🏙️ Back sprite created at (${
+        worldWidth / 2
+      }, ${backYPosition}), size: ${worldWidth}x${backSpriteHeight}, depth: 0, scrollFactor: 1.0, parallaxFactor: 0.2`
     );
     console.log(
       `🏙️ Back sprite position: (${this.cityBackSprite.x}, ${this.cityBackSprite.y}), origin: (${this.cityBackSprite.originX}, ${this.cityBackSprite.originY})`
@@ -298,10 +300,9 @@ export class TilemapSystem {
 
     if (this.cityBackSprite && (this.cityBackSprite as any).parallaxFactor) {
       const parallaxFactor = (this.cityBackSprite as any).parallaxFactor;
-      // Offset the texture position based on camera scroll and parallax factor
-      // The further back (smaller parallaxFactor), the slower it scrolls
+      // Offset only horizontally to avoid vertical tiling/scrolling
       this.cityBackSprite.tilePositionX = camera.scrollX * (1 - parallaxFactor);
-      this.cityBackSprite.tilePositionY = camera.scrollY * (1 - parallaxFactor);
+      this.cityBackSprite.tilePositionY = 0;
     }
 
     if (this.cityFrontSprite && (this.cityFrontSprite as any).parallaxFactor) {
