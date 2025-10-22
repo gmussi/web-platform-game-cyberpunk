@@ -263,14 +263,14 @@ export class WorldSystem {
     }
 
     // Edge-based navigation: no explicit spawn points per map.
-    // Fall back to world's startingPosition if available.
-    if (this.worldData.startingPosition) {
-      return {
-        id: spawnId,
-        x: this.worldData.startingPosition.x,
-        y: this.worldData.startingPosition.y,
-      };
-    }
+    // Default to 5 tiles from the top-left of the starting/current map.
+    const mapId = this.currentMapId || this.worldData.startingMap;
+    const map = this.worldData.maps[mapId];
+    const tileSize = map?.world?.tileSize ?? 32;
+    const tilesFromEdge = 5;
+    const x = tilesFromEdge * tileSize + tileSize / 2;
+    const y = tilesFromEdge * tileSize + tileSize / 2;
+    return { id: spawnId, x, y };
 
     return null;
   }

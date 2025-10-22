@@ -226,8 +226,10 @@ export class TilemapSystem {
     // Create front layer (moderate parallax)
     // Front layer uses natural height and is positioned at bottom (ground level)
     // Width matches tile grid width for horizontal coverage
+    // Use the front texture's natural height and align its top to match the back layer's top,
+    // then push it down by 100px. Horizontal tiling remains enabled; no vertical parallax.
     const frontSpriteHeight = Math.min(frontHeight, worldHeight);
-    const frontYPosition = worldHeight - frontSpriteHeight / 2;
+    const frontYPosition = frontSpriteHeight / 2 + 100;
     this.cityFrontSprite = this.scene.add.tileSprite(
       worldWidth / 2,
       frontYPosition,
@@ -263,12 +265,7 @@ export class TilemapSystem {
     // Log camera and world bounds info (reusing camera variable from above)
     console.log(`🎥 Camera position: (${camera.scrollX}, ${camera.scrollY})`);
     console.log(
-      `🎥 Camera bounds: x=${camera.x}, y=${camera.y}, width=${camera.width}, height=${camera.height}`
-    );
-    console.log(`🎥 Camera zoom: ${camera.zoom}`);
-    const physicsWorld = this.scene.physics.world;
-    console.log(
-      `🌍 Physics world bounds: x=${physicsWorld.bounds.x}, y=${physicsWorld.bounds.y}, width=${physicsWorld.bounds.width}, height=${physicsWorld.bounds.height}`
+      `🎥 Camera bounds: x=${camera.worldView.x}, y=${camera.worldView.y}, width=${camera.worldView.width}, height=${camera.worldView.height}`
     );
     console.log(
       `🗺️ Map dimensions (tiles): ${this.mapWidth}x${this.mapHeight}`
@@ -307,11 +304,10 @@ export class TilemapSystem {
 
     if (this.cityFrontSprite && (this.cityFrontSprite as any).parallaxFactor) {
       const parallaxFactor = (this.cityFrontSprite as any).parallaxFactor;
-      // Offset the texture position based on camera scroll and parallax factor
+      // Apply horizontal parallax only to avoid vertical tiling/cutting
       this.cityFrontSprite.tilePositionX =
         camera.scrollX * (1 - parallaxFactor);
-      this.cityFrontSprite.tilePositionY =
-        camera.scrollY * (1 - parallaxFactor);
+      this.cityFrontSprite.tilePositionY = 0;
     }
   }
 
