@@ -10,6 +10,7 @@ export interface Character {
   name: string;
   color: number;
   scrollDirection: "right";
+  visualOffsetX?: number; // Optional visual offset to account for asymmetric sprites
 }
 
 export interface Characters {

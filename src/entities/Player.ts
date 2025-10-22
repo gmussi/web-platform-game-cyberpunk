@@ -1,6 +1,7 @@
 import { GAME_CONSTANTS } from "../data/config";
 import { characters, gameData } from "../data/characters";
 import { Character } from "../types/game";
+import { Actor } from "./Actor";
 
 // Jump phase type
 type JumpPhase = "none" | "start" | "ascending" | "falling" | "landing";
@@ -8,7 +9,7 @@ type JumpPhase = "none" | "start" | "ascending" | "falling" | "landing";
 // Animation state type
 type AnimationState = "idle" | "running" | "jumping";
 
-export class Player extends Phaser.Physics.Arcade.Sprite {
+export class Player extends Actor {
   public scene: Phaser.Scene;
   public characterKey: string;
   public characterData: Character;
@@ -21,7 +22,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public health: number;
   public maxHealth: number;
   public isMoving: boolean;
-  public facingRight: boolean;
   public currentAnimation: AnimationState;
   public isJumping: boolean;
   public jumpPhase: JumpPhase;
@@ -44,12 +44,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.characterData = characters[characterKey]!;
     this.charName = charName!;
 
-    // Add to scene and enable physics
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
-
-    // Scale sprite to 150% (48px -> 72px display size)
-    this.setScale(1.5);
+    // Scale visual sprite to 150% (48px -> 72px display size)
+    this.setVisualScale(1.5);
 
     // Set up physics body
     this.setCollideWorldBounds(false); // Disable world bounds - we use custom edge walls instead
@@ -60,15 +56,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Sprite is 48x48, body should be narrower and aligned to bottom (where feet are)
     const bodyWidth = 32;
     const bodyHeight = 44;
-    this.body.setSize(bodyWidth, bodyHeight);
-    this.body.setOffset(0, 48 - bodyHeight); // Left-align horizontally, align bottom
+    // Centered hitbox with feet aligned to bottom of nominal 48px frame
+    this.setBodyBounds(
+      { width: bodyWidth, height: bodyHeight },
+      { x: (48 - bodyWidth) / 2, y: 48 - bodyHeight }
+    );
 
     // Set depth to appear above dark overlay and other elements
     this.setDepth(30);
 
-    // Ensure player is always visible
-    this.setVisible(true);
-    this.setActive(true);
+    // Ensure player is always visible (visual only)
+    this.visual.setVisible(true);
 
     // Input handling
     this.cursors = scene.input.keyboard.createCursorKeys();
@@ -85,7 +83,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Animation states
     this.isMoving = false;
-    this.facingRight = true; // Always face right
+    this.setFacingRight(true);
     this.currentAnimation = "idle";
     this.isJumping = false;
 
@@ -94,11 +92,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpStartTime = 0;
     this.jumpFrameIndex = 0;
 
-    // Set initial facing direction (always right)
-    this.setFlipX(false);
+    // Visual starts unflipped; set optional visual X offset from character data
+    if (typeof this.characterData.visualOffsetX === "number") {
+      this.setVisualOffsets(this.characterData.visualOffsetX, 0);
+    }
 
     // Start with idle animation
-    this.play(`${charName}_idle`);
+    this.playAnim(`${charName}_idle`);
 
     // Player created successfully
   }
@@ -108,9 +108,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.handleJump();
     this.updateAnimation();
 
-    // Ensure player stays visible
+    // Ensure player stays visible (visual only)
     this.setVisible(true);
-    this.setActive(true);
 
     // Ensure player depth is maintained
     this.setDepth(30);
@@ -144,7 +143,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.jumpPhase === "none") {
         this.isMoving = true;
       }
-      this.facingRight = false;
+      this.setFacingRight(false);
     } else if (this.cursors.right!.isDown && canMoveRight) {
       console.log("🧠 Player moving right");
       this.setVelocityX(this.speed);
@@ -152,15 +151,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.jumpPhase === "none") {
         this.isMoving = true;
       }
-      this.facingRight = true;
+      this.setFacingRight(true);
     } else {
       this.setVelocityX(0);
       this.isMoving = false;
     }
 
-    // Ensure player stays visible after movement
+    // Ensure player stays visible after movement (visual only)
     this.setVisible(true);
-    this.setActive(true);
 
     // Check if movement state changed
     if (wasMoving !== this.isMoving) {
@@ -233,9 +231,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private updateAnimation(): void {
-    // Set sprite flip based on facing direction
-    this.setFlipX(!this.facingRight);
-
     // Handle jump animation phases
     if (this.jumpPhase !== "none") {
       this.handleJumpAnimation();
@@ -247,13 +242,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Running animation
       const animationKey = `${this.charName}_run`;
       if (this.currentAnimation !== "running") {
-        this.play(animationKey);
+        this.playAnim(animationKey);
         this.currentAnimation = "running";
       }
     } else {
       // Idle animation
       if (this.currentAnimation !== "idle") {
-        this.play(`${this.charName}_idle`);
+        this.playAnim(`${this.charName}_idle`);
         this.currentAnimation = "idle";
       }
     }
@@ -262,7 +257,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private handleJumpAnimation(): void {
     // Play jump animation if not already playing
     if (this.currentAnimation !== "jumping") {
-      this.play(`${this.charName}_jump`);
+      this.playAnim(`${this.charName}_jump`);
       this.currentAnimation = "jumping";
     }
 
@@ -282,9 +277,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.health < 0) this.health = 0;
 
     // Visual feedback for damage
-    this.setTint(0xff0000); // Red flash
+    this.setVisualTint(0xff0000); // Red flash
     this.scene.time.delayedCall(200, () => {
-      this.setTint(this.characterData.color);
+      this.setVisualTint(this.characterData.color);
     });
 
     // Emit damage event
@@ -301,9 +296,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.health > this.maxHealth) this.health = this.maxHealth;
 
     // Visual feedback for healing
-    this.setTint(0x00ff00); // Green flash
+    this.setVisualTint(0x00ff00); // Green flash
     this.scene.time.delayedCall(200, () => {
-      this.setTint(this.characterData.color);
+      this.setVisualTint(this.characterData.color);
     });
 
     this.scene.events.emit("playerHealed", this.health);

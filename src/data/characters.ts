@@ -14,15 +14,18 @@ export const characters: Characters = {
     name: "Biker",
     color: 0xff4444,
     scrollDirection: "right",
+    visualOffsetX: 8,
   },
   punk: {
     name: "Punk",
     color: 0xff00ff,
     scrollDirection: "right",
+    visualOffsetX: 8,
   },
   cyborg: {
     name: "Cyborg",
     color: 0x00ffff,
     scrollDirection: "right",
+    visualOffsetX: 8,
   },
 };

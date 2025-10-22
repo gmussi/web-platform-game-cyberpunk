@@ -1,8 +1,9 @@
 import { GAME_CONSTANTS } from "../data/config";
 import { EnemyType, EnemySpriteType } from "../types/enemy";
+import { Actor } from "./Actor";
 type FacingDirection = "south" | "east" | "west";
 
-export class Enemy extends Phaser.Physics.Arcade.Sprite {
+export class Enemy extends Actor {
   public scene: Phaser.Scene;
   public type: EnemyType;
   public enemyType: EnemySpriteType;
@@ -39,17 +40,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.type = type; // 'stationary' or 'moving'
     this.enemyType = enemyType; // 'enemy1' or 'enemy2'
 
-    // Add to scene and enable physics
-    scene.add.existing(this);
-    scene.physics.add.existing(this);
-
     // Set up physics body
     (this.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(false);
     // Enemies now affected by gravity like the player
 
-    // Set proper physics body size (smaller than sprite for better gameplay)
-    (this.body as Phaser.Physics.Arcade.Body).setSize(32, 48); // Width: 32px, Height: 48px (smaller than 64x64 sprite)
-    (this.body as Phaser.Physics.Arcade.Body).setOffset(16, 8); // Center horizontally, offset vertically to align with body
+    // Centered hitbox (assume nominal 64x64 enemy frames -> align bottom to 64)
+    this.setBodyBounds(
+      { width: 32, height: 48 },
+      { x: (64 - 32) / 2, y: 64 - 48 }
+    );
 
     // All enemies need to be movable to collide with platforms properly
     (this.body as Phaser.Physics.Arcade.Body).setImmovable(false); // Allow collision with platforms
@@ -81,11 +80,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   private updateSprite(): void {
-    // Update sprite based on facing direction
+    // Update visual based on facing direction
     const spriteKey = `${this.enemyType}_${this.facingDirection}`;
     if (this.scene.textures.exists(spriteKey)) {
-      this.setTexture(spriteKey);
+      this.visual.setTexture(spriteKey);
     }
+    // Flip horizontally for east/west using Actor's API
+    if (this.facingDirection === "east") this.setFacingRight(true);
+    if (this.facingDirection === "west") this.setFacingRight(false);
   }
 
   private setupBehavior(): void {
@@ -160,9 +162,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       (this.scene as any).playWilhelmScream();
 
       // Visual feedback
-      this.setTint(0xffaa00); // Orange flash
+      this.setVisualTint(0xffaa00); // Orange flash
       this.scene.time.delayedCall(200, () => {
-        this.setTint(0xff0000);
+        this.setVisualTint(0xff0000);
       });
     }
   }

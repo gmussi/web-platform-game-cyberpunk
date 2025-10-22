@@ -11,7 +11,7 @@
   "startingSpawn": "default",
   "startingPosition": {
     "x": 100,
-    "y": 100
+    "y": 1008
   },
   "maps": {
     "room_1": {
@@ -19908,19 +19908,19 @@
         ],
         [
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
@@ -22214,23 +22214,23 @@
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           },
           {
-            "type": 0,
+            "type": 1,
             "spriteIndex": null
           }
         ],
