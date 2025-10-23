@@ -1666,12 +1666,13 @@ export class GameScene extends Phaser.Scene {
     const exit = this.findExitAtPlayerPosition(edge, px, py);
 
     if (exit) {
-      // Transition when player is close to edge (within 16 pixels) - before hitting edge wall
+      // Transition when player is within the exit band at the edge
+      // Use actual exit dimensions instead of a fixed 16px threshold
       const atEdge =
-        (edge === "left" && px < 16) ||
-        (edge === "right" && px > this.mapData.world.width - 16) ||
-        (edge === "top" && py < 16) ||
-        (edge === "bottom" && py > this.mapData.world.height - 16);
+        (edge === "left" && px <= exit.width) ||
+        (edge === "right" && px >= this.mapData.world.width - exit.width) ||
+        (edge === "top" && py <= exit.height) ||
+        (edge === "bottom" && py >= this.mapData.world.height - exit.height);
 
       if (atEdge) {
         console.log(
