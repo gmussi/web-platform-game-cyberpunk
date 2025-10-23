@@ -5522,7 +5522,17 @@
       ],
       "cityBackground": {
         "variant": "city2"
-      }
+      },
+      "npcs": [
+        {
+          "id": "npc_1761243763138",
+          "npcType": "npc01",
+          "position": {
+            "x": 86,
+            "y": 722
+          }
+        }
+      ]
     },
     "room_2": {
       "id": "room_2",

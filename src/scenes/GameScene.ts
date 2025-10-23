@@ -11,6 +11,7 @@ import { Platform } from "../entities/Platform";
 import { ExitZone } from "../entities/ExitZone";
 import { gameData } from "../data/characters";
 import { WorldMapData } from "../types/map";
+import { Npc } from "@/entities/Npc";
 
 // GameScene interfaces
 interface MapData {
@@ -67,6 +68,7 @@ export class GameScene extends Phaser.Scene {
   public tilemapSystem!: TilemapSystem;
   public player!: Player;
   public enemies: Enemy[] = [];
+  public npcs: Npc[] = [];
   public enemyGroup!: Phaser.Physics.Arcade.Group;
   public playerGroup!: Phaser.Physics.Arcade.Group;
   public exitZones: ExitZone[] = [];
@@ -275,6 +277,71 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private createNpcAnimations(): void {
+    // Create animations for 12 NPCs: idle (loop), walk (loop), special (no loop)
+    for (let i = 1; i <= 12; i++) {
+      const id = i.toString().padStart(2, "0");
+      const base = `npc${id}`;
+      try {
+        const idleKey = `${base}_idle`;
+        const walkKey = `${base}_walk`;
+        const specialKey = `${base}_special`;
+
+        const getCount = (key: string) => {
+          if (!this.textures.exists(key)) return 0;
+          try {
+            const tex: any = this.textures.get(key);
+            const names: string[] = tex.getFrameNames?.() || [];
+            return names.length;
+          } catch {
+            return 0;
+          }
+        };
+
+        const idleCount = getCount(idleKey);
+        if (idleCount > 0) {
+          this.anims.create({
+            key: idleKey,
+            frames: this.anims.generateFrameNumbers(idleKey, {
+              start: 0,
+              end: idleCount - 1,
+            }),
+            frameRate: 8,
+            repeat: -1,
+          });
+        }
+
+        const walkCount = getCount(walkKey);
+        if (walkCount > 0) {
+          this.anims.create({
+            key: walkKey,
+            frames: this.anims.generateFrameNumbers(walkKey, {
+              start: 0,
+              end: walkCount - 1,
+            }),
+            frameRate: 10,
+            repeat: -1,
+          });
+        }
+
+        const specialCount = getCount(specialKey);
+        if (specialCount > 0) {
+          this.anims.create({
+            key: specialKey,
+            frames: this.anims.generateFrameNumbers(specialKey, {
+              start: 0,
+              end: specialCount - 1,
+            }),
+            frameRate: 8,
+            repeat: 0,
+          });
+        }
+      } catch (e) {
+        console.warn(`Failed to create NPC animations for ${base}`, e);
+      }
+    }
+  }
+
   public create(data?: any): void {
     // Initialize world system
     this.worldSystem = new WorldSystem(this as any);
@@ -289,6 +356,7 @@ export class GameScene extends Phaser.Scene {
 
     // Create character animations
     this.createCharacterAnimations();
+    this.createNpcAnimations();
 
     // Create tilemap system with correct initial dimensions for default map
     this.tilemapSystem = new TilemapSystem(this as any, 128, 31);
@@ -307,6 +375,7 @@ export class GameScene extends Phaser.Scene {
 
     // Initialize enemies and exit zones arrays to prevent race condition
     this.enemies = [];
+    this.npcs = [];
     this.exitZones = [];
 
     // Set up camera
@@ -374,6 +443,8 @@ export class GameScene extends Phaser.Scene {
         this.tilemapSystem.createCollisionBodies();
         // Create enemies AFTER map data is loaded
         this.createEnemies();
+        // Create NPCs AFTER map data is loaded
+        this.createNpcs();
         // Create exit zones AFTER map data is loaded
         this.createExitZones();
         // Create portal AFTER map data is loaded
@@ -433,6 +504,7 @@ export class GameScene extends Phaser.Scene {
         this.loadTileDataFromMap();
         this.tilemapSystem.createCollisionBodies();
         this.createEnemies();
+        this.createNpcs();
         this.createExitZones();
         this.createPortal();
         this.setupCollisions();
@@ -617,6 +689,7 @@ export class GameScene extends Phaser.Scene {
       this.loadTileDataFromMap();
       this.tilemapSystem.createCollisionBodies();
       this.createEnemies();
+      this.createNpcs();
       this.createExitZones();
       this.createPortal();
       this.setupCollisions();
@@ -643,6 +716,7 @@ export class GameScene extends Phaser.Scene {
     this.loadTileDataFromMap();
     this.tilemapSystem.createCollisionBodies();
     this.createEnemies();
+    this.createNpcs();
     this.createExitZones();
     this.createPortal();
     this.setupCollisions();
@@ -1259,6 +1333,22 @@ export class GameScene extends Phaser.Scene {
     this.activeColliders.push(portalOverlap);
   }
 
+  private createNpcs(): void {
+    this.npcs = [];
+    const list = (this.mapData && (this.mapData as any).npcs) || [];
+    if (!Array.isArray(list)) return;
+    list.forEach((n: any) => {
+      const npcType: string = n.npcType || "npc01";
+      const nx = n.position?.x ?? 0;
+      const ny = n.position?.y ?? 0;
+      const npc = new Npc(this as any, nx, ny, npcType);
+      // Ensure no gravity/collisions and start loop
+      (npc.body as Phaser.Physics.Arcade.Body)?.setAllowGravity(false);
+      npc.startBehaviorLoop();
+      this.npcs.push(npc);
+    });
+  }
+
   private cleanupColliders(): void {
     // Remove all active colliders from the physics world
     this.activeColliders.forEach((collider) => {
@@ -1423,6 +1513,12 @@ export class GameScene extends Phaser.Scene {
       this.enemies = [];
     }
 
+    // Clear existing NPCs
+    if (this.npcs) {
+      this.npcs.forEach((n) => n.destroy());
+      this.npcs = [];
+    }
+
     // Clear existing portal
     if (this.portalSprite) {
       this.portalSprite.destroy();
@@ -1436,6 +1532,8 @@ export class GameScene extends Phaser.Scene {
     this.tilemapSystem.createCollisionBodies();
     // Create enemies AFTER map data is loaded
     this.createEnemies();
+    // Create NPCs AFTER map data is loaded
+    this.createNpcs();
     // Create portal AFTER map data is loaded
     this.createPortal();
     // Setup collisions AFTER collision bodies are created
@@ -1939,6 +2037,8 @@ export class GameScene extends Phaser.Scene {
     this.enemies = [];
     this.exitZones.forEach((exit) => exit.destroy());
     this.exitZones = [];
+    this.npcs.forEach((n) => n.destroy());
+    this.npcs = [];
     this.edgeWalls.forEach((wall) => wall.destroy());
     this.edgeWalls = [];
     if (this.portalSprite) {

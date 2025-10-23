@@ -90,6 +90,13 @@ export class MapEditorScene extends Phaser.Scene {
   public toolButtons: ToolButton[] = [];
   public spritePicker: Phaser.GameObjects.Rectangle | null = null;
   public spriteButtons: SpriteButton[] = [];
+  public selectedNpcType: string | null = null;
+  public npcPicker: Phaser.GameObjects.Rectangle | null = null;
+  public npcButtons: Array<{
+    sprite: Phaser.GameObjects.Sprite;
+    border: Phaser.GameObjects.Rectangle;
+    key: string;
+  }> = [];
   public mapSelector: Phaser.GameObjects.Rectangle | null = null;
   public mapSelectorButtons: Phaser.GameObjects.Text[] = [];
   public spawnPointSelector: Phaser.GameObjects.Rectangle | null = null;
@@ -1042,6 +1049,7 @@ export class MapEditorScene extends Phaser.Scene {
       { name: "Portal", key: "portal", color: "#ff00ff" },
       { name: "Enemy1", key: "enemy1", color: "#ff0000" },
       { name: "Enemy2", key: "enemy2", color: "#ff8800" },
+      { name: "NPC", key: "npc", color: "#66ff66" },
       { name: "Platform", key: "platform", color: "#66ccff" },
       { name: "Solid", key: "solid", color: "#8B4513" },
       { name: "Erase", key: "erase", color: "#000000" },
@@ -1053,8 +1061,8 @@ export class MapEditorScene extends Phaser.Scene {
     this.selectedSpriteIndex = null; // Track selected sprite for solid tiles
     this.toolButtons = [];
 
-    // Grid layout: 3 rows x 4 columns (10 tools)
-    const cols = 4;
+    // Grid layout: 3 rows x 5 columns (added NPC)
+    const cols = 5;
     const rows = 3;
     const buttonWidth = 60;
     const buttonHeight = 25;
@@ -1085,6 +1093,10 @@ export class MapEditorScene extends Phaser.Scene {
           this.openSpritePicker();
         } else if (tool.key === "resize") {
           this.openResizeModal();
+        } else if (tool.key === "npc") {
+          this.selectedTool = tool.key;
+          this.updateToolSelection();
+          this.openNpcPicker();
         } else {
           this.selectedTool = tool.key;
           this.selectedSpriteIndex = null;
@@ -1371,6 +1383,136 @@ export class MapEditorScene extends Phaser.Scene {
         this.closeSpritePicker();
       });
     });
+  }
+
+  private openNpcPicker(): void {
+    // Close if already open
+    if (this.npcPicker) {
+      this.closeNpcPicker();
+      return;
+    }
+
+    const centerX = this.viewportWidth / 2;
+    const centerY = this.viewportHeight / 2;
+    const modalWidth = 520;
+    const modalHeight = 420;
+
+    this.npcPicker = this.add.rectangle(
+      centerX,
+      centerY,
+      modalWidth,
+      modalHeight,
+      0x000000,
+      0.85
+    );
+    this.npcPicker.setScrollFactor(0);
+    this.npcPicker.setDepth(1000);
+
+    const title = this.add.text(centerX, centerY - 180, "Select NPC", {
+      fontSize: "18px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+    });
+    title.setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(1001);
+
+    const cols = 6;
+    const rows = 2;
+    const spriteSize = 32;
+    const spacing = 70;
+    const startX = centerX - ((cols - 1) * spacing) / 2;
+    const startY = centerY - 110;
+
+    this.npcButtons = [];
+    const toIgnore: Phaser.GameObjects.GameObject[] = [this.npcPicker, title];
+    // Mark modal as open to block map clicks
+    (this as any)._npcModalOpen = true;
+
+    for (let i = 1; i <= 12; i++) {
+      const col = (i - 1) % cols;
+      const row = Math.floor((i - 1) / cols);
+      const x = startX + col * spacing;
+      const y = startY + row * spacing;
+      const id = i.toString().padStart(2, "0");
+      const key = `npc${id}_idle`;
+
+      const sprite = this.add.sprite(x, y, key, 0);
+      sprite.setDisplaySize(spriteSize, spriteSize);
+      sprite.setScrollFactor(0);
+      sprite.setDepth(1001);
+      // Guard: only play if animation exists (frame-count may vary)
+      if (this.anims.exists(`npc${id}_idle`)) {
+        sprite.play(`npc${id}_idle`);
+      }
+      sprite.setInteractive();
+
+      const border = this.add.rectangle(
+        x,
+        y,
+        spriteSize + 8,
+        spriteSize + 8,
+        0xffffff,
+        0.25
+      );
+      border.setScrollFactor(0);
+      border.setDepth(1000);
+
+      sprite.on("pointerdown", () => {
+        // Delay closing so global pointerdown handler still sees modal as open
+        this.time.delayedCall(1, () => {
+          this.selectedNpcType = `npc${id}`;
+          this.closeNpcPicker();
+        });
+      });
+      sprite.on("pointerover", () => border.setFillStyle(0x00ff00, 0.4));
+      sprite.on("pointerout", () => border.setFillStyle(0xffffff, 0.25));
+
+      this.npcButtons.push({ sprite, border, key: `npc${id}` });
+      toIgnore.push(sprite);
+      toIgnore.push(border as unknown as Phaser.GameObjects.GameObject);
+    }
+
+    const closeBtn = this.add.text(centerX, centerY + 170, "Close", {
+      fontSize: "14px",
+      fill: "#ffffff",
+      fontStyle: "bold",
+      backgroundColor: "#aa0000",
+      padding: { x: 10, y: 6 },
+    });
+    closeBtn.setOrigin(0.5);
+    closeBtn.setScrollFactor(0);
+    closeBtn.setDepth(1001);
+    closeBtn.setInteractive();
+    closeBtn.on("pointerdown", () => this.closeNpcPicker());
+    toIgnore.push(closeBtn);
+
+    if (this.uiCamera) {
+      (this.uiCamera as any).ignore(toIgnore);
+    }
+  }
+
+  private closeNpcPicker(): void {
+    if (this.npcButtons && this.npcButtons.length) {
+      this.npcButtons.forEach(({ sprite, border }) => {
+        sprite.destroy();
+        border.destroy();
+      });
+      this.npcButtons = [];
+    }
+    if (this.npcPicker) {
+      this.npcPicker.destroy();
+      this.npcPicker = null;
+    }
+    (this as any)._npcModalOpen = false;
+    const title = (this.children as any).list.find(
+      (c: any) => c.text === "Select NPC" && c.depth === 1001
+    );
+    if (title) title.destroy();
+    const close = (this.children as any).list.find(
+      (c: any) => c.text === "Close" && c.depth === 1001
+    );
+    if (close) close.destroy();
   }
 
   private closeSpritePicker(): void {
@@ -2202,7 +2344,8 @@ export class MapEditorScene extends Phaser.Scene {
       // Check if click is on UI elements first
       const isOnUI = this.isClickOnUI(pointer);
 
-      if (isOnUI) {
+      // Also block if NPC modal flagged open (belt-and-suspenders)
+      if (isOnUI || (this as any)._npcModalOpen) {
         return; // Don't process placement if clicking on UI
       }
 
@@ -2252,9 +2395,10 @@ export class MapEditorScene extends Phaser.Scene {
       event.preventDefault();
     });
 
-    // Add T key handler for tile selector
+    // Add T key handler: NPC picker when NPC tool is active, otherwise tile picker
     this.input.keyboard.on("keydown-T", () => {
-      this.openSpritePicker();
+      if (this.selectedTool === "npc") this.openNpcPicker();
+      else this.openSpritePicker();
     });
 
     // Add G key handler for grid toggle
@@ -2345,6 +2489,9 @@ export class MapEditorScene extends Phaser.Scene {
       case "enemy1":
       case "enemy2":
         this.addEnemy(x, y, this.selectedTool);
+        break;
+      case "npc":
+        this.addNpc(x, y);
         break;
       case "ground":
       case "wall":
@@ -2446,6 +2593,22 @@ export class MapEditorScene extends Phaser.Scene {
       }
     });
 
+    // Check NPCs (use distance-only hit test like enemies)
+    const npcs: any[] = ((this.mapData as any).npcs || []) as any[];
+    npcs.forEach((npc: any, index: number) => {
+      const distance = Phaser.Math.Distance.Between(
+        x,
+        y,
+        npc.position.x,
+        npc.position.y
+      );
+      if (distance <= 50) {
+        if (!closestObject || distance < closestObject.distance) {
+          closestObject = { type: "npc", distance, index };
+        }
+      }
+    });
+
     // Spawn points no longer exist in edge-based system
 
     // Check exit zones
@@ -2480,6 +2643,10 @@ export class MapEditorScene extends Phaser.Scene {
           this.mapData.exits.splice(closestObject.index, 1);
           console.log("Removed exit zone");
           break;
+        case "npc":
+          ((this.mapData as any).npcs as any[]).splice(closestObject.index, 1);
+          console.log("Removed npc");
+          break;
       }
       this.updatePreviewObjects();
     }
@@ -2513,6 +2680,18 @@ export class MapEditorScene extends Phaser.Scene {
     };
 
     this.mapData.enemies.push(enemy as any);
+    this.updatePreviewObjects();
+  }
+
+  private addNpc(x: number, y: number): void {
+    const npcType = this.selectedNpcType || "npc01";
+    const npcId = `npc_${Date.now()}`;
+    if (!this.mapData.npcs) this.mapData.npcs = [] as any;
+    (this.mapData.npcs as any).push({
+      id: npcId,
+      npcType,
+      position: { x: Math.round(x), y: Math.round(y) },
+    });
     this.updatePreviewObjects();
   }
 
@@ -2707,6 +2886,34 @@ export class MapEditorScene extends Phaser.Scene {
       );
       enemyPreview.setDepth(50);
       this.previewObjects.push(enemyPreview);
+    });
+
+    // Create NPC previews as small idle sprites (fallback to circle if missing)
+    const npcs: any[] = ((this.mapData as any).npcs || []) as any[];
+    npcs.forEach((npc: any) => {
+      const key = `${npc.npcType}_idle`;
+      if (this.textures.exists(key)) {
+        const spr = this.add.sprite(npc.position.x, npc.position.y, key, 0);
+        spr.setOrigin(0.5, 1);
+        // Only play if animation exists; otherwise static frame
+        if (this.anims.exists(`${npc.npcType}_idle`)) {
+          spr.play(`${npc.npcType}_idle`);
+        }
+        // Match in-game NPC visual scale (48px frame scaled to 1.5x => 72px)
+        spr.setScale(1.5);
+        spr.setDepth(50);
+        this.previewObjects.push(spr);
+      } else {
+        const circle = this.add.circle(
+          npc.position.x,
+          npc.position.y,
+          12,
+          0x00ffff,
+          0.7
+        );
+        circle.setDepth(50);
+        this.previewObjects.push(circle);
+      }
     });
 
     // Make sure UI camera ignores all preview objects and exit zones

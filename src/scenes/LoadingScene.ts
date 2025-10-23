@@ -122,6 +122,9 @@ export class LoadingScene extends Phaser.Scene {
     // Load enemy sprites
     this.loadEnemySprites();
 
+    // Load NPC sprites
+    this.loadNpcSprites();
+
     // Load portal sprites
     this.loadPortalSprites();
 
@@ -214,6 +217,26 @@ export class LoadingScene extends Phaser.Scene {
         );
       });
     });
+  }
+
+  private loadNpcSprites(): void {
+    // Load 12 NPCs: each has Idle, Walk, Special (48x48, 6 frames)
+    for (let i = 1; i <= 12; i++) {
+      const id = i.toString().padStart(2, "0");
+      const basePath = `/assets/images/npcs/${i}`;
+      this.load.spritesheet(`npc${id}_idle`, `${basePath}/Idle.png`, {
+        frameWidth: 48,
+        frameHeight: 48,
+      });
+      this.load.spritesheet(`npc${id}_walk`, `${basePath}/Walk.png`, {
+        frameWidth: 48,
+        frameHeight: 48,
+      });
+      this.load.spritesheet(`npc${id}_special`, `${basePath}/Special.png`, {
+        frameWidth: 48,
+        frameHeight: 48,
+      });
+    }
   }
 
   private loadPortalSprites(): void {

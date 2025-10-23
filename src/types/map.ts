@@ -110,6 +110,11 @@ export interface WorldMapData {
       patrolRange?: number;
     };
   }>;
+  npcs?: Array<{
+    id: string;
+    npcType: string; // e.g., "npc01".."npc12"
+    position: { x: number; y: number };
+  }>;
   platforms?: any[];
   collectibles?: any[];
   checkpoints?: any[];
