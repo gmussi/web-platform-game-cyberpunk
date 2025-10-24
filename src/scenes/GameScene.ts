@@ -96,6 +96,14 @@ export class GameScene extends Phaser.Scene {
   public readonly TRANSITION_COOLDOWN_MS = 1000; // 1 second grace period
   public worldViewRenderer!: WorldViewRenderer;
   private activeColliders: Phaser.Physics.Arcade.Collider[] = [];
+  // Dialogue system state
+  private npcDialogues: any | null = null;
+  private npcHintBubbles: Map<Npc, Phaser.GameObjects.Container> = new Map();
+  private activeDialogueNpc: Npc | null = null;
+  private currentDialogueLineIndex: number = 0;
+  private dialoguePanel: Phaser.GameObjects.Container | null = null;
+  private dialogueText: Phaser.GameObjects.Text | null = null;
+  private dialogueMoreText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super({ key: "GameScene" });
@@ -392,6 +400,9 @@ export class GameScene extends Phaser.Scene {
 
     // Initialize debug counter
     this.frameCount = 0;
+
+    // Load dialogues (from cache populated in LoadingScene)
+    this.npcDialogues = (this as any).cache?.json?.get("npc_dialogues") || null;
   }
 
   private loadWorldData(): void {
@@ -1717,6 +1728,226 @@ export class GameScene extends Phaser.Scene {
         this.scene.start("VictoryScene");
       }
     }
+
+    // NPC talk hint visibility and dialogue auto-close on distance
+    this.updateNpcTalkHintsAndDialogue();
+  }
+
+  private getNpcLines(npc: Npc): string[] {
+    if (!this.npcDialogues) return ["…"]; // fallback
+    const byType = this.npcDialogues.npcs?.[npc.npcType]?.lines;
+    const fallback = this.npcDialogues.npcs?.["default"]?.lines;
+    if (Array.isArray(byType) && byType.length > 0) return byType;
+    if (Array.isArray(fallback) && fallback.length > 0) return fallback;
+    return ["…"];
+  }
+
+  private isWithinOneTile(
+    ax: number,
+    ay: number,
+    bx: number,
+    by: number
+  ): boolean {
+    const tile = GAME_CONSTANTS.TILE_SIZE;
+    const atx = Math.floor(ax / tile);
+    const aty = Math.floor(ay / tile);
+    const btx = Math.floor(bx / tile);
+    const bty = Math.floor(by / tile);
+    return Math.max(Math.abs(atx - btx), Math.abs(aty - bty)) <= 1;
+  }
+
+  private updateNpcTalkHintsAndDialogue(): void {
+    if (!this.player || !this.npcs) return;
+
+    const hintText = this.npcDialogues?.ui?.talkHint || "Click UP to talk";
+
+    // Maintain/position hint bubbles
+    this.npcs.forEach((npc) => {
+      const within = this.isWithinOneTile(
+        this.player.x,
+        this.player.y,
+        npc.x,
+        npc.y
+      );
+      let bubble = this.npcHintBubbles.get(npc);
+      if (
+        within &&
+        (!this.activeDialogueNpc || this.activeDialogueNpc === npc)
+      ) {
+        if (!bubble) {
+          bubble = this.createHintBubbleAbove(npc, hintText);
+          this.npcHintBubbles.set(npc, bubble);
+        }
+        // Reposition above NPC head
+        bubble.setPosition(npc.x, npc.y - 56);
+        const dialogueActive = !!(
+          this.dialoguePanel && this.dialoguePanel.visible
+        );
+        bubble.setVisible(!dialogueActive); // hide hint only while dialogue is visible
+      } else {
+        if (bubble) {
+          bubble.destroy();
+          this.npcHintBubbles.delete(npc);
+        }
+      }
+    });
+
+    // If dialogue open and moved away, close it
+    if (
+      this.activeDialogueNpc &&
+      !this.isWithinOneTile(
+        this.player.x,
+        this.player.y,
+        this.activeDialogueNpc.x,
+        this.activeDialogueNpc.y
+      )
+    ) {
+      this.closeDialogue();
+    }
+
+    // Handle UP key for dialogue open/advance
+    if (Phaser.Input.Keyboard.JustDown(this.upKey)) {
+      if (this.activeDialogueNpc) {
+        this.advanceDialogue();
+      } else {
+        // Find nearest NPC within one tile
+        let nearest: Npc | null = null;
+        let bestDist = Number.POSITIVE_INFINITY;
+        for (const npc of this.npcs) {
+          if (
+            this.isWithinOneTile(this.player.x, this.player.y, npc.x, npc.y)
+          ) {
+            const d = Phaser.Math.Distance.Between(
+              this.player.x,
+              this.player.y,
+              npc.x,
+              npc.y
+            );
+            if (d < bestDist) {
+              bestDist = d;
+              nearest = npc;
+            }
+          }
+        }
+        if (nearest) this.openDialogue(nearest);
+      }
+    }
+  }
+
+  private createHintBubbleAbove(
+    npc: Npc,
+    text: string
+  ): Phaser.GameObjects.Container {
+    const container = this.add.container(npc.x, npc.y - 56);
+    container.setDepth(1000); // UI above sprites
+    const paddingX = 8;
+    const paddingY = 4;
+    const label = this.add
+      .text(0, 0, text, {
+        fontSize: "12px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5);
+    const bgWidth = label.width + paddingX * 2;
+    const bgHeight = label.height + paddingY * 2;
+    const bg = this.add
+      .rectangle(0, 0, bgWidth, bgHeight, 0x000000, 0.6)
+      .setOrigin(0.5);
+    container.add([bg, label]);
+    return container;
+  }
+
+  private openDialogue(npc: Npc): void {
+    this.activeDialogueNpc = npc;
+    this.currentDialogueLineIndex = 0;
+    const lines = this.getNpcLines(npc);
+    const first = lines[0] || "";
+
+    // Create panel if missing
+    if (!this.dialoguePanel) {
+      this.dialoguePanel = this.add.container(0, 0);
+      this.dialoguePanel.setDepth(2000);
+      this.dialoguePanel.setScrollFactor(0);
+
+      const viewW = (this.cameras.main as any).width;
+      const viewH = (this.cameras.main as any).height;
+      const panelWidth = Math.min(700, Math.max(320, Math.floor(viewW * 0.8)));
+      const panelHeight = 100;
+      const panelX = Math.floor(viewW / 2);
+      const panelY = Math.floor(panelHeight / 2 + 20);
+
+      const bg = this.add.rectangle(
+        panelX,
+        panelY,
+        panelWidth,
+        panelHeight,
+        0x000000,
+        0.7
+      );
+      this.dialoguePanel.add(bg);
+
+      this.dialogueText = this.add
+        .text(
+          panelX - panelWidth / 2 + 16,
+          panelY - panelHeight / 2 + 12,
+          first,
+          {
+            fontSize: "16px",
+            fill: "#ffffff",
+          }
+        )
+        .setOrigin(0, 0);
+      this.dialoguePanel.add(this.dialogueText);
+
+      // Bottom-right "More" indicator (only when there are more lines)
+      this.dialogueMoreText = this.add
+        .text(
+          panelX + panelWidth / 2 - 12,
+          panelY + panelHeight / 2 - 8,
+          "° More...",
+          {
+            fontSize: "12px",
+            fill: "#cccccc",
+            fontStyle: "bold",
+            stroke: "#000000",
+            strokeThickness: 1,
+          }
+        )
+        .setOrigin(1, 1);
+      this.dialoguePanel.add(this.dialogueMoreText);
+      this.updateMoreIndicator(lines);
+    } else if (this.dialogueText) {
+      this.dialogueText.setText(first);
+      this.dialoguePanel.setVisible(true);
+      this.updateMoreIndicator(lines);
+    }
+  }
+
+  private advanceDialogue(): void {
+    if (!this.activeDialogueNpc || !this.dialogueText) return;
+    const lines = this.getNpcLines(this.activeDialogueNpc);
+    this.currentDialogueLineIndex += 1;
+    if (this.currentDialogueLineIndex >= lines.length) {
+      this.closeDialogue();
+      return;
+    }
+    this.dialogueText.setText(lines[this.currentDialogueLineIndex]);
+    this.updateMoreIndicator(lines);
+  }
+
+  private closeDialogue(): void {
+    this.activeDialogueNpc = null;
+    this.currentDialogueLineIndex = 0;
+    if (this.dialoguePanel) this.dialoguePanel.setVisible(false);
+  }
+
+  private updateMoreIndicator(lines: string[]): void {
+    if (!this.dialogueMoreText) return;
+    const hasMore = this.currentDialogueLineIndex < lines.length - 1;
+    this.dialogueMoreText.setVisible(hasMore);
   }
 
   private checkEdgeTransition(): void {
@@ -1896,6 +2127,8 @@ export class GameScene extends Phaser.Scene {
     this.loadTileDataFromMap();
     this.tilemapSystem.createCollisionBodies();
     this.createEnemies();
+    // Ensure NPCs are created on edge transitions as well
+    this.createNpcs();
     this.createExitZones();
     this.createPortal();
 

@@ -134,6 +134,9 @@ export class LoadingScene extends Phaser.Scene {
     // Load map data
     this.loadMapData();
 
+    // Load NPC dialogue data
+    this.load.json("npc_dialogues", `/assets/dialogue/npc_dialogues.json`);
+
     // Start loading
     this.load.start();
   }

@@ -109,7 +109,17 @@ export class Actor extends Phaser.Physics.Arcade.Sprite {
   }
 
   public playAnim(key: string): this {
-    this.visual.play(key);
+    // Avoid playing on destroyed or non-animatable visuals (can happen during scene transitions)
+    const vis: any = this.visual as any;
+    if (
+      !vis ||
+      vis.destroyed === true ||
+      typeof vis.play !== "function" ||
+      !vis.anims
+    ) {
+      return this;
+    }
+    vis.play(key);
     return this;
   }
 

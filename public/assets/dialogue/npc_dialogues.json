@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "locale": "en",
+  "npcs": {
+    "npc01": {
+      "name": "Vendor",
+      "lines": ["You looking for a dog?", "Saw one running around here."]
+    },
+    "npc03": {
+      "name": "Fixer",
+      "lines": ["That guy up there looks suspicious.", "How did he get there?"]
+    },
+    "default": {
+      "lines": ["…"]
+    }
+  },
+  "ui": {
+    "talkHint": "Click UP to talk"
+  }
+}

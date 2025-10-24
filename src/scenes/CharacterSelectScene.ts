@@ -312,7 +312,8 @@ export class CharacterSelectScene extends Phaser.Scene {
     gameData.playerHealth = gameData.maxHealth; // Reset health
 
     console.log("🧠 Transitioning to GameScene");
-    // Start the game scene
-    this.scene.start("GameScene", { showWorldPicker: true });
+    // Start the game scene (world picker disabled for now)
+    // this.scene.start("GameScene", { showWorldPicker: true }); // Re-enable later
+    this.scene.start("GameScene");
   }
 }

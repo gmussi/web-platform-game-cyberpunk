@@ -40,40 +40,21 @@ export class Npc extends Actor {
   public startBehaviorLoop(): void {
     if (this.isRunningLoop) return;
     this.isRunningLoop = true;
-    const tile = GAME_CONSTANTS.TILE_SIZE;
-    const dist = 3 * tile; // walk exactly 3 tiles
-
-    const runCycle = async () => {
-      if (!this.active || !this.scene) return;
-      // Idle 3s, then special
-      this.playAnim(`${this.npcType}_idle`);
-      await this.wait(3000);
-      await this.playSpecialOnce();
-
-      // Idle 3s, then walk 3 tiles left/right (random)
-      this.playAnim(`${this.npcType}_idle`);
-      await this.wait(3000);
-      const moveRight = Math.random() < 0.5;
-      await this.walkBy(moveRight ? dist : -dist);
-
-      // Idle 3s, then special
-      this.playAnim(`${this.npcType}_idle`);
-      await this.wait(3000);
-      await this.playSpecialOnce();
-
-      // Idle 3s, then walk back to original position
-      this.playAnim(`${this.npcType}_idle`);
-      await this.wait(3000);
-      await this.walkTo(this.startX);
-      if (this.active) runCycle();
-    };
-
-    runCycle();
+    // NPCs remain in idle state; no walking/special loop
+    this.playAnim(`${this.npcType}_idle`);
   }
 
   private wait(ms: number): Promise<void> {
     return new Promise((resolve) => {
-      this.scene.time.delayedCall(ms, () => resolve());
+      // If scene is unavailable (e.g., during transition/destruction), fall back to setTimeout
+      const scn: any = this.scene as any;
+      if (!scn || (this as any).destroyed || !scn.time) {
+        const timer =
+          typeof window !== "undefined" ? window.setTimeout : setTimeout;
+        timer(() => resolve(), ms);
+        return;
+      }
+      scn.time.delayedCall(ms, () => resolve());
     });
   }
 
@@ -84,11 +65,16 @@ export class Npc extends Actor {
         anim: Phaser.Animations.Animation,
         frame: Phaser.Animations.AnimationFrame
       ) => {
-        this.visual.off("animationcomplete", onComplete);
+        if (!this || (this as any).destroyed) return resolve();
+        if (this.visual && (this.visual as any).off) {
+          (this.visual as any).off("animationcomplete", onComplete);
+        }
         this.playAnim(`${this.npcType}_idle`);
         resolve();
       };
-      this.visual.on("animationcomplete", onComplete);
+      if (this.visual && (this.visual as any).on) {
+        (this.visual as any).on("animationcomplete", onComplete);
+      }
       this.playAnim(key);
     });
   }
