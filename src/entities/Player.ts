@@ -1,4 +1,4 @@
-import { GAME_CONSTANTS } from "../data/config";
+import { GAME_CONSTANTS, GAME_CONFIG } from "../data/config";
 import { characters, gameData } from "../data/characters";
 import { Character } from "../types/game";
 import { Actor } from "./Actor";
@@ -29,6 +29,8 @@ export class Player extends Actor {
   public jumpFrameIndex: number;
   public isDroppingThrough?: boolean;
   public dropThroughUntil?: number;
+  public defaultGravityY: number;
+  public fallGravityMultiplier: number;
 
   constructor(scene: Phaser.Scene, x: number, y: number, characterKey: string) {
     // Character key is now the character name directly (biker, punk, cyborg)
@@ -76,7 +78,7 @@ export class Player extends Actor {
 
     // Player properties
     this.speed = 200;
-    this.jumpPower = 400;
+    this.jumpPower = 520;
     this.isGrounded = false;
     this.health = gameData.maxHealth;
     this.maxHealth = gameData.maxHealth;
@@ -91,6 +93,10 @@ export class Player extends Actor {
     this.jumpPhase = "none"; // 'none', 'start', 'ascending', 'falling', 'landing'
     this.jumpStartTime = 0;
     this.jumpFrameIndex = 0;
+
+    // Gravity control (faster falling)
+    this.defaultGravityY = GAME_CONFIG.physics.arcade.gravity.y;
+    this.fallGravityMultiplier = 1.8; // Increase Y gravity while falling
 
     // Visual starts unflipped; set optional visual X offset from character data
     if (typeof this.characterData.visualOffsetX === "number") {
@@ -191,6 +197,10 @@ export class Player extends Actor {
       this.jumpPhase = "falling";
       this.jumpStartTime = this.scene.time.now;
       this.jumpFrameIndex = 0;
+      // Apply stronger gravity immediately for faster drop-through fall
+      (this.body as Phaser.Physics.Arcade.Body).setGravityY(
+        this.defaultGravityY * this.fallGravityMultiplier
+      );
       this.scene.events.emit("playerDropThrough");
       return;
     }
@@ -228,6 +238,13 @@ export class Player extends Actor {
         this.jumpFrameIndex = 0;
       }
     }
+
+    // Apply gravity scaling: faster fall, normal otherwise
+    const targetGravityY =
+      this.jumpPhase === "falling"
+        ? this.defaultGravityY * this.fallGravityMultiplier
+        : this.defaultGravityY;
+    (this.body as Phaser.Physics.Arcade.Body).setGravityY(targetGravityY);
   }
 
   private updateAnimation(): void {
